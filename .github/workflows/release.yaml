@@ -1,0 +1,65 @@
+name: Run release
+
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: 'Release kind (major, minor, patch, auto)'
+        required: true
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - major
+          - minor
+          - patch
+      branch:
+        description: 'Branch to release from'
+        required: true
+        default: 'main'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write # for provenance
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.BOT_PAT }}
+      - if: ${{ github.event.inputs.branch != 'master' }}
+        run: git checkout ${{ github.event.inputs.branch }}
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20.15'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '9.5.0'
+      - run: pnpm install --frozen-lockfile
+      - name: Initialize git
+        env:
+          BOT_SIGNKEY: ${{ secrets.BOT_SIGNKEY }}
+        run: |
+          echo "$BOT_SIGNKEY" > /tmp/bot-key
+          git config --global user.name "desu-bot"
+          git config --global user.email github-desu-bot@tei.su
+          git config --global gpg.format ssh
+          git config --global user.signingkey /tmp/bot-key
+          git config --global commit.gpgsign true
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: '2.0'
+      - name: Run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx tsx packages/build/src/cli/main.ts release \
+            --kind=${{ github.event.inputs.kind }} \
+            --with-npm \
+            --npm-token=${{ secrets.NPM_TOKEN }} \
+            --with-github-release

@@ -1,0 +1,6 @@
+{
+    "name": "@fuman-fixtures/package-b",
+    "dependencies": {
+        "chai": "^2.0.0"
+    }
+}

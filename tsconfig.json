@@ -1,0 +1,40 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "lib": [
+            "esnext",
+            "dom",
+            "dom.iterable",
+            "WebWorker"
+        ],
+        "useDefineForClassFields": true,
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "resolveJsonModule": true,
+        "types": [
+            "node",
+            "bun",
+            "deno/ns",
+            "vite/client"
+        ],
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "inlineSources": true,
+        "noEmit": true,
+        "sourceMap": true,
+        "stripInternal": true,
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "isolatedDeclarations": true,
+        "isolatedModules": true,
+        "skipLibCheck": true
+    },
+    "exclude": [
+        "**/node_modules",
+        "**/dist",
+        "**/__snapshots__",
+        "**/__fixtures__"
+    ]
+}

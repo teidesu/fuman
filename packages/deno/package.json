@@ -1,0 +1,22 @@
+{
+    "name": "@fuman/deno",
+    "type": "module",
+    "version": "0.0.1",
+    "description": "deno-specific utilities",
+    "license": "MIT",
+    "sideEffects": false,
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "scripts": {
+        "dev": "vitest watch"
+    },
+    "dependencies": {
+        "@fuman/io": "workspace:^",
+        "@fuman/net": "workspace:^",
+        "@fuman/utils": "workspace:^"
+    },
+    "fuman": {
+        "jsr": "only"
+    }
+}

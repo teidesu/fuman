@@ -1,0 +1,6 @@
+{
+    "name": "@fuman-fixtures/workspace",
+    "workspaces": [
+        "./packages/*"
+    ]
+}
