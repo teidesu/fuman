@@ -6,7 +6,7 @@ import * as fsp from 'node:fs/promises'
 
 import { join, relative } from 'node:path'
 import process from 'node:process'
-import { asNonNull, assertStartsWith, type MaybeArray, type MaybePromise } from '@fuman/utils'
+import { asNonNull, assertStartsWith, deepMerge, type MaybeArray, type MaybePromise } from '@fuman/utils'
 
 import { loadBuildConfig } from '../misc/_config.js'
 import { directoryExists, fileExists, tryCopy } from '../misc/fs.js'
@@ -199,20 +199,15 @@ export async function fumanBuild(params: {
 
                 buildCjs = outputFormats.includes('cjs')
 
-                return {
-                    ...packageConfig?.viteConfig,
+                return deepMerge({
                     root: packageRoot,
                     build: {
                         emptyOutDir: true,
                         target: 'es2022',
                         minify: false,
-                        ...packageConfig?.viteConfig?.build,
                         rollupOptions: {
-                            ...packageConfig?.viteConfig?.build?.rollupOptions,
                             output: {
                                 minifyInternalExports: false,
-                                ...packageConfig?.viteConfig?.build?.rollupOptions?.output,
-                                // prefix and suffix can't be overridden, as we'll put a package.json file into `chunks/cjs`
                                 chunkFileNames:
                                     buildCjs
                                         ? `chunks/[format]/${chunkFileName}.js`
@@ -221,11 +216,10 @@ export async function fumanBuild(params: {
                         },
                         lib: {
                             entry: entrypoints,
-                            ...packageConfig?.viteConfig?.build?.lib,
                             formats: outputFormats,
                         },
                     },
-                }
+                }, packageConfig?.viteConfig ?? {})
             },
             async closeBundle() {
                 if (isNoop) return

@@ -154,7 +154,7 @@ export function processPackageJson(params: {
             if (entrypointName === '') entrypointName = 'index'
 
             entrypoints[entrypointName] = value
-            newBin[key] = `./${entrypointName}.js`
+            newBin[key] = `${entrypointName}.js`
         }
 
         packageJson.bin = newBin

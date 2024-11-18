@@ -23,6 +23,16 @@ const config = defineConfig(() => {
                 ],
             },
         },
+        build: {
+            target: 'esnext',
+            rollupOptions: {
+                output: {
+                    // re-exported namespaces can't be tree-shaken when bundled
+                    // see: https://github.com/rollup/rollup/issues/5161
+                    preserveModules: true,
+                },
+            },
+        },
         plugins: [
             nodeExternals(),
             fumanBuild({
