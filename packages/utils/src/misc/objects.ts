@@ -3,14 +3,14 @@ import type { MaybeArray } from '../types/misc.js'
 /**
  * Strictly typed `Object.keys`
  */
-export function objectKeys<T extends object>(obj: T) {
+export function objectKeys<T extends object>(obj: T): Array<`${keyof T & (string | number | boolean | null | undefined)}`> {
     return Object.keys(obj) as Array<`${keyof T & (string | number | boolean | null | undefined)}`>
 }
 
 /**
  * Strictly typed `Object.entries`
  */
-export function objectEntries<T extends object>(obj: T) {
+export function objectEntries<T extends object>(obj: T): Array<[keyof T, T[keyof T]]> {
     return Object.entries(obj) as Array<[keyof T, T[keyof T]]>
 }
 
@@ -103,7 +103,7 @@ export function deepMerge<T extends object = object, S extends object = T>(into:
             const existing = into[key]
             if (value === undefined) {
                 if (onUndefined === 'replace') {
-                    // eslint-disable-next-line ts/no-unsafe-assignment
+                    // eslint-disable-next-line ts/no-unsafe-member-access
                     (into as any)[key] = undefined
                 }
                 continue

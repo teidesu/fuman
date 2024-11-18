@@ -2,10 +2,14 @@ import type { PackageJson } from './types.js'
 
 import * as path from 'node:path'
 
-import { glob } from 'tinyglobby'
+import process from 'node:process'
 
+import { glob } from 'tinyglobby'
 import { normalizeFilePath } from '../misc/path.js'
 import { parsePackageJsonFile, parseWorkspaceRootPackageJson } from './parse.js'
+
+// defaulting to Infinity takes a lot of time on larger workspaces
+const maxDepth = process.env.FUMAN_BUILD_MAX_DEPTH !== undefined ? Number(process.env.FUMAN_BUILD_MAX_DEPTH) : 5
 
 export interface WorkspacePackage {
     path: string
@@ -35,10 +39,12 @@ export async function collectPackageJsons(
         })
     }
 
-    for (const dir of await glob(rootPackageJson.workspaces, {
+    for (const dir of await glob({
+        patterns: rootPackageJson.workspaces,
         cwd: workspaceRoot,
         onlyDirectories: true,
         followSymbolicLinks: true,
+        deep: maxDepth,
     })) {
         try {
             const packageJson = await parsePackageJsonFile(path.join(workspaceRoot, dir, 'package.json'))

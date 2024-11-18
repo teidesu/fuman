@@ -21,6 +21,10 @@ export async function buildPackage(params: {
     const packageRoot = findPackageByName(workspacePackages, params.packageName).path
 
     await exec(['npx', 'vite', 'build', '--config', join(params.workspaceRoot, viteConfig)], {
+        env: {
+            ...process.env,
+            __FUMAN_INTERNAL_PACKAGES_LIST: JSON.stringify(workspacePackages),
+        },
         cwd: packageRoot,
         stdio: 'inherit',
         throwOnError: true,

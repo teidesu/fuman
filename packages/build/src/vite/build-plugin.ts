@@ -1,13 +1,14 @@
 import type { PluginOption } from 'vite'
 import type { BuildHookContext } from '../config.js'
 
+import type { WorkspacePackage } from '../package-json/collect-package-jsons.js'
 import type { CustomBuildConfigObject } from './config.js'
-import * as fsp from 'node:fs/promises'
 
+import * as fsp from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import process from 'node:process'
-import { asNonNull, assertStartsWith, deepMerge, type MaybeArray, type MaybePromise } from '@fuman/utils'
 
+import { asNonNull, assertStartsWith, deepMerge, type MaybeArray, type MaybePromise } from '@fuman/utils'
 import { loadBuildConfig } from '../misc/_config.js'
 import { directoryExists, fileExists, tryCopy } from '../misc/fs.js'
 import { normalizeFilePath } from '../misc/path.js'
@@ -110,7 +111,10 @@ export async function fumanBuild(params: {
     } = params
     const rootDir = normalizeFilePath(params.root)
 
-    const allPackageJsons = await collectPackageJsons(rootDir, true)
+    // when vite is started from our cli, we already have the list of packages,
+    // so we can avoid the expensive collectPackageJsons call
+    const cachedWorkspace = process.env.__FUMAN_INTERNAL_PACKAGES_LIST
+    const allPackageJsons = cachedWorkspace !== undefined ? JSON.parse(cachedWorkspace) as WorkspacePackage[] : await collectPackageJsons(rootDir, true)
     const rootPackageJson = allPackageJsons.find(it => it.root)?.json
     if (!rootPackageJson) {
         throw new Error('Could not find root package.json')

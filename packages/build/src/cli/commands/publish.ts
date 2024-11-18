@@ -36,7 +36,7 @@ export async function publishPackages(params: {
 }): Promise<PublishPackagesResult> {
     const {
         workspaceRoot = process.cwd(),
-        workspace = await collectPackageJsons(workspaceRoot, false),
+        workspace = await collectPackageJsons(workspaceRoot, true),
         packages,
         unpublishExisting = false,
         skipVersionCheck = false,
@@ -49,7 +49,9 @@ export async function publishPackages(params: {
         withBuild,
     } = params
 
-    const ordered = filterPackageJsonsForPublish(sortWorkspaceByPublishOrder(workspace), 'npm')
+    const workspaceWithoutRoot = workspace.filter(pkg => !pkg.root)
+
+    const ordered = filterPackageJsonsForPublish(sortWorkspaceByPublishOrder(workspaceWithoutRoot), 'npm')
 
     const toPublish = packages.length === 1 && packages[0] === ':all'
         ? ordered
