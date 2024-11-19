@@ -26,3 +26,11 @@ export const ffetch: Ffetch<
 > = /* #__PURE__ */ createFfetch({
     addons: ffetchDefaultAddons,
 })
+
+export {
+    /**
+     * for convenience, so that you don't need to rename the import
+     * when using `const ffetch = ffetchBase.extend(...)`
+     */
+    ffetch as ffetchBase,
+}

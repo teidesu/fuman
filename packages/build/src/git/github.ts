@@ -1,4 +1,4 @@
-import { createFfetch, ffetchAddons, ffetchDefaultAddons } from '@fuman/fetch'
+import { ffetchAddons, ffetchBase } from '@fuman/fetch'
 import { ffetchZodAdapter } from '@fuman/fetch/zod'
 import { asyncPool } from '@fuman/utils'
 import { z } from 'zod'
@@ -17,10 +17,9 @@ export async function createGithubRelease(params: {
         body: BodyInit
     }[]
 }): Promise<number> {
-    const ffetch = createFfetch({
+    const ffetch = ffetchBase.extend({
         baseUrl: 'https://api.github.com',
         addons: [
-            ...ffetchDefaultAddons,
             ffetchAddons.retry(),
             ffetchAddons.parser(ffetchZodAdapter()),
         ],
@@ -32,8 +31,7 @@ export async function createGithubRelease(params: {
         },
     })
 
-    const release = await ffetch(`/repos/${params.repo}/releases`, {
-        method: 'POST',
+    const release = await ffetch.post(`/repos/${params.repo}/releases`, {
         json: {
             tag_name: params.tag,
             name: params.name,

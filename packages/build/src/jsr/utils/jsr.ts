@@ -3,7 +3,7 @@ import * as fsp from 'node:fs/promises'
 import { join } from 'node:path'
 import process from 'node:process'
 
-import { createFfetch, ffetch, ffetchAddons } from '@fuman/fetch'
+import { ffetch, ffetchAddons, ffetchBase } from '@fuman/fetch'
 import { ffetchZodAdapter } from '@fuman/fetch/zod'
 import { webReadableToFuman, write } from '@fuman/io'
 import { nodeWritableToFuman } from '@fuman/node'
@@ -48,7 +48,7 @@ export async function downloadJsrPackage(
     }
 
     const registry = params?.registry ?? DEFAULT_REGISTRY
-    const ffetch = createFfetch({
+    const ffetch = ffetchBase.extend({
         baseUrl: registry,
         addons: [
             ffetchAddons.parser(ffetchZodAdapter()),

@@ -75,7 +75,39 @@ const OCTET_STREAM_CONTENT_TYPE = 'application/octet-stream'
  * @param url  url to fetch (or path, if baseUrl is set)
  * @param params  options (note that the function may mutate the object, do not rely on its immutability)
  */
-export type Ffetch<RequestMixin, ResponseMixin> = (url: string, params?: FfetchOptions & RequestMixin) => FfetchResult & ResponseMixin
+export interface Ffetch<RequestMixin, ResponseMixin> {
+    (url: string, params?: FfetchOptions & RequestMixin): FfetchResult & ResponseMixin
+    /** shorthand for making a GET request */
+    get: (url: string, params?: FfetchOptions & RequestMixin) => FfetchResult & ResponseMixin
+    /** shorthand for making a POST request */
+    post: (url: string, params?: FfetchOptions & RequestMixin) => FfetchResult & ResponseMixin
+    /** shorthand for making a PUT request */
+    put: (url: string, params?: FfetchOptions & RequestMixin) => FfetchResult & ResponseMixin
+    /** shorthand for making a DELETE request */
+    delete: (url: string, params?: FfetchOptions & RequestMixin) => FfetchResult & ResponseMixin
+    /** shorthand for making a PATCH request */
+    patch: (url: string, params?: FfetchOptions & RequestMixin) => FfetchResult & ResponseMixin
+    /** shorthand for making a HEAD request */
+    head: (url: string, params?: FfetchOptions & RequestMixin) => FfetchResult & ResponseMixin
+    /** shorthand for making an OPTIONS request */
+    options: (url: string, params?: FfetchOptions & RequestMixin) => FfetchResult & ResponseMixin
+
+    /**
+     * extend the base options with the given options
+     *
+     * note: addons, middlewares and headers will be merged with the base options,
+     * the rest of the options will be overridden
+     */
+    extend: <
+        const Addons extends FfetchAddon<any, any>[],
+        Combined extends {
+            request: object
+            response: object
+        } = CombineAddons<Addons>,
+    >(
+        baseOptions: FfetchBaseOptions<Addons> & Combined['request']
+    ) => Ffetch<RequestMixin & Combined['request'], ResponseMixin & Combined['response']>
+}
 
 /**
  * an error that is thrown when the response status is not 2xx,
@@ -213,6 +245,12 @@ class FfetchResultImpl implements FfetchResult {
     }
 }
 
+function _wrapMethod<T extends Ffetch<any, any>>(method: string, fn: T): T {
+    return ((url: string, options: FfetchOptions) => {
+        return fn(url, { ...options, method }) as FfetchResult
+    }) as T
+}
+
 /** create a new ffetch function with the given base options */
 export function createFfetch<
     const Addons extends FfetchAddon<any, any>[],
@@ -243,7 +281,7 @@ export function createFfetch<
         FfetchResultInner = FfetchResultImpl
     }
 
-    return (url: string, options: FfetchOptions = {}) => {
+    const fn_ = (url: string, options: FfetchOptions = {}) => {
         let stack: string | undefined
         if (captureStackTrace) {
             // eslint-disable-next-line unicorn/error-message
@@ -299,4 +337,35 @@ export function createFfetch<
 
         return new FfetchResultInner(fetcher, url, init, headers, options, stack)
     }
+
+    const fn = fn_ as unknown as Ffetch<Combined['request'], Combined['response']>
+    fn.get = _wrapMethod('GET', fn)
+    fn.post = _wrapMethod('POST', fn)
+    fn.put = _wrapMethod('PUT', fn)
+    fn.delete = _wrapMethod('DELETE', fn)
+    fn.patch = _wrapMethod('PATCH', fn)
+    fn.head = _wrapMethod('HEAD', fn)
+    fn.options = _wrapMethod('OPTIONS', fn)
+
+    fn.extend = (otherOptions: FfetchBaseOptions<any>) => {
+        return createFfetch<Addons, Combined>({
+            ...baseOptions,
+            ...otherOptions,
+            addons: [
+                ...(baseOptions.addons ?? []),
+                // eslint-disable-next-line ts/no-unsafe-assignment
+                ...(otherOptions.addons ?? []),
+            ],
+            middlewares: [
+                ...(baseOptions.middlewares ?? []),
+                ...(otherOptions.middlewares ?? []),
+            ],
+            headers: {
+                ...baseOptions.headers,
+                ...otherOptions.headers,
+            },
+        })
+    }
+
+    return fn
 }
