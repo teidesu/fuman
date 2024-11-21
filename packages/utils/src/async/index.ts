@@ -2,6 +2,7 @@ import * as timers from './timers.js'
 
 export { timers }
 
+export * from './async-interval.js'
 export * from './async-lock.js'
 export * from './async-queue.js'
 export * from './async-resource.js'
