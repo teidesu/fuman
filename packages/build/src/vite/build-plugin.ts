@@ -111,6 +111,8 @@ export async function fumanBuild(params: {
     } = params
     const rootDir = normalizeFilePath(params.root)
 
+    const fixedVersion = process.env.__FUMAN_INTERNAL_FIXED_VERSION
+
     // when vite is started from our cli, we already have the list of packages,
     // so we can avoid the expensive collectPackageJsons call
     const cachedWorkspace = process.env.__FUMAN_INTERNAL_PACKAGES_LIST
@@ -165,6 +167,7 @@ export async function fumanBuild(params: {
         bundledWorkspaceDeps: (bundledWorkspaceDeps === undefined || Array.isArray(bundledWorkspaceDeps) ? bundledWorkspaceDeps : [bundledWorkspaceDeps])
             ?.map(dep => typeof dep === 'string' ? new RegExp(dep) : dep),
         rootFieldsToCopy,
+        fixedVersion,
     })
 
     hookContext.packageJson = packageJson

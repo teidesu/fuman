@@ -8,6 +8,7 @@ export function processPackageJson(params: {
     bundledWorkspaceDeps?: RegExp[]
     rootPackageJson?: PackageJson
     rootFieldsToCopy?: string[]
+    fixedVersion?: string
 }): {
         packageJson: PackageJson
         packageJsonOrig: PackageJson
@@ -19,6 +20,7 @@ export function processPackageJson(params: {
         rootPackageJson,
         rootFieldsToCopy = DEFAULT_FIELDS_TO_COPY_ROOT,
         bundledWorkspaceDeps,
+        fixedVersion,
     } = params
     const packageJson = structuredClone(packageJsonOrig)
     const entrypoints: Record<string, string> = {}
@@ -82,6 +84,11 @@ export function processPackageJson(params: {
                 }
                 if (workspaceVersions?.[name] == null) {
                     throw new Error(`Cannot replace workspace: dependency ${name} not found in workspace`)
+                }
+
+                if (fixedVersion != null) {
+                    dependencies[name] = fixedVersion
+                    continue
                 }
 
                 const workspaceVersion = workspaceVersions?.[name]

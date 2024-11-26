@@ -13,6 +13,7 @@ export async function buildPackage(params: {
     workspace?: WorkspacePackage[]
     packageName: string
     configPath?: string
+    fixedVersion?: string
 }): Promise<void> {
     const config = await loadConfig(params)
     const workspacePackages = params.workspace ?? await collectPackageJsons(params.workspaceRoot, true)
@@ -24,6 +25,7 @@ export async function buildPackage(params: {
         env: {
             ...process.env,
             __FUMAN_INTERNAL_PACKAGES_LIST: JSON.stringify(workspacePackages),
+            __FUMAN_INTERNAL_FIXED_VERSION: params.fixedVersion,
         },
         cwd: packageRoot,
         stdio: 'inherit',
@@ -41,12 +43,15 @@ export const buildPackageCli = bc.command({
         packageName: bc.positional('package-name')
             .desc('name of the package to build')
             .required(),
+        fixedVersion: bc.string('fixed-version')
+            .desc('version to publish the package to (overrides the version in every package.json, useful for pre-releases)'),
     },
     handler: async (args) => {
         await buildPackage({
             workspaceRoot: args.root ?? process.cwd(),
             packageName: args.packageName,
             configPath: args.config,
+            fixedVersion: args.fixedVersion,
         })
     },
 })

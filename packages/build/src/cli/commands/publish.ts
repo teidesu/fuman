@@ -1,6 +1,7 @@
 import type { WorkspacePackage } from '../../package-json/collect-package-jsons.js'
-import { join, resolve } from 'node:path'
+import * as fsp from 'node:fs/promises'
 
+import { join, resolve } from 'node:path'
 import process from 'node:process'
 
 import { asNonNull } from '@fuman/utils'
@@ -8,8 +9,9 @@ import { isRunningInGithubActions, writeGithubActionsOutput } from '../../ci/git
 import { exec } from '../../misc/exec.js'
 import { sortWorkspaceByPublishOrder } from '../../misc/publish-order.js'
 import { npmCheckVersion } from '../../npm/npm-api.js'
-import { collectPackageJsons, filterPackageJsonsForPublish } from '../../package-json/collect-package-jsons.js'
 
+import { collectPackageJsons, filterPackageJsonsForPublish } from '../../package-json/collect-package-jsons.js'
+import { parsePackageJsonFile } from '../../package-json/parse.js'
 import { bc } from './_utils.js'
 import { buildPackage } from './build.js'
 
@@ -33,6 +35,7 @@ export async function publishPackages(params: {
     withTarballs?: boolean
     withBuild?: boolean
     skipVersionCheck?: boolean
+    fixedVersion?: string
 }): Promise<PublishPackagesResult> {
     const {
         workspaceRoot = process.cwd(),
@@ -47,6 +50,7 @@ export async function publishPackages(params: {
         dryRun,
         withTarballs,
         withBuild,
+        fixedVersion,
     } = params
 
     const workspaceWithoutRoot = workspace.filter(pkg => !pkg.root)
@@ -89,10 +93,11 @@ export async function publishPackages(params: {
 
     for (const pkg of toPublish) {
         // check if this version is already published
+        const pkgVersion = fixedVersion ?? asNonNull(pkg.json.version)
         if (!dryRun && !skipVersionCheck && await npmCheckVersion({
             registry: registryUrl,
             package: asNonNull(pkg.json.name),
-            version: asNonNull(pkg.json.version),
+            version: pkgVersion,
         })) {
             if (unpublishExisting) {
                 await exec([
@@ -101,12 +106,12 @@ export async function publishPackages(params: {
                     '--force',
                     '--registry',
                     registryUrl,
-                    `${asNonNull(pkg.json.name)}@${asNonNull(pkg.json.version)}`,
+                    `${asNonNull(pkg.json.name)}@${pkgVersion}`,
                 ], {
                     stdio: 'inherit',
                 })
             } else {
-                console.log(`Skipping ${pkg.json.name}@${pkg.json.version} because it is already published`)
+                console.log(`Skipping ${pkg.json.name}@${pkgVersion} because it is already published`)
                 continue
             }
         }
@@ -133,6 +138,7 @@ export async function publishPackages(params: {
                         workspaceRoot,
                         workspace,
                         packageName: asNonNull(pkg.json.name),
+                        fixedVersion,
                     })
                 } catch (err) {
                     console.log('failed to build %s:', pkg.json.name)
@@ -143,7 +149,17 @@ export async function publishPackages(params: {
             }
         }
 
-        console.log(`publishing ${pkg.json.name}@${pkg.json.version}`)
+        const fullDistDir = join(pkg.path, distDir)
+
+        if (fixedVersion != null) {
+            const distPkgJsonPath = join(fullDistDir, 'package.json')
+
+            const pkgJson = await parsePackageJsonFile(distPkgJsonPath)
+            pkgJson.version = fixedVersion
+            await fsp.writeFile(distPkgJsonPath, JSON.stringify(pkgJson, null, 4))
+        }
+
+        console.log(`publishing ${pkg.json.name}@${pkgVersion}`)
 
         if (pkg.json.name?.includes('/')) {
             // scoped packages are published as `private` by default,
@@ -162,7 +178,7 @@ export async function publishPackages(params: {
             ...(dryRun ? ['--dry-run'] : ['-q']),
             ...publishArgs,
         ], {
-            cwd: join(pkg.path, distDir),
+            cwd: fullDistDir,
             stdio: 'inherit',
         })
 
@@ -172,7 +188,7 @@ export async function publishPackages(params: {
 
         if (withTarballs) {
             const tar = await exec(['npm', 'pack', '-q'], {
-                cwd: join(pkg.path, distDir),
+                cwd: fullDistDir,
             })
             if (tar.exitCode !== 0) {
                 console.error(tar.stderr)
@@ -215,6 +231,8 @@ export const publishPackagesCli = bc.command({
             .desc('whether to generate tarballs in the dist directory using `npm pack` (doesn\'t work with jsr)'),
         withBuild: bc.boolean('with-build')
             .desc('whether to build the package before publishing using `build` npm script (or defaulting to building using fuman-build if one is not found)'),
+        fixedVersion: bc.string('fixed-version')
+            .desc('version to publish the package to (overrides the version in every package.json, useful for pre-releases)'),
     },
     handler: async (options) => {
         const { failed, tarballs } = await publishPackages({

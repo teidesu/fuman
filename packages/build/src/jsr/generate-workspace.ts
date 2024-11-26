@@ -30,12 +30,14 @@ export async function generateDenoWorkspace(params: {
     workspacePackages?: WorkspacePackage[]
     rootConfig?: JsrConfig
     withDryRun?: boolean
+    fixedVersion?: string
 }): Promise<string> {
     const {
         workspaceRoot: workspaceRoot_,
         workspacePackages = await collectPackageJsons(workspaceRoot_, true),
         rootConfig,
         withDryRun = false,
+        fixedVersion,
     } = params
 
     const workspaceRoot = normalizeFilePath(workspaceRoot_)
@@ -193,6 +195,11 @@ export async function generateDenoWorkspace(params: {
             bundledWorkspaceDeps: [],
             rootFieldsToCopy: ['license'],
         })
+
+        if (fixedVersion != null) {
+            packageJson.version = fixedVersion
+            packageJsonOrig.version = fixedVersion
+        }
 
         const denoJson = packageJsonToDeno({
             packageJson,
