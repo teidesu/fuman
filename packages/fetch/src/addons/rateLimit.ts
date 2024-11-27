@@ -20,7 +20,7 @@ export interface RateLimitAddon {
         getReset?: (res: Response) => MaybePromise<string | number | null>
 
         /**
-         * when the rate limit is exceeded (i.e. `getRemaining` returns 0),
+         * when the rate limit is exceeded (i.e. `isRejected` returns true),
          * but the reset time is unknown (i.e. `getReset` returns `null`),
          * what is the default time to wait until the rate limit is reset?
          * in milliseconds
@@ -38,7 +38,7 @@ export interface RateLimitAddon {
         jitter?: number
 
         /**
-         * when the rate limit has exceeded (i.e. `getRemaining` returns 0),
+         * when the rate limit has exceeded (i.e. `isRejected` returns true),
          * what is the maximum acceptable time to wait until the rate limit is reset?
          * in milliseconds
          *
@@ -54,7 +54,8 @@ export interface RateLimitAddon {
         maxRetries?: number
 
         /**
-         * function that will be called when the rate limit is exceeded
+         * function that will be called when the rate limit is exceeded (i.e. `isRejected` returns true),
+         * but before starting the wait timer
          *
          * @param res the response that caused the rate limit to be exceeded
          * @param waitTime the time to wait until the rate limit is reset (in milliseconds)
