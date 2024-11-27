@@ -135,6 +135,7 @@ export function processPackageJson(params: {
             if (entrypointName === '') entrypointName = 'index'
 
             entrypoints[entrypointName] = value
+            // todo: we should probably not announce `require` imports if we don't build for cjs
             newExports[key] = {
                 import: {
                     types: `./${entrypointName}.d.ts`,
