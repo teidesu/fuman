@@ -1,4 +1,4 @@
-import { ffetch } from '@fuman/fetch'
+import { ffetchBase } from '@fuman/fetch'
 
 export const NPM_PACKAGE_NAME_REGEX = /^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/
 
@@ -14,7 +14,7 @@ export async function npmCheckVersion(params: {
         version,
     } = params
 
-    const res = await ffetch(`/${packageName}/${version}`, {
+    const res = await ffetchBase(`/${packageName}/${version}`, {
         baseUrl: registry,
         validateResponse: false,
     })

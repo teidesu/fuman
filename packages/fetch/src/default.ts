@@ -16,8 +16,26 @@ export const ffetchDefaultAddons: [
 
 /**
  * the default ffetch instance with reasonable default set of addons
+ *
+ * you can use this as a base to create your project-specific fetch instance,
+ * or use this as is.
+ *
+ * this is not exported as `ffetch` because most of the time you will want to extend it,
+ * and exporting it as `ffetch` would make them clash in import suggestions,
+ * and will also make it prone to subtle bugs.
+ *
+ * @example
+ * ```ts
+ * import { ffetchBase } from '@fuman/fetch'
+ *
+ * const ffetch = ffetchBase.extend({
+ *   baseUrl: 'https://example.com',
+ *   headers: { ... },
+ *   addons: [ ... ],
+ * })
+ * ```
  */
-export const ffetch: Ffetch<
+export const ffetchBase: Ffetch<
     ffetchAddons.TimeoutAddon &
     ffetchAddons.QueryAddon &
     ffetchAddons.FormAddon &
@@ -26,11 +44,3 @@ export const ffetch: Ffetch<
 > = /* #__PURE__ */ createFfetch({
     addons: ffetchDefaultAddons,
 })
-
-export {
-    /**
-     * for convenience, so that you don't need to rename the import
-     * when using `const ffetch = ffetchBase.extend(...)`
-     */
-    ffetch as ffetchBase,
-}

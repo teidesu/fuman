@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env node
 import process from 'node:process'
 
 import { bc } from './commands/_utils.js'

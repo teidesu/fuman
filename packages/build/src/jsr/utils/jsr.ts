@@ -3,7 +3,7 @@ import * as fsp from 'node:fs/promises'
 import { join } from 'node:path'
 import process from 'node:process'
 
-import { ffetch, ffetchAddons, ffetchBase } from '@fuman/fetch'
+import { ffetchAddons, ffetchBase } from '@fuman/fetch'
 import { ffetchZodAdapter } from '@fuman/fetch/zod'
 import { webReadableToFuman, write } from '@fuman/io'
 import { nodeWritableToFuman } from '@fuman/node'
@@ -29,7 +29,7 @@ export async function jsrCheckVersion(params: {
         version,
     } = params
 
-    const res = await ffetch(`/${packageName}/meta${version != null ? `_${version}` : ''}.json`, {
+    const res = await ffetchBase(`/${packageName}/meta${version != null ? `_${version}` : ''}.json`, {
         baseUrl: registry,
         validateResponse: false,
     })
