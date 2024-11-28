@@ -116,7 +116,7 @@ function rateLimitMiddleware(options: NonNullable<RateLimitAddon['rateLimit']>):
                     waitTime = undefined
                 } else if (waitTime > maxWaitTime) {
                     // reset time is too far in the future, throw
-                    throw new Error(`Rate limit exceeded, reset time is too far in the future: ${new Date(reset).toISOString()}`)
+                    throw new Error(`Rate limit exceeded, reset time is too far in the future: ${new Date(reset).toISOString()}`, { cause: res })
                 }
             }
 

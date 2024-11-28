@@ -6,7 +6,7 @@ import type { FfetchAddon } from './types.js'
 
 export interface FfetchToughCookieAddon {
     /** cookie jar to use */
-    cookies: CookieJar
+    cookies?: CookieJar
 }
 
 function cookieJarMiddleware(jar: CookieJar): FfetchMiddleware {
@@ -29,7 +29,8 @@ export function toughCookieAddon(): FfetchAddon<FfetchToughCookieAddon, object> 
             if (ctx.options.cookies != null || ctx.baseOptions.cookies != null) {
                 const jar = ctx.options.cookies ?? ctx.baseOptions.cookies
                 ctx.options.middlewares ??= []
-                ctx.options.middlewares.push(cookieJarMiddleware(jar))
+                // eslint-disable-next-line ts/no-non-null-assertion
+                ctx.options.middlewares.push(cookieJarMiddleware(jar!))
             }
         },
     }
