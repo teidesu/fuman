@@ -62,4 +62,5 @@ jobs:
             --kind=${{ github.event.inputs.kind }} \
             --with-npm \
             --npm-token=${{ secrets.NPM_TOKEN }} \
+            --with-jsr \
             --with-github-release

@@ -58,7 +58,8 @@ jobs:
       - test-node
       - lint
     runs-on: ubuntu-latest
-    if: github.repository == 'teidesu/fuman' # dont run on forks
+    # dont run on forks or release commits
+    if: github.repository == 'teidesu/fuman' && github.actor != 'desu-bot'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v3

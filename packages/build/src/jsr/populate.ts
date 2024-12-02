@@ -10,9 +10,9 @@ import { exec } from '../misc/exec.js'
 import { determinePublishOrder } from '../misc/publish-order.js'
 
 import { parseImportSpecifier } from './utils/external-libs.js'
-import { downloadJsrPackage } from './utils/jsr.js'
 import { jsrMaybeCreatePackage } from './utils/jsr-api.js'
 import { findClosestJsrJson, parseJsrJson } from './utils/jsr-json.js'
+import { downloadJsrPackage } from './utils/jsr.js'
 
 async function findPackageDependencies(packagePath: string): Promise<string[]> {
     // jsr.json/deno.json might not contain all dependencies, so we need to find them manually by looking at the source code

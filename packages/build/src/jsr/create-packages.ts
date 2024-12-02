@@ -2,8 +2,8 @@
 import type { WorkspacePackage } from '../package-json/collect-package-jsons.js'
 import process from 'node:process'
 import { collectPackageJsons, filterPackageJsonsForPublish } from '../package-json/collect-package-jsons.js'
-import { jsrCheckVersion } from './utils/jsr.js'
 import { jsrMaybeCreatePackage, jsrSetGithubRepo } from './utils/jsr-api.js'
+import { jsrCheckVersion } from './utils/jsr.js'
 
 export async function jsrCreatePackages(params: {
     workspaceRoot: string
