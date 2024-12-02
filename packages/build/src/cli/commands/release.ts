@@ -1,8 +1,11 @@
+import type { WorkspacePackage } from '../../package-json/collect-package-jsons.js'
+import type { BumpVersionResult } from '../../versioning/bump-version.js'
 import { createReadStream } from 'node:fs'
 import { basename } from 'node:path'
 import process from 'node:process'
 import { nodeReadableToWeb } from '@fuman/node'
-import { asNonNull } from '@fuman/utils'
+import { asNonNull, notImplemented } from '@fuman/utils'
+import { sort } from 'semver'
 import { createGithubRelease } from '../../git/github.js'
 import { getFirstCommit, getLatestTag } from '../../git/utils.js'
 import { jsrCreatePackages } from '../../jsr/create-packages.js'
@@ -75,25 +78,29 @@ export const releaseCli = bc.command({
             console.log(`📌 previous tag: ${prevTag}`)
         }
 
-        const bumpVersionResult = await bumpVersion({
-            workspace,
-            since: prevTag ?? await getFirstCommit(root),
-            type: args.kind === 'auto' ? undefined : args.kind,
-            cwd: root,
-            params: config?.versioning,
-            dryRun: args.dryRun,
-        })
+        let changedPackages: WorkspacePackage[]
+        let bumpVersionResult: BumpVersionResult | undefined
+        if (prevTag != null) {
+            bumpVersionResult = await bumpVersion({
+                workspace,
+                since: prevTag ?? await getFirstCommit(root),
+                type: args.kind === 'auto' ? undefined : args.kind,
+                cwd: root,
+                params: config?.versioning,
+                dryRun: args.dryRun,
+            })
 
-        const changedPackages = prevTag == null
-            ? workspace
-            : bumpVersionResult.changedPackages.map(pkg => pkg.package)
+            changedPackages = bumpVersionResult.changedPackages.map(pkg => pkg.package)
 
-        if (bumpVersionResult.changedPackages.length === 0 && prevTag != null) {
-            console.log('🤔 no packages changed, nothing to do')
-            process.exit(1)
+            if (bumpVersionResult.changedPackages.length === 0) {
+                console.log('🤔 no packages changed, nothing to do')
+                process.exit(1)
+            }
+
+            console.log(formatBumpVersionResult(bumpVersionResult, args.kind === 'auto'))
+        } else {
+            changedPackages = workspace
         }
-
-        console.log(formatBumpVersionResult(bumpVersionResult, args.kind === 'auto'))
 
         console.log('')
         console.log('📝 generating changelog...')
@@ -121,7 +128,7 @@ export const releaseCli = bc.command({
 
             const publishResult = await publishPackages({
                 packages: changedPackages.map(pkg => asNonNull(pkg.json.name)),
-                workspace,
+                workspace: workspaceWithRoot,
                 workspaceRoot: root,
                 registryUrl: args.npmRegistry,
                 token: args.npmToken,
@@ -147,7 +154,7 @@ export const releaseCli = bc.command({
         } else if (args.withGithubRelease) {
             // todo: we are definitely able to generate tarballs without publishing to npm,
             // but im just too lazy to implement it right now, and there's no need for it for me
-            throw new Error('Cannot create a github release without publishing to npm (yet)')
+            notImplemented('Cannot create a github release without publishing to npm (yet)')
         }
 
         if (args.withJsr) {
@@ -200,9 +207,16 @@ export const releaseCli = bc.command({
             console.log('\x1B[;32m✅ published to jsr\x1B[;0m')
         }
 
-        // if this is a first release, use the max version as the tag name,
-        // because the bump did not happen
-        const tagName = `v${prevTag == null ? bumpVersionResult.maxVersion : bumpVersionResult.nextVersion}`
+        let tagName: string
+        if (!bumpVersionResult) {
+            // if this is a first release, use the max version as the tag name,
+            // because the bump did not happen
+            const versions = sort(workspace.map(pkg => asNonNull(pkg.json.version)))
+            tagName = `v${versions[versions.length - 1]}`
+        } else {
+            tagName = `v${bumpVersionResult.nextVersion}`
+        }
+
         if (args.dryRun) {
             console.log('dry run, skipping release commit and tag')
         } else {

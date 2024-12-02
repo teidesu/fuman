@@ -6,6 +6,10 @@
     "description": "",
     "author": "",
     "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/teidesu/fuman.git"
+    },
     "scripts": {
         "prepare": "pnpm run -C packages/build build-vite-plugin",
         "dev": "vitest watch",

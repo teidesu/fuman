@@ -46,6 +46,7 @@ jobs:
           BOT_SIGNKEY: ${{ secrets.BOT_SIGNKEY }}
         run: |
           echo "$BOT_SIGNKEY" > /tmp/bot-key
+          chmod 600 /tmp/bot-key
           git config --global user.name "desu-bot"
           git config --global user.email github-desu-bot@tei.su
           git config --global gpg.format ssh
