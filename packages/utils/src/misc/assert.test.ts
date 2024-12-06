@@ -18,15 +18,23 @@ describe('assertNonNull', () => {
 
 describe('asNonNull', () => {
     it('should return the value if it is not null', () => {
-        expect(asNonNull(1)).toBe(1)
+        // @ts-expect-error  this should throw at type level because `1` is not nullable
+        const x: number = asNonNull(1)
+        expect(x).toBe(1)
     })
 
     it('should throw if value is null', () => {
-        expect(() => asNonNull(null)).toThrow('value is null')
+        const z: number | null = null
+        expect(() => {
+            const _x: number = asNonNull(z)
+        }).toThrow('value is null')
     })
 
     it('should throw if value is undefined', () => {
-        expect(() => asNonNull(undefined)).toThrow('value is undefined')
+        const z: number | undefined = undefined
+        expect(() => {
+            const _x: number = asNonNull(z)
+        }).toThrow('value is undefined')
     })
 })
 
