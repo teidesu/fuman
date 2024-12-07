@@ -8,7 +8,11 @@ class BaseConnection<Conn extends Deno.Conn> {
     async read(into: Uint8Array): Promise<number> {
         try {
             const read = await this.conn.read(into)
-            if (read === null) return 0
+            // 0 or null don't mean the connection has ended, so we need to retry
+            if (read === 0 || read === null) {
+                // eslint-disable-next-line ts/return-await
+                return this.read(into)
+            }
             return read
         } catch (err) {
             if (err instanceof Deno.errors.BadResource || err instanceof Deno.errors.Interrupted) {
