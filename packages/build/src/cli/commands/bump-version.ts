@@ -21,8 +21,8 @@ export function formatBumpVersionResult(result: BumpVersionResult, withReleaseTy
     lines.push('')
 
     lines.push('list of changed packages:')
-    for (const { package: pkg, because } of result.changedPackages) {
-        lines.push(`  ${pkg.json.name}${because ? ` (because of ${because.join(', ')})` : ''}: ${pkg.json.version} → ${result.nextVersion}`)
+    for (const { package: pkg, because, prevVersion } of result.changedPackages) {
+        lines.push(`  ${pkg.json.name}${because ? ` (because of ${because.join(', ')})` : ''}: ${prevVersion} → ${pkg.json.version}`)
     }
 
     return lines.join('\n')

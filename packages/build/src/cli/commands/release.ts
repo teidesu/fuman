@@ -92,12 +92,18 @@ export const releaseCli = bc.command({
 
             changedPackages = bumpVersionResult.changedPackages.map(pkg => pkg.package)
 
-            if (bumpVersionResult.changedPackages.length === 0) {
+            if (changedPackages.length === 0) {
                 console.log('🤔 no packages changed, nothing to do')
                 process.exit(1)
             }
 
             console.log(formatBumpVersionResult(bumpVersionResult, args.kind === 'auto'))
+
+            for (const pkg of changedPackages) {
+                const inWorkspace = asNonNull(workspace.find(it => it.json.name === pkg.json.name))
+
+                inWorkspace.json.version = pkg.json.version
+            }
         } else {
             changedPackages = workspace
         }
@@ -220,7 +226,7 @@ export const releaseCli = bc.command({
         if (args.dryRun) {
             console.log('dry run, skipping release commit and tag')
         } else {
-            let message = tagName
+            let message = `chore(release): ${tagName}`
             if (!args.withGithubRelease) {
                 message += `\n\n${changelog}`
             }

@@ -18,6 +18,8 @@ import { findProjectChangedPackages } from './collect-files.js'
 export interface BumpVersionPackage {
     /** info about the package */
     package: WorkspacePackage
+    /** version before the bump */
+    prevVersion: string
     /**
      * if the package was not changed by itself,
      * but the bump is required because of another package
@@ -145,7 +147,10 @@ export async function bumpVersion(params: {
     for (const pkg of changedPackages) {
         if (pkg.json.fuman?.ownVersioning) continue
 
-        result.push({ package: pkg })
+        result.push({
+            package: pkg,
+            prevVersion: asNonNull(pkg.json.version),
+        })
     }
 
     // make sure that packages that depend on the changed package are also updated if needed
@@ -175,6 +180,7 @@ export async function bumpVersion(params: {
                     } else {
                         result.push({
                             package: otherPkg,
+                            prevVersion: asNonNull(otherPkg.json.version),
                             because: [pkgName],
                         })
                     }
@@ -184,8 +190,8 @@ export async function bumpVersion(params: {
         }
     }
 
-    if (!dryRun) {
-        for (const { package: pkg } of result) {
+    for (const { package: pkg } of result) {
+        if (!dryRun) {
             const pkgJsonPath = join(pkg.path, 'package.json')
             const pkgJsonText = await fsp.readFile(pkgJsonPath, 'utf8')
             const indent = detectIndent(pkgJsonText).indent || '    '
@@ -195,6 +201,9 @@ export async function bumpVersion(params: {
 
             await fsp.writeFile(pkgJsonPath, `${JSON.stringify(pkgJson, null, indent)}\n`)
         }
+
+        // update the version in the object as well, in case it'll be reused in the future as is
+        pkg.json.version = nextVersion
     }
 
     return {
