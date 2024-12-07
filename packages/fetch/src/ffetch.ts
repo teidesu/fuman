@@ -331,6 +331,11 @@ export function createFfetch<
         } else {
             init.body = options.body
             init.method = options.method ?? baseOptions.method ?? 'GET'
+
+            if (init.body instanceof ReadableStream) {
+                // eslint-disable-next-line ts/no-unsafe-member-access
+                (init as any).duplex ??= 'half'
+            }
         }
 
         init.headers = headers
