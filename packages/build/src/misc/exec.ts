@@ -1,5 +1,5 @@
 import type { SpawnOptions } from 'node:child_process'
-import { spawn } from 'node:child_process'
+import { spawn } from 'cross-spawn'
 
 export interface ExecResult {
     stdout: string

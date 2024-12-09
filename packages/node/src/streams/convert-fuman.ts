@@ -13,6 +13,13 @@ export function nodeReadableToFuman(stream: Readable): IReadable & IClosable {
         }
     })
 
+    stream.on('error', (err) => {
+        while (waiters.length > 0) {
+            // eslint-disable-next-line ts/no-non-null-assertion
+            waiters.popFront()!.reject(err)
+        }
+    })
+
     stream.on('readable', () => {
         waiters.popFront()?.resolve()
     })
@@ -85,6 +92,13 @@ export function nodeWritableToFuman(writable: Writable): IWritable & IClosable {
     writable.on('drain', () => {
         full = false
         waiters.popFront()?.resolve()
+    })
+
+    writable.on('error', (err) => {
+        while (waiters.length > 0) {
+            // eslint-disable-next-line ts/no-non-null-assertion
+            waiters.popFront()!.reject(err)
+        }
     })
 
     return {
