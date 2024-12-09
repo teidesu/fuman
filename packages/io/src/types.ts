@@ -1,6 +1,4 @@
-/**
- * An interface for reading bytes synchronously from somewhere.
- */
+/** A synchronous readable stream */
 export interface ISyncReadable {
     /**
      * Read the specified number of bytes from the source
@@ -18,6 +16,7 @@ export interface ISyncReadable {
     readSync: (bytes: number) => Uint8Array
 }
 
+/** A readable stream */
 export interface IReadable {
     /**
      * Read data from the underlying source into the provided Uint8Array,
@@ -33,6 +32,7 @@ export interface IReadable {
     read: (into: Uint8Array) => Promise<number>
 }
 
+/** Something that can be closed */
 export interface IClosable {
     /**
      * Close the underlying source.
@@ -40,6 +40,7 @@ export interface IClosable {
     close: () => void
 }
 
+/** A synchronous writable stream */
 export interface ISyncWritable {
     /**
      * Write the specified number of bytes to the underlying source.
@@ -66,6 +67,8 @@ export interface ISyncWritable {
     disposeWriteSync: (written?: number) => void
 }
 
+/** A writable stream */
 export interface IWritable {
+    /** Write bytes to the underlying stream, resolving once the write is complete */
     write: (bytes: Uint8Array) => Promise<void>
 }

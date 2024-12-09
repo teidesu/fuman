@@ -1,9 +1,13 @@
-import { ConnectionClosedError, type ITcpConnection, type ITlsConnection, type TcpEndpoint } from '@fuman/net'
+import type { IClosable, IReadable, IWritable } from '@fuman/io'
 
+import { ConnectionClosedError, type ITcpConnection, type ITlsConnection, type TcpEndpoint } from '@fuman/net'
 import { addrToTcpEndpoint } from './_utils.js'
 
-class BaseConnection<Conn extends Deno.Conn> {
-    constructor(readonly conn: Conn) {}
+class BaseConnection<Conn extends Deno.Conn> implements IReadable, IWritable, IClosable {
+    constructor(
+        /** Underlying connection */
+        readonly conn: Conn,
+    ) {}
 
     async read(into: Uint8Array): Promise<number> {
         try {
@@ -49,6 +53,7 @@ class BaseConnection<Conn extends Deno.Conn> {
     }
 }
 
+/** An implementation of {@link ITcpConnection} using Deno's `connect` function */
 export class TcpConnection extends BaseConnection<Deno.TcpConn> implements ITcpConnection {
     get localAddress(): TcpEndpoint {
         return addrToTcpEndpoint(this.conn.localAddr)
@@ -67,9 +72,12 @@ export class TcpConnection extends BaseConnection<Deno.TcpConn> implements ITcpC
     }
 }
 
+/** An implementation of {@link ITlsConnection} using Deno's `connectTls` function */
 export class TlsConnection extends BaseConnection<Deno.TlsConn> implements ITlsConnection {
     constructor(
+        /** Underlying connection */
         override readonly conn: Deno.TlsConn,
+        /** TLS handshake info (if available) */
         readonly handshake: Deno.TlsHandshakeInfo | null = null,
     ) {
         super(conn)

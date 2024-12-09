@@ -10,6 +10,7 @@ export class TcpListener implements IListener<TcpEndpoint, TcpConnection> {
     #listener!: TCPSocketListener
     #waiter?: Deferred<TcpConnection>
 
+    /** listen on the given endpoint; must be called before any other methods */
     listen(endpoint: TcpEndpoint): void {
         this.#listener = Bun.listen<TcpConnection>({
             hostname: endpoint.address,

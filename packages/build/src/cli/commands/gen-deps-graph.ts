@@ -4,9 +4,13 @@ import { collectPackageJsons } from '../../package-json/collect-package-jsons.js
 
 import { bc } from './_utils.js'
 
+/** generate a graphviz dot file of the workspace dependencies */
 export async function generateDepsGraph(params: {
+    /** path to the workspace root */
     workspaceRoot: string | URL
+    /** whether to include the root package.json in the graph */
     includeRoot?: boolean
+    /** whether to include external dependencies in the graph */
     includeExternal?: boolean
 }): Promise<string> {
     const {

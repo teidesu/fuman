@@ -9,9 +9,6 @@ interface OneWayLinkedList<T> {
  *
  * Note: this is not exactly LRU, but rather "least recently added"
  * and doesn't mark items as recently added if they are already in the set.
- * This is enough for our use case, so we don't bother with more complex implementation.
- *
- * Used to store recently received message IDs in {@link SessionConnection}
  *
  * Uses one-way linked list internally to keep track of insertion order
  */

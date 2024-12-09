@@ -6,6 +6,7 @@ import { collectPackageJsons } from '../../package-json/collect-package-jsons.js
 
 import { bc } from './_utils.js'
 
+/** information about a mismatch between a package and its dependencies */
 export interface WorkspaceDepsError {
     /** package name where the mismatch occurred */
     package: string
@@ -22,7 +23,12 @@ export interface WorkspaceDepsError {
     otherVersion: string
 }
 
-export async function validateWorkspaceDeps(workspaceRoot: string | URL, params?: {
+/**
+ * validate the external dependencies of a workspace
+ */
+export async function validateWorkspaceDeps(params: {
+    /** path to the workspace root */
+    workspaceRoot: string | URL
     /**
      * whether to also validate the root package.json
      *
@@ -37,7 +43,11 @@ export async function validateWorkspaceDeps(workspaceRoot: string | URL, params?
      */
     skipWorkspaceDeps?: boolean
 }): Promise<WorkspaceDepsError[]> {
-    const { includeRoot = true, skipWorkspaceDeps = true } = params || {}
+    const {
+        workspaceRoot,
+        includeRoot = true,
+        skipWorkspaceDeps = true,
+    } = params
 
     const pjs = await collectPackageJsons(workspaceRoot, includeRoot)
     const workspacePackages = new Set(skipWorkspaceDeps ? pjs.map(pj => pj.json.name) : [])
@@ -95,7 +105,8 @@ export const validateWorkspaceDepsCli = bc.command({
         root: bc.string().desc('path to the root of the workspace (default: cwd)'),
     },
     handler: async (args) => {
-        const errors = await validateWorkspaceDeps(args.root ?? process.cwd(), {
+        const errors = await validateWorkspaceDeps({
+            workspaceRoot: args.root ?? process.cwd(),
             includeRoot: args.includeRoot,
             skipWorkspaceDeps: !args.noSkipWorkspaceDeps,
         })

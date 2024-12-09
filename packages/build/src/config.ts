@@ -4,6 +4,7 @@ import type { JsrConfig } from './jsr/config.js'
 import type { PackageJson } from './package-json/types.js'
 import type { VersioningOptions } from './versioning/types.js'
 
+/** context object that is passed to each build hook */
 export interface BuildHookContext {
     /** full path to the output directory */
     outDir: string
@@ -24,6 +25,7 @@ export interface BuildHookContext {
     typedoc: boolean
 }
 
+/** root configuration object */
 export interface RootConfigObject {
     /**
      * path to vite config to use when building using fuman-build cli,
@@ -57,4 +59,5 @@ export interface RootConfigObject {
     }>
 }
 
+/** root configuration (either an object or a function that returns an object) */
 export type RootConfig = RootConfigObject | (() => RootConfigObject)

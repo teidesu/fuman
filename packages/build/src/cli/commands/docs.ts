@@ -112,7 +112,9 @@ class FumanTypedocReader implements td.OptionsReader {
     }
 }
 
+/** generate documentation using typedoc for the workspace */
 export async function generateDocs(params: {
+    /** path to the workspace root */
     workspaceRoot: string
 }): Promise<void> {
     // roughly based on https://github.com/TypeStrong/typedoc/blob/master/src/lib/cli.ts

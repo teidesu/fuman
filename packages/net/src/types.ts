@@ -1,7 +1,9 @@
 import type { IClosable, IReadable, IWritable } from '@fuman/io'
 
 export interface IConnection<Address, LocalAddress = Address> extends IReadable, IWritable, IClosable {
+    /** local address of the connection (if available) */
     readonly localAddress: LocalAddress | null
+    /** remote address of the connection (if available) */
     readonly remoteAddress: Address | null
 }
 
@@ -32,17 +34,22 @@ export interface TlsListenOptions extends TcpEndpoint, TlsOptions {
 }
 
 export interface ITcpConnection extends IConnection<TcpEndpoint> {
+    /** set no-delay flag on the connection */
     setNoDelay: (noDelay: boolean) => void
+    /** set keep-alive flag on the connection */
     setKeepAlive: (keepAlive: boolean) => void
 }
 
 export interface ITlsConnection extends ITcpConnection {
+    /** get the ALPN protocol that was negotiated in the handshake */
     getAlpnProtocol: () => string | null
 }
 
 export interface IListener<Address, Connection extends IConnection<Address> = IConnection<Address>> extends IClosable {
+    /** address of the listener (if available) */
     readonly address: Address | null
 
+    /** accept a new connection */
     accept: () => Promise<Connection>
 }
 

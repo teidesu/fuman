@@ -5,7 +5,12 @@ import { Bytes } from '@fuman/io'
 import { ConnectionClosedError } from '@fuman/net'
 import { ConditionVariable, Deferred, Deque } from '@fuman/utils'
 
+/**
+ * Implementation of {@link ITcpConnection} and {@link ITlsConnection} interfaces
+ * using Bun's `connect` function.
+ */
 export class TcpConnection implements ITcpConnection, ITlsConnection {
+    /** Underlying socket */
     readonly socket!: Socket<any>
     #error: Error | null = null
     #recvBuffer = Bytes.alloc(1024 * 16)
@@ -13,6 +18,7 @@ export class TcpConnection implements ITcpConnection, ITlsConnection {
     #cv = new ConditionVariable()
     #endpoint?: TcpEndpoint
 
+    /** Connect to the given endpoint (must be called as the first thing before using the connection) */
     async connect(endpoint: TcpEndpoint, tls = false): Promise<void> {
         ;(this as UnsafeMutable<TcpConnection>).socket = await Bun.connect({
             hostname: endpoint.address,
@@ -28,22 +34,26 @@ export class TcpConnection implements ITcpConnection, ITlsConnection {
         this.#endpoint = endpoint
     }
 
+    /** Create a new TcpConnection from an existing socket */
     static from(socket: Socket<any>): TcpConnection {
         const conn = new TcpConnection()
         ;(conn as UnsafeMutable<TcpConnection>).socket = socket
         return conn
     }
 
+    /** @internal */
     _handleData(_: unknown, data: Buffer): void {
         this.#recvBuffer.writeSync(data.length).set(data)
         this.#cv.notify()
     }
 
+    /** @internal */
     _handleError(_: unknown, error: Error): void {
         this.#error = error
         this.#cv.notify()
     }
 
+    /** @internal */
     _handleClose(): void {
         this.#error = new ConnectionClosedError()
         this.#cv.notify()
@@ -52,6 +62,7 @@ export class TcpConnection implements ITcpConnection, ITlsConnection {
         }
     }
 
+    /** @internal */
     _handleDrain(): void {
         while (!this.#sendBuffer.isEmpty()) {
             // eslint-disable-next-line ts/no-non-null-assertion
