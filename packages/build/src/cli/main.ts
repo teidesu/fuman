@@ -5,6 +5,7 @@ import { bc } from './commands/_utils.js'
 import { buildPackageCli } from './commands/build.js'
 import { bumpVersionCli } from './commands/bump-version.js'
 import { runContinuousReleaseCli } from './commands/cr.js'
+import { generateDocsCli } from './commands/docs.js'
 import { findChangedPackagesCli } from './commands/find-changed-packages.js'
 import { generateChangelogCli } from './commands/gen-changelog.js'
 import { generateDepsGraphCli } from './commands/gen-deps-graph.js'
@@ -24,6 +25,7 @@ await bc.run([
     publishPackagesCli,
     releaseCli,
     runContinuousReleaseCli,
+    generateDocsCli,
 ], {
     theme: (event) => {
         if (event.type === 'error' && event.violation === 'unknown_error') {

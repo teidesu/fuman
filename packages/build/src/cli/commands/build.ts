@@ -8,11 +8,23 @@ import { findPackageByName } from '../../package-json/utils.js'
 
 import { bc, loadConfig } from './_utils.js'
 
+/**
+ * build a single package using vite
+ *
+ * tiny wrapper on top of `vite build`
+ */
 export async function buildPackage(params: {
+    /** path to the workspace root */
     workspaceRoot: string
+    /**
+     * list of workspace packages **including root**
+     */
     workspace?: WorkspacePackage[]
+    /** name of the package to build */
     packageName: string
+    /** path to the `build.config.js` file */
     configPath?: string
+    /** "fixed" version to use when building the package */
     fixedVersion?: string
 }): Promise<void> {
     const config = await loadConfig(params)

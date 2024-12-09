@@ -5,6 +5,7 @@ node_modules/
 .idea
 .vscode
 *.log
+/docs
 
 coverage
 .rollup.cache

@@ -1,6 +1,7 @@
-import type { MaybePromise } from '@fuman/utils'
-import type { Plugin, UserConfig } from 'vite'
+import type { AnyToNever, MaybePromise } from '@fuman/utils'
+import type { TypeDocOptions } from 'typedoc'
 
+import type { Plugin, UserConfig } from 'vite'
 import type { BuildHookContext } from '../config.js'
 import type { JsrConfig } from '../jsr/config.js'
 
@@ -37,6 +38,11 @@ export interface CustomBuildConfigObject {
      * time to do any final modifications to the package contents
      */
     finalize?: (ctx: BuildHookContext) => MaybePromise<void>
+
+    /** package-specific configuration for typedoc */
+    typedoc?:
+        | AnyToNever<Partial<TypeDocOptions>>
+        | ((current: AnyToNever<Partial<TypeDocOptions>>) => AnyToNever<Partial<TypeDocOptions>>)
 }
 
 export type CustomBuildConfig = CustomBuildConfigObject | (() => CustomBuildConfigObject)

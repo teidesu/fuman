@@ -155,6 +155,7 @@ export async function fumanBuild(params: {
         packageName: asNonNull(ourPackageJson.name),
         packageJson: ourPackageJson,
         jsr: false,
+        typedoc: false,
     }
 
     params.preparePackageJson?.(hookContext)

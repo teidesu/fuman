@@ -1,3 +1,5 @@
+import type { AnyToNever } from '@fuman/utils'
+import type { TypeDocOptions } from 'typedoc'
 import type { JsrConfig } from './jsr/config.js'
 import type { PackageJson } from './package-json/types.js'
 import type { VersioningOptions } from './versioning/types.js'
@@ -17,6 +19,9 @@ export interface BuildHookContext {
 
     /** whether this is a jsr build */
     jsr: boolean
+
+    /** whether this is a documentation build */
+    typedoc: boolean
 }
 
 export interface RootConfigObject {
@@ -33,6 +38,23 @@ export interface RootConfigObject {
 
     /** configuration for the changelog generator */
     versioning?: VersioningOptions
+
+    /** base configuration for typedoc */
+    typedoc?: AnyToNever<Omit<Partial<TypeDocOptions>, 'entryPoints' | 'entryPointStrategy' | 'extends'> & {
+        /**
+         * **note**: fuman-specific option
+         *
+         * if passed, docs will be generated for the specified packages only
+         */
+        includePackages?: string[]
+
+        /**
+         * **note**: fuman-specific option
+         *
+         * list of packages for which the docs should *not* be generated
+         */
+        excludePackages?: string[]
+    }>
 }
 
 export type RootConfig = RootConfigObject | (() => RootConfigObject)

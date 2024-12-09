@@ -4,4 +4,11 @@ export default {
         exclude: ['**/*.{test,bench}.ts', '**/__fixtures__/**'],
         sourceDir: 'src',
     },
+    typedoc: {
+        validation: {
+            notExported: true,
+            invalidLink: true,
+            notDocumented: true,
+        },
+    },
 }

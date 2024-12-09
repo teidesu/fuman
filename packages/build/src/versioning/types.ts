@@ -13,6 +13,7 @@ export interface ChangelogGeneratorParams {
     packageCommitsFormatter?: (packageName: string, commits: Record<string, string>) => string
 }
 
+/** settings for versioning manager */
 export interface VersioningOptions {
     /**
      * globs of files changes to which to white-list (relative to package root)

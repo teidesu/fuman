@@ -149,6 +149,7 @@ export async function runJsrBuild(params: {
         packageName: asNonNull(ourPackage.json.name),
         packageJson: ourPackage.json,
         jsr: true,
+        typedoc: false,
     }
 
     packageConfig?.preparePackageJson?.(hookContext)

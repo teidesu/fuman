@@ -179,6 +179,7 @@ export async function generateDenoWorkspace(params: {
             packageName: pkg.json.name,
             packageJson: pkg.json,
             jsr: true,
+            typedoc: false,
         }
 
         packageConfig?.preparePackageJson?.(hookContext)
