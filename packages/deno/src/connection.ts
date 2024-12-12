@@ -19,7 +19,16 @@ class BaseConnection<Conn extends Deno.Conn> implements IReadable, IWritable, IC
             }
             return read
         } catch (err) {
-            if (err instanceof Deno.errors.BadResource || err instanceof Deno.errors.Interrupted) {
+            if (
+                err instanceof Deno.errors.BadResource
+                || err instanceof Deno.errors.Interrupted
+                || err instanceof Deno.errors.BrokenPipe
+                || err instanceof Deno.errors.ConnectionReset
+                || err instanceof Deno.errors.ConnectionRefused
+                || err instanceof Deno.errors.ConnectionAborted
+                || err instanceof Deno.errors.TimedOut
+                || err instanceof Deno.errors.NetworkUnreachable
+            ) {
                 throw new ConnectionClosedError()
             } else {
                 throw err
@@ -34,8 +43,17 @@ class BaseConnection<Conn extends Deno.Conn> implements IReadable, IWritable, IC
                 nwritten += await this.conn.write(bytes.subarray(nwritten))
             }
         } catch (err) {
-            if (err instanceof Deno.errors.BadResource || err instanceof Deno.errors.Interrupted) {
-                throw new ConnectionClosedError()
+            if (
+                err instanceof Deno.errors.BadResource
+                || err instanceof Deno.errors.Interrupted
+                || err instanceof Deno.errors.BrokenPipe
+                || err instanceof Deno.errors.ConnectionReset
+                || err instanceof Deno.errors.ConnectionRefused
+                || err instanceof Deno.errors.ConnectionAborted
+                || err instanceof Deno.errors.TimedOut
+                || err instanceof Deno.errors.NetworkUnreachable
+            ) {
+                throw new ConnectionClosedError(err.message)
             } else {
                 throw err
             }
