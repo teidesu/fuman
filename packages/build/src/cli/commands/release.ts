@@ -34,6 +34,8 @@ export const releaseCli = bc.command({
             .desc('github token to use for creating a release (defaults to GITHUB_TOKEN env var)'),
         githubRepo: bc.string('github-repo')
             .desc('github repo to create a release for (defaults to GITHUB_REPOSITORY env var)'),
+        githubApiUrl: bc.string('github-api-url')
+            .desc('github api url to use for creating a release (for github-compatible apis)'),
 
         withJsr: bc.boolean('with-jsr')
             .desc('whether to publish to jsr')

@@ -16,9 +16,10 @@ export async function createGithubRelease(params: {
         type: string
         body: BodyInit
     }[]
+    apiUrl?: string
 }): Promise<number> {
     const ffetch = ffetchBase.extend({
-        baseUrl: 'https://api.github.com',
+        baseUrl: params.apiUrl ?? 'https://api.github.com',
         addons: [
             ffetchAddons.retry(),
             ffetchAddons.parser(ffetchZodAdapter()),
