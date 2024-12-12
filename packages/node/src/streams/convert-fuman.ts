@@ -3,6 +3,7 @@ import { Readable, Writable } from 'node:stream'
 
 import { Deferred, Deque } from '@fuman/utils'
 
+/** convert a node Readable stream to a fuman IReadable */
 export function nodeReadableToFuman(stream: Readable): IReadable & IClosable {
     const waiters = new Deque<Deferred<void>>()
 
@@ -55,6 +56,7 @@ export function nodeReadableToFuman(stream: Readable): IReadable & IClosable {
     }
 }
 
+/** convert a fuman Readable stream to a node Readable stream */
 export function fumanReadableToNode(stream: IReadable): Readable {
     return new Readable({
         read(size: number) {
@@ -76,6 +78,7 @@ export function fumanReadableToNode(stream: IReadable): Readable {
     })
 }
 
+/** convert a node Writable stream to a fuman IWritable */
 export function nodeWritableToFuman(writable: Writable): IWritable & IClosable {
     let ended = false
     const waiters = new Deque<Deferred<void>>()
@@ -131,6 +134,7 @@ export function nodeWritableToFuman(writable: Writable): IWritable & IClosable {
     }
 }
 
+/** convert a fuman Writable stream to a node Writable stream */
 export function fumanWritableToNode(writable: IWritable): Writable {
     return new Writable({
         write(chunk, encoding, callback) {

@@ -8,7 +8,7 @@ export default {
         validation: {
             notExported: true,
             invalidLink: true,
-            notDocumented: true,
+            notDocumented: false,
         },
     },
 }

@@ -198,6 +198,7 @@ export interface ConventionalCommit {
     subject: string
 }
 
+/** parse a conventional commit message */
 export function parseConventionalCommit(msg: string): ConventionalCommit | null {
     const match = msg.match(/^(\w+)(?:\(([^)]+)\))?(!?): (.+)$/)
 

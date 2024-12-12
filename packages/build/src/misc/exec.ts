@@ -1,17 +1,44 @@
 import type { SpawnOptions } from 'node:child_process'
+import path from 'node:path'
+import process from 'node:process'
 import { spawn } from 'cross-spawn'
-
+import { normalizeFilePath } from './path.js'
+/** result of {@link exec} */
 export interface ExecResult {
+    /** stdout of the command */
     stdout: string
+    /** stderr of the command */
     stderr: string
+    /** exit code of the command */
     exitCode: number
 }
 
-export function exec(cmd: string[], options?: SpawnOptions & { throwOnError?: boolean }): Promise<ExecResult> {
+/**
+ * execute a command and return its result
+ *
+ * **differences from node's `child_process.exec()`**:
+ * - if `options.stdio` is set to `'inherit'`, the command will be printed to the console (unless `options.quiet` is set to `true`)
+ * - on non-zero exit code, the promise will be rejected with an error if `options.throwOnError` is set to `true`
+ *
+ * @param cmd  command to execute (first element is the command itself, the rest are arguments to it)
+ */
+export function exec(cmd: string[], options?: SpawnOptions & {
+    throwOnError?: boolean
+    quiet?: boolean
+}): Promise<ExecResult> {
     return new Promise((resolve, reject) => {
-        if (options?.stdio === 'inherit') {
+        if (options?.stdio === 'inherit' && !options.quiet) {
+            const cmdStr = cmd.map(it => it.includes(' ') ? `"${it.replace(/"/g, '\\"')}"` : it).join(' ')
+
+            let cwdStr = ''
+            if (options?.cwd != null) {
+                const normCwd = path.resolve(normalizeFilePath(options.cwd))
+                const showCwd = normCwd !== process.cwd()
+                cwdStr = showCwd ? `\x1B[;3m${path.relative(process.cwd(), normCwd)}\x1B[;23m ` : ''
+            }
+
             // eslint-disable-next-line no-console
-            console.log('\x1B[;34m$\x1B[;0m', cmd.map(it => it.includes(' ') ? `"${it.replace(/"/g, '\\"')}"` : it).join(' '))
+            console.log(`${cwdStr}\x1B[;34m$\x1B[;0m ${cmdStr}`)
         }
 
         const proc = spawn(cmd[0], cmd.slice(1), {

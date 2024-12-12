@@ -2,6 +2,7 @@ import { LruMap } from '@fuman/utils'
 
 import { exec } from './exec.js'
 
+/** get a full tsconfig for the given directory */
 export async function getTsconfigFor(cwd: string): Promise<unknown> {
     const res = await exec(['npx', 'tsc', '--showConfig'], {
         cwd,
@@ -12,6 +13,10 @@ export async function getTsconfigFor(cwd: string): Promise<unknown> {
 }
 
 const _tsconfigFilesCache = new LruMap<string, string[]>(32)
+
+/**
+ * get the list of files that are included in the tsconfig
+ */
 export async function getTsconfigFiles(cwd: string): Promise<string[]> {
     const cached = _tsconfigFilesCache.get(cwd)
     if (cached) return cached

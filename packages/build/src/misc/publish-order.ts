@@ -1,6 +1,7 @@
 import type { WorkspacePackage } from '../package-json/collect-package-jsons.js'
 import { asNonNull } from '@fuman/utils'
 
+/** sort a workspace by the publish order (i.e. dependencies first, then dependants) */
 export function sortWorkspaceByPublishOrder(packages: WorkspacePackage[]): WorkspacePackage[] {
     const workspacePackages = new Map<string, WorkspacePackage>()
     for (const pkg of packages) {
@@ -37,6 +38,14 @@ export function sortWorkspaceByPublishOrder(packages: WorkspacePackage[]): Works
     return res
 }
 
+/**
+ * determine the publish order of a workspace
+ *
+ * publish order is determined by the dependencies of the packages,
+ * so that for each package, all its dependencies are to be published before it
+ *
+ * @throws  if there's a cycle in the dependencies
+ */
 export function determinePublishOrder(dependencies: Record<string, string[]>): string[] {
     const result: string[] = []
 

@@ -7,11 +7,15 @@ export interface IConnection<Address, LocalAddress = Address> extends IReadable,
     readonly remoteAddress: Address | null
 }
 
+/** a TCP endpoint */
 export interface TcpEndpoint {
+    /** address of the endpoint */
     readonly address: string
+    /** port of the endpoint */
     readonly port: number
 }
 
+/** common TLS options */
 export interface TlsOptions {
     /**
      * List of CA certificates to use.
@@ -24,8 +28,10 @@ export interface TlsOptions {
     readonly sni?: string
 }
 
+/** TLS options for connecting to an endpoint */
 export interface TlsConnectOptions extends TcpEndpoint, TlsOptions {}
 
+/** TLS options for listening on an endpoint */
 export interface TlsListenOptions extends TcpEndpoint, TlsOptions {
     readonly key?: string
     readonly cert?: string
@@ -33,6 +39,7 @@ export interface TlsListenOptions extends TcpEndpoint, TlsOptions {
     readonly hosts?: Omit<this, 'hosts' | 'address' | 'port'>[]
 }
 
+/** a TCP connection */
 export interface ITcpConnection extends IConnection<TcpEndpoint> {
     /** set no-delay flag on the connection */
     setNoDelay: (noDelay: boolean) => void
@@ -40,11 +47,13 @@ export interface ITcpConnection extends IConnection<TcpEndpoint> {
     setKeepAlive: (keepAlive: boolean) => void
 }
 
+/** a TLS connection */
 export interface ITlsConnection extends ITcpConnection {
     /** get the ALPN protocol that was negotiated in the handshake */
     getAlpnProtocol: () => string | null
 }
 
+/** a listener for connections */
 export interface IListener<Address, Connection extends IConnection<Address> = IConnection<Address>> extends IClosable {
     /** address of the listener (if available) */
     readonly address: Address | null

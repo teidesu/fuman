@@ -1,7 +1,9 @@
 /* eslint-disable node/prefer-global/process */
 
+/** Node version as a string (e.g. `'18.16.0'`) */
 export const NODE_VERSION: string | null
     = typeof process !== 'undefined' && 'node' in process.versions ? process.versions.node : null
+/** Node version as a tuple (e.g. `[18, 16, 0]`) */
 export const NODE_VERSION_TUPLE: number[] | null
     = NODE_VERSION != null ? /* #__PURE__ */ NODE_VERSION.split('.').map(Number) : null
 

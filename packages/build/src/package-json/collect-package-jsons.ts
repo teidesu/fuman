@@ -11,12 +11,17 @@ import { parsePackageJsonFile, parseWorkspaceRootPackageJson } from './parse.js'
 // defaulting to Infinity takes a lot of time on larger workspaces
 const maxDepth = process.env.FUMAN_BUILD_MAX_DEPTH !== undefined ? Number(process.env.FUMAN_BUILD_MAX_DEPTH) : 5
 
+/** information about a package in a workspace */
 export interface WorkspacePackage {
+    /** path to the package root */
     path: string
+    /** whether this is the root package */
     root: boolean
+    /** package.json of the package */
     json: PackageJson
 }
 
+/** collect package.jsons from a workspace */
 export async function collectPackageJsons(
     workspaceRoot: string | URL,
     includeRoot = false,
@@ -66,6 +71,10 @@ export async function collectPackageJsons(
     return packageJsons
 }
 
+/**
+ * filter packages to only include the ones that are to be published
+ * to the given registry
+ */
 export function filterPackageJsonsForPublish(
     packages: WorkspacePackage[],
     registry: 'jsr' | 'npm',

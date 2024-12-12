@@ -7,14 +7,17 @@ import { normalizeFilePath } from '../misc/path.js'
 
 import { type PackageJson, PackageJsonSchema } from './types.js'
 
+/** parse a package.json from string */
 export function parsePackageJson(packageJson: string): PackageJson {
     return PackageJsonSchema.parse(JSON.parse(packageJson))
 }
 
+/** parse a package.json file */
 export async function parsePackageJsonFile(packageJsonPath: string | URL): Promise<PackageJson> {
     return parsePackageJson(await fsp.readFile(normalizeFilePath(packageJsonPath), 'utf8'))
 }
 
+/** parse the package.json file at the root of the workspace */
 export async function parseWorkspaceRootPackageJson(workspaceRoot: string | URL): Promise<PackageJson> {
     workspaceRoot = normalizeFilePath(workspaceRoot)
     const packageJsonPath = path.join(workspaceRoot, 'package.json')

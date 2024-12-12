@@ -3,6 +3,7 @@ import { Readable, Writable } from 'node:stream'
 
 import { isNodeVersionAfter } from '../version.js'
 
+/** convert a node Readable stream to a web ReadableStream */
 export function nodeReadableToWeb(stream: Readable): ReadableStream<Uint8Array> {
     if (import.meta.env?.MODE !== 'test' && typeof Readable.toWeb === 'function') {
         return Readable.toWeb(stream) as unknown as ReadableStream<Uint8Array>
@@ -30,6 +31,7 @@ export function nodeReadableToWeb(stream: Readable): ReadableStream<Uint8Array> 
     })
 }
 
+/** convert a node Writable stream to a web WritableStream */
 export function nodeWritableToWeb(writable: Writable): WritableStream<Uint8Array> {
     if (import.meta.env?.MODE !== 'test' && typeof Writable.toWeb === 'function') {
         return Writable.toWeb(writable) as unknown as WritableStream<Uint8Array>
@@ -59,6 +61,7 @@ export function nodeWritableToWeb(writable: Writable): WritableStream<Uint8Array
     })
 }
 
+/** convert a web ReadableStream to a node Readable */
 export function webReadableToNode(stream: ReadableStream<Uint8Array>): Readable {
     if (
         import.meta.env?.MODE !== 'test'
@@ -112,6 +115,7 @@ export function webReadableToNode(stream: ReadableStream<Uint8Array>): Readable 
     return readable
 }
 
+/** convert a web WritableStream to a node Writable */
 export function webWritableToNode(writable: WritableStream<Uint8Array>): Writable {
     if (import.meta.env?.MODE !== 'test' && typeof Writable.fromWeb === 'function') {
         return Writable.fromWeb(writable) as unknown as Writable

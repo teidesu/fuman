@@ -17,7 +17,10 @@ abstract class NodeListener<
 
     protected abstract mapAddress(address: AddressInfo | string | null): Address
 
-    constructor(readonly server: Server) {
+    constructor(
+        /** Underlying server */
+        readonly server: Server,
+    ) {
         server.on('close', () => {
             this._waiter?.reject(new ListenerClosedError())
         })
