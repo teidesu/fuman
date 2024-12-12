@@ -198,12 +198,13 @@ class FfetchResultImpl implements FfetchResult {
             return await this.#fetchAndValidate()
         } catch (err_) {
             const err = unknownToError(err_)
-            const errCopy = structuredClone(err_)
+            const origMessage = err.message
+            const origStack = err.stack
 
             // eslint-disable-next-line ts/no-non-null-assertion
             const stack = this.#stack!.split('\n').slice(2).join('\n')
             err.stack = `${err.name}: ${err.message}\n${stack}`
-            err.cause = errCopy
+            err.cause = { message: origMessage, stack: origStack }
 
             throw err
         }

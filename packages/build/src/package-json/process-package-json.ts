@@ -103,8 +103,8 @@ export function processPackageJson(params: {
                     if (!rootPackageJson?.catalogs) throw new Error('catalogs are not available in the workspace root')
                     const catalogName = value.slice('catalog:'.length)
                     const catalog = rootPackageJson.catalogs[catalogName]
-                    if (!catalog) throw new Error(`catalog ${catalogName} not found in the workspace root`)
-                    if (!catalog[name]) throw new Error(`catalog ${catalogName} does not contain ${name}`)
+                    if (catalog == null) throw new Error(`catalog ${catalogName} not found in the workspace root`)
+                    if (catalog[name] == null) throw new Error(`catalog ${catalogName} does not contain ${name}`)
 
                     dependencies[name] = catalog[name]
                 }
