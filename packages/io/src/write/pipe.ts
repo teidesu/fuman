@@ -1,5 +1,6 @@
 import type { IReadable, IWritable } from '../types.js'
 
+/** pipe the contents of a readable stream (until it ends) into a writable stream */
 export async function pipe(into: IWritable, readable: IReadable): Promise<void> {
     const chunk = new Uint8Array(1024 * 32)
 

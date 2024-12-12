@@ -3,6 +3,7 @@ import type { ISyncWritable } from '../types.js'
 import type { IFrameDecoder, IFrameEncoder } from './types.js'
 import { typed } from '@fuman/utils'
 
+/** options for {@link DelimiterCodec} */
 export interface DelimiterCodecOptions {
     /**
      * Strategy for handling delimiter.
@@ -10,12 +11,19 @@ export interface DelimiterCodecOptions {
      *  - `discard` - delimiter is discarded
      *
      * Ignored for encoding (delimiter is always appended after the frame)
+     *
+     * @default 'discard'
      */
     strategy?: 'keep' | 'discard'
 }
 
+/** a simple frame codec that uses a delimiter to separate frames */
 export class DelimiterCodec implements IFrameDecoder, IFrameEncoder {
     #strategy: DelimiterCodecOptions['strategy']
+    /**
+     * @param delimiter  delimiter to use
+     * @param options  options
+     */
     constructor(
         readonly delimiter: Uint8Array,
         readonly options?: DelimiterCodecOptions | undefined,

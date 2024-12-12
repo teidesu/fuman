@@ -2,11 +2,13 @@ import type { ISyncReadable } from '../types.js'
 import { u8 } from '@fuman/utils'
 import { exactly } from '../read/strings.js'
 
+/** a bit reader that reads bits from a byte-aligned stream */
 export class BitReader implements ISyncReadable {
     #readable: ISyncReadable
     #currentByte = 0
     #currentBitIdx = 0
 
+    /** @param readable  fuman readable stream */
     constructor(readable: ISyncReadable) {
         this.#readable = readable
     }
@@ -56,6 +58,7 @@ export class BitReader implements ISyncReadable {
         return result
     }
 
+    /** read a number of bits from the stream, and return them as a number */
     readBits(size: number): number {
         let result = 0
 
@@ -105,6 +108,7 @@ export class BitReader implements ISyncReadable {
         return result
     }
 
+    /** read a number of bits from the stream, and return them as a bigint */
     readBitsBig(size: number): bigint {
         let result = 0n
 
@@ -155,6 +159,7 @@ export class BitReader implements ISyncReadable {
         return result
     }
 
+    /** skip a number of bits from the stream */
     skipBits(size: number): void {
         if (size % 8 === 0) {
             // we can just skip the bytes

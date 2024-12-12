@@ -15,6 +15,7 @@ function _checkInt(value: number | bigint, min: number | bigint, max: number | b
     }
 }
 
+/** write a uint8 to the target (fuman writable stream or a buffer) */
 export function uint8(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     if (!noAssert) _checkInt(value, 0, 0xFF)
     const buf = _maybeWrite(writable, 1)
@@ -22,6 +23,7 @@ export function uint8(writable: ISyncWritable | Uint8Array, value: number, noAss
     buf[0] = (value & 0xFF)
 }
 
+/** write an int8 to the target (fuman writable stream or a buffer) */
 export function int8(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     if (!noAssert) _checkInt(value, -0x80, 0x7F)
     const buf = _maybeWrite(writable, 1)
@@ -29,6 +31,7 @@ export function int8(writable: ISyncWritable | Uint8Array, value: number, noAsse
     buf[0] = (value & 0xFF)
 }
 
+/** write a uint16 (little endian) to the target (fuman writable stream or a buffer) */
 export function uint16le(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     if (!noAssert) _checkInt(value, 0, 0xFFFF)
     const buf = _maybeWrite(writable, 2)
@@ -36,6 +39,7 @@ export function uint16le(writable: ISyncWritable | Uint8Array, value: number, no
     buf[1] = (value >>> 8)
 }
 
+/** write a uint16 (big endian) to the target (fuman writable stream or a buffer) */
 export function uint16be(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     if (!noAssert) _checkInt(value, 0, 0xFFFF)
     const buf = _maybeWrite(writable, 2)
@@ -43,6 +47,7 @@ export function uint16be(writable: ISyncWritable | Uint8Array, value: number, no
     buf[1] = (value & 0xFF)
 }
 
+/** write an int16 (little endian) to the target (fuman writable stream or a buffer) */
 export function int16le(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     const buf = _maybeWrite(writable, 2)
     if (!noAssert) _checkInt(value, -0x8000, 0x7FFF)
@@ -50,6 +55,7 @@ export function int16le(writable: ISyncWritable | Uint8Array, value: number, noA
     buf[1] = (value >>> 8)
 }
 
+/** write an int16 (big endian) to the target (fuman writable stream or a buffer) */
 export function int16be(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     const buf = _maybeWrite(writable, 2)
     if (!noAssert) _checkInt(value, -0x8000, 0x7FFF)
@@ -57,6 +63,7 @@ export function int16be(writable: ISyncWritable | Uint8Array, value: number, noA
     buf[1] = (value & 0xFF)
 }
 
+/** write a uint24 (little endian) to the target (fuman writable stream or a buffer) */
 export function uint24le(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     if (!noAssert) _checkInt(value, 0, 0xFFFFFF)
 
@@ -68,6 +75,7 @@ export function uint24le(writable: ISyncWritable | Uint8Array, value: number, no
     buf[2] = value
 }
 
+/** write a uint24 (big endian) to the target (fuman writable stream or a buffer) */
 export function uint24be(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     if (!noAssert) _checkInt(value, 0, 0xFFFFFF)
 
@@ -79,6 +87,7 @@ export function uint24be(writable: ISyncWritable | Uint8Array, value: number, no
     buf[0] = value
 }
 
+/** write an int24 (little endian) to the target (fuman writable stream or a buffer) */
 export function int24le(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     if (!noAssert) _checkInt(value, -0x800000, 0x7FFFFF)
 
@@ -90,6 +99,7 @@ export function int24le(writable: ISyncWritable | Uint8Array, value: number, noA
     buf[2] = value
 }
 
+/** write an int24 (big endian) to the target (fuman writable stream or a buffer) */
 export function int24be(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     if (!noAssert) _checkInt(value, -0x800000, 0x7FFFFF)
 
@@ -101,6 +111,7 @@ export function int24be(writable: ISyncWritable | Uint8Array, value: number, noA
     buf[0] = value
 }
 
+/** write a uint32 (little endian) to the target (fuman writable stream or a buffer) */
 export function uint32le(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     const buf = _maybeWrite(writable, 4)
     if (!noAssert) _checkInt(value, 0, 0xFFFFFFFF)
@@ -114,6 +125,7 @@ export function uint32le(writable: ISyncWritable | Uint8Array, value: number, no
     buf[3] = value
 }
 
+/** write a uint32 (big endian) to the target (fuman writable stream or a buffer) */
 export function uint32be(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     const buf = _maybeWrite(writable, 4)
     if (!noAssert) _checkInt(value, 0, 0xFFFFFFFF)
@@ -127,6 +139,7 @@ export function uint32be(writable: ISyncWritable | Uint8Array, value: number, no
     buf[0] = value
 }
 
+/** write an int32 (little endian) to the target (fuman writable stream or a buffer) */
 export function int32le(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     const buf = _maybeWrite(writable, 4)
     if (!noAssert) _checkInt(value, -0x80000000, 0x7FFFFFFF)
@@ -140,6 +153,7 @@ export function int32le(writable: ISyncWritable | Uint8Array, value: number, noA
     buf[3] = value
 }
 
+/** write an int32 (big endian) to the target (fuman writable stream or a buffer) */
 export function int32be(writable: ISyncWritable | Uint8Array, value: number, noAssert = false): void {
     const buf = _maybeWrite(writable, 4)
     if (!noAssert) _checkInt(value, -0x80000000, 0x7FFFFFFF)
@@ -153,6 +167,7 @@ export function int32be(writable: ISyncWritable | Uint8Array, value: number, noA
     buf[0] = value
 }
 
+/** write a uint64 (little endian) to the target (fuman writable stream or a buffer) */
 export function uint64le(writable: ISyncWritable | Uint8Array, value: bigint, noAssert = false): void {
     const buf = _maybeWrite(writable, 8)
     if (!noAssert) _checkInt(value, 0n, 0xFFFFFFFFFFFFFFFFn)
@@ -175,6 +190,7 @@ export function uint64le(writable: ISyncWritable | Uint8Array, value: bigint, no
     buf[7] = hi
 }
 
+/** write a uint64 (big endian) to the target (fuman writable stream or a buffer) */
 export function uint64be(writable: ISyncWritable | Uint8Array, value: bigint, noAssert = false): void {
     const buf = _maybeWrite(writable, 8)
     if (!noAssert) _checkInt(value, 0n, 0xFFFFFFFFFFFFFFFFn)
@@ -197,6 +213,7 @@ export function uint64be(writable: ISyncWritable | Uint8Array, value: bigint, no
     buf[0] = hi
 }
 
+/** write an int64 (little endian) to the target (fuman writable stream or a buffer) */
 export function int64le(writable: ISyncWritable | Uint8Array, value: bigint, noAssert = false): void {
     const buf = _maybeWrite(writable, 8)
     if (!noAssert) _checkInt(value, -0x8000000000000000n, 0x7FFFFFFFFFFFFFFFn)
@@ -219,6 +236,7 @@ export function int64le(writable: ISyncWritable | Uint8Array, value: bigint, noA
     buf[7] = hi
 }
 
+/** write an int64 (big endian) to the target (fuman writable stream or a buffer) */
 export function int64be(writable: ISyncWritable | Uint8Array, value: bigint, noAssert = false): void {
     const buf = _maybeWrite(writable, 8)
     if (!noAssert) _checkInt(value, -0x8000000000000000n, 0x7FFFFFFFFFFFFFFFn)
@@ -241,6 +259,7 @@ export function int64be(writable: ISyncWritable | Uint8Array, value: bigint, noA
     buf[0] = hi
 }
 
+/** write a variable-size uint (little endian) to the target (fuman writable stream or a buffer) */
 export function uintle(writable: ISyncWritable | Uint8Array, size: number, value: bigint, noAssert = false): void {
     if (!noAssert) {
         _checkInt(value, 0n, 2n ** BigInt(8 * size) - 1n)
@@ -257,6 +276,7 @@ export function uintle(writable: ISyncWritable | Uint8Array, size: number, value
     }
 }
 
+/** write a variable-size uint (big endian) to the target (fuman writable stream or a buffer) */
 export function uintbe(writable: ISyncWritable | Uint8Array, size: number, value: bigint, noAssert = false): void {
     if (!noAssert) {
         _checkInt(value, 0n, 2n ** BigInt(8 * size) - 1n)
@@ -273,6 +293,7 @@ export function uintbe(writable: ISyncWritable | Uint8Array, size: number, value
     }
 }
 
+/** write a variable-size int (little endian) to the target (fuman writable stream or a buffer) */
 export function intle(writable: ISyncWritable | Uint8Array, size: number, value: bigint, noAssert = false): void {
     if (!noAssert) {
         const limit = 2n ** BigInt((8 * size) - 1)
@@ -295,6 +316,7 @@ export function intle(writable: ISyncWritable | Uint8Array, size: number, value:
     }
 }
 
+/** write a variable-size int (big endian) to the target (fuman writable stream or a buffer) */
 export function intbe(writable: ISyncWritable | Uint8Array, size: number, value: bigint, noAssert = false): void {
     if (!noAssert) {
         const limit = 2n ** BigInt((8 * size) - 1)
@@ -317,21 +339,25 @@ export function intbe(writable: ISyncWritable | Uint8Array, size: number, value:
     }
 }
 
+/** write a float32 (little endian) to the target (fuman writable stream or a buffer) */
 export function float32le(writable: ISyncWritable | Uint8Array, value: number): void {
     const buf = _maybeWrite(writable, 4)
     getDv(buf).setFloat32(buf.byteOffset, value, true)
 }
 
+/** write a float32 (big endian) to the target (fuman writable stream or a buffer) */
 export function float32be(writable: ISyncWritable | Uint8Array, value: number): void {
     const buf = _maybeWrite(writable, 4)
     getDv(buf).setFloat32(buf.byteOffset, value, false)
 }
 
+/** write a float64 (little endian) to the target (fuman writable stream or a buffer) */
 export function float64le(writable: ISyncWritable | Uint8Array, value: number): void {
     const buf = _maybeWrite(writable, 8)
     getDv(buf).setFloat64(buf.byteOffset, value, true)
 }
 
+/** write a float64 (big endian) to the target (fuman writable stream or a buffer) */
 export function float64be(writable: ISyncWritable | Uint8Array, value: number): void {
     const buf = _maybeWrite(writable, 8)
     getDv(buf).setFloat64(buf.byteOffset, value, false)

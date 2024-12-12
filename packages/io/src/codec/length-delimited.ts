@@ -3,11 +3,23 @@ import type { ISyncWritable } from '../types.js'
 import type { IFrameDecoder, IFrameEncoder } from './types.js'
 import { u8 } from '@fuman/utils'
 
+/** options for {@link LengthDelimitedCodec} */
 export interface LengthDelimitedCodecOptions {
+    /**
+     * function that will be called to read the length of the frame
+     *
+     * @example  `read.uint32le`
+     */
     read?: (r: Bytes) => number | null
+    /**
+     * function that will be called to write the length of the frame
+     *
+     * @example  `write.uint32le`
+     */
     write?: (w: ISyncWritable, n: number) => void
 }
 
+/** a simple frame codec that uses a length prefix to separate frames */
 export class LengthDelimitedCodec implements IFrameDecoder, IFrameEncoder {
     #read: LengthDelimitedCodecOptions['read']
     #write: LengthDelimitedCodecOptions['write']

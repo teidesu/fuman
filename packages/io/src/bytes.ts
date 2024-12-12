@@ -3,12 +3,10 @@ import { u8 } from '@fuman/utils'
 
 import { nextPowerOfTwo } from './_utils.js'
 
+/** a byte buffer implementing fuman readable/writable streams */
 export class Bytes implements IReadable, IWritable, ISyncReadable, ISyncWritable {
-    /** Underlying buffer */
     #buffer: Uint8Array
-    /** Position of the write cursor (should always be >= {@link #readPos}) */
     #writePos = 0
-    /** Position of the read cursor */
     #readPos = 0
 
     #preferredCapacity: number
@@ -100,8 +98,14 @@ export class Bytes implements IReadable, IWritable, ISyncReadable, ISyncWritable
         this.disposeWriteSync()
     }
 
+    /**
+     * get the "result" of the buffer, i.e. everything that has been written so far,
+     * but not yet read
+     *
+     * **Note**: this method returns a view into the underlying buffer, and does advance the read cursor
+     */
     result(): Uint8Array {
-        return this.#buffer.subarray(0, this.#writePos)
+        return this.#buffer.subarray(this.#readPos, this.#writePos)
     }
 
     /** Reclaim memory by only keeping the yet-unread data */
@@ -132,6 +136,7 @@ export class Bytes implements IReadable, IWritable, ISyncReadable, ISyncWritable
         this.#readPos -= n
     }
 
+    /** reset the read/write cursors */
     reset(): void {
         this.#readPos = 0
         this.#writePos = 0

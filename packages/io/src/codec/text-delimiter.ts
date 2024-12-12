@@ -6,6 +6,7 @@ import { utf8 } from '@fuman/utils'
 
 import { DelimiterCodec } from './delimiter.js'
 
+/** wrapper over {@link DelimiterCodec} that handles text frames */
 export class TextDelimiterCodec implements IFrameDecoder<string>, IFrameEncoder<string> {
     #inner: DelimiterCodec
 

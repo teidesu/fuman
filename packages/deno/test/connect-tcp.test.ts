@@ -27,7 +27,13 @@ describe('connectTcp', () => {
         }),
         errors: {
             BadResource: class BadResource extends Error {},
-            Interrupted: class BadResource extends Error {},
+            Interrupted: class Interrupted extends Error {},
+            BrokenPipe: class BrokenPipe extends Error {},
+            ConnectionReset: class ConnectionReset extends Error {},
+            ConnectionRefused: class ConnectionRefused extends Error {},
+            ConnectionAborted: class ConnectionAborted extends Error {},
+            TimedOut: class TimedOut extends Error {},
+            NetworkUnreachable: class NetworkUnreachable extends Error {},
         },
     })
 

@@ -3,11 +3,13 @@ import type { IReadable } from '../types.js'
 import type { IFrameDecoder } from './types.js'
 import { Bytes } from '../bytes.js'
 
+/** options for {@link FramedReader} */
 export interface FramedReaderOptions {
     initialBufferSize?: number
     readChunkSize?: number
 }
 
+/** a reader that decodes frames one by one from a readable stream */
 export class FramedReader<Frame> {
     #readable: IReadable
     #decoder: IFrameDecoder<Frame>
@@ -18,6 +20,11 @@ export class FramedReader<Frame> {
     #eof = false
     #canDecode = false
 
+    /**
+     * @param readable  fuman readable stream to read from
+     * @param decoder  frame decoder
+     * @param options  extra options
+     */
     constructor(
         readable: IReadable,
         decoder: IFrameDecoder<Frame>,
@@ -29,6 +36,7 @@ export class FramedReader<Frame> {
         this.#readChunkSize = options?.readChunkSize ?? 1024 * 16
     }
 
+    /** read a next frame from the stream, or `null` if the stream ended */
     async read(): Promise<Frame | null> {
         while (true) {
             if (this.#canDecode) {
@@ -57,6 +65,7 @@ export class FramedReader<Frame> {
         }
     }
 
+    /** create an async iterator that yields frames */
     [Symbol.asyncIterator](): AsyncIterator<Frame> {
         return {
             next: async () => {

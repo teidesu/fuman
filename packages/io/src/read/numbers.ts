@@ -4,6 +4,7 @@ import { PartialReadError } from '../errors.js'
 
 import { exactly } from './strings.js'
 
+/** read a uint8 from the source */
 export function uint8(readable: ISyncReadable): number {
     return exactly(readable, 1)[0]
 }
@@ -19,24 +20,28 @@ function _maybeRead(readable: ISyncReadable | Uint8Array, size: number): Uint8Ar
     return exactly(readable, size)
 }
 
+/** read an int8 from the source (fuman readable stream or a buffer) */
 export function int8(readable: ISyncReadable | Uint8Array): number {
     const val = _maybeRead(readable, 1)[0]
     if (!(val & 0x80)) return val
     return -(0xFF - val + 1)
 }
 
+/** read a uint16 (little endian) from the source (fuman readable stream or a buffer) */
 export function uint16le(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 2)
 
     return buffer[0] | (buffer[1] << 8)
 }
 
+/** read a uint16 (big endian) from the source (fuman readable stream or a buffer) */
 export function uint16be(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 2)
 
     return (buffer[0] << 8) | buffer[1]
 }
 
+/** read a uint24 (little endian) from the source (fuman readable stream or a buffer) */
 export function uint24le(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 3)
 
@@ -47,6 +52,7 @@ export function uint24le(readable: ISyncReadable | Uint8Array): number {
     )
 }
 
+/** read a uint24 (big endian) from the source (fuman readable stream or a buffer) */
 export function uint24be(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 3)
 
@@ -57,6 +63,7 @@ export function uint24be(readable: ISyncReadable | Uint8Array): number {
     )
 }
 
+/** read a uint32 (little endian) from the source (fuman readable stream or a buffer) */
 export function uint32le(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 4)
 
@@ -67,6 +74,7 @@ export function uint32le(readable: ISyncReadable | Uint8Array): number {
     + (buffer[3] * 0x1000000)
 }
 
+/** read a uint32 (big endian) from the source (fuman readable stream or a buffer) */
 export function uint32be(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 4)
 
@@ -77,6 +85,7 @@ export function uint32be(readable: ISyncReadable | Uint8Array): number {
     )
 }
 
+/** read a uint64 (little endian) from the source (fuman readable stream or a buffer) */
 export function uint64le(readable: ISyncReadable | Uint8Array): bigint {
     const buffer = _maybeRead(readable, 8)
     const lo = (
@@ -94,6 +103,7 @@ export function uint64le(readable: ISyncReadable | Uint8Array): bigint {
     return BigInt(lo) | (BigInt(hi) << 32n)
 }
 
+/** read a uint64 (big endian) from the source (fuman readable stream or a buffer) */
 export function uint64be(readable: ISyncReadable | Uint8Array): bigint {
     const buffer = _maybeRead(readable, 8)
     const lo = buffer[0] * 0x1000000 + (
@@ -110,6 +120,7 @@ export function uint64be(readable: ISyncReadable | Uint8Array): bigint {
     return BigInt(lo) << 32n | BigInt(hi)
 }
 
+/** read an int16 (little endian) from the source (fuman readable stream or a buffer) */
 export function int16le(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 2)
 
@@ -117,12 +128,14 @@ export function int16le(readable: ISyncReadable | Uint8Array): number {
     return (val & 0x8000) ? val | 0xFFFF0000 : val
 }
 
+/** read an int16 (big endian) from the source (fuman readable stream or a buffer) */
 export function int16be(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 2)
     const val = (buffer[0] << 8) | buffer[1]
     return (val & 0x8000) ? val | 0xFFFF0000 : val
 }
 
+/** read an int24 (little endian) from the source (fuman readable stream or a buffer) */
 export function int24le(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 3)
 
@@ -135,6 +148,7 @@ export function int24le(readable: ISyncReadable | Uint8Array): number {
     return (val & 0x800000) ? val | 0xFF000000 : val
 }
 
+/** read an int24 (big endian) from the source (fuman readable stream or a buffer) */
 export function int24be(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 3)
 
@@ -147,6 +161,7 @@ export function int24be(readable: ISyncReadable | Uint8Array): number {
     return (val & 0x800000) ? val | 0xFF000000 : val
 }
 
+/** read an int32 (little endian) from the source (fuman readable stream or a buffer) */
 export function int32le(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 4)
 
@@ -158,6 +173,7 @@ export function int32le(readable: ISyncReadable | Uint8Array): number {
     )
 }
 
+/** read an int32 (big endian) from the source (fuman readable stream or a buffer) */
 export function int32be(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 4)
 
@@ -169,6 +185,7 @@ export function int32be(readable: ISyncReadable | Uint8Array): number {
     )
 }
 
+/** read an int64 (little endian) from the source (fuman readable stream or a buffer) */
 export function int64le(readable: ISyncReadable | Uint8Array): bigint {
     const buffer = _maybeRead(readable, 8)
     const val = buffer[4]
@@ -183,6 +200,7 @@ export function int64le(readable: ISyncReadable | Uint8Array): bigint {
             + buffer[3] * 2 ** 24)
 }
 
+/** read an int64 (big endian) from the source (fuman readable stream or a buffer) */
 export function int64be(readable: ISyncReadable | Uint8Array): bigint {
     const buffer = _maybeRead(readable, 8)
 
@@ -198,6 +216,7 @@ export function int64be(readable: ISyncReadable | Uint8Array): bigint {
             + buffer[7])
 }
 
+/** read a variable-size uint (little endian) from the source (fuman readable stream or a buffer) */
 export function uintle(readable: ISyncReadable | Uint8Array, size: number): bigint {
     const buffer = _maybeRead(readable, size)
     let val = BigInt(buffer[0])
@@ -211,6 +230,7 @@ export function uintle(readable: ISyncReadable | Uint8Array, size: number): bigi
     return val
 }
 
+/** read a variable-size uint (big endian) from the source (fuman readable stream or a buffer) */
 export function uintbe(readable: ISyncReadable | Uint8Array, size: number): bigint {
     const buffer = _maybeRead(readable, size)
 
@@ -224,6 +244,7 @@ export function uintbe(readable: ISyncReadable | Uint8Array, size: number): bigi
     return val
 }
 
+/** read a variable-size int (big endian) from the source (fuman readable stream or a buffer) */
 export function intbe(readable: ISyncReadable | Uint8Array, size: number): bigint {
     const buffer = _maybeRead(readable, size)
 
@@ -241,6 +262,7 @@ export function intbe(readable: ISyncReadable | Uint8Array, size: number): bigin
     return val
 }
 
+/** read a variable-size int (little endian) from the source (fuman readable stream or a buffer) */
 export function intle(readable: ISyncReadable | Uint8Array, size: number): bigint {
     const buffer = _maybeRead(readable, size)
 
@@ -258,21 +280,25 @@ export function intle(readable: ISyncReadable | Uint8Array, size: number): bigin
     return val
 }
 
+/** read a float32 (little endian) from the source (fuman readable stream or a buffer) */
 export function float32le(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 4)
     return getDv(buffer).getFloat32(buffer.byteOffset, true)
 }
 
+/** read a float32 (big endian) from the source (fuman readable stream or a buffer) */
 export function float32be(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 4)
     return getDv(buffer).getFloat32(buffer.byteOffset, false)
 }
 
+/** read a float64 (little endian) from the source (fuman readable stream or a buffer) */
 export function float64le(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 8)
     return getDv(buffer).getFloat64(buffer.byteOffset, true)
 }
 
+/** read a float64 (big endian) from the source (fuman readable stream or a buffer) */
 export function float64be(readable: ISyncReadable | Uint8Array): number {
     const buffer = _maybeRead(readable, 8)
     return getDv(buffer).getFloat64(buffer.byteOffset, false)

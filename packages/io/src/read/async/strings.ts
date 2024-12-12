@@ -4,6 +4,15 @@ import { u8 } from '@fuman/utils'
 import { Bytes } from '../../bytes.js'
 import { PartialReadError } from '../../errors.js'
 
+/**
+ * read exactly N bytes from the source
+ *
+ * @param readable  fuman readable stream
+ * @param length  length of the buffer to read, or a buffer to read into (when a number is passed, a new buffer will be allocated)
+ * @param onEof  what to do when the end of the stream is reached
+ *  - `error` - throw an {@link PartialReadError}
+ *  - `truncate` - truncate the buffer to the number of bytes that were read. note that this might return 0 bytes
+ */
 export async function exactly(
     readable: IReadable,
     length: number | Uint8Array,
@@ -34,6 +43,12 @@ export async function exactly(
     return res
 }
 
+/**
+ * read the source until it ends, and return the buffer
+ *
+ * @param readable  fuman readable stream
+ * @param chunkSize  size of the chunks to read
+ */
 export async function untilEnd(readable: IReadable, chunkSize: number = 1024 * 16): Promise<Uint8Array> {
     const buf = Bytes.alloc(chunkSize)
 

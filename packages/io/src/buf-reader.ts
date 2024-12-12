@@ -11,10 +11,6 @@ export class BufReader implements IReadable {
     #writePos = 0
     #eof = false
 
-    static create(readable: IReadable, size: number = DEFAULT_BUF_SIZE): BufReader {
-        return new BufReader(readable, size)
-    }
-
     constructor(readable: IReadable, size: number = DEFAULT_BUF_SIZE) {
         if (size < MIN_BUF_SIZE) {
             size = MIN_BUF_SIZE
@@ -23,10 +19,12 @@ export class BufReader implements IReadable {
         this.#readable = readable
     }
 
+    /** the size of the buffer */
     get bufferSize(): number {
         return this.#buffer.byteLength
     }
 
+    /** the number of bytes that are currently buffered */
     get buffered(): number {
         return this.#writePos - this.#readPos
     }

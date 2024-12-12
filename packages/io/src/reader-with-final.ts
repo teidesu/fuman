@@ -1,10 +1,17 @@
 import type { IReadable } from './types.js'
 
+/** result of {@link ReaderWithFinal#readWithFinal} */
 export interface ReaderWithFinalResult {
+    /** number of bytes read */
     readonly nread: number
+    /** whether this was the last chunk */
     readonly final: boolean
 }
 
+/**
+ * a reader that reads one read ahead, allowing the caller to know
+ * whether the chunk being read is the last one
+ */
 export class ReaderWithFinal implements IReadable {
     #buf1: Uint8Array
     #buf2: Uint8Array
@@ -13,9 +20,12 @@ export class ReaderWithFinal implements IReadable {
     #prev: Uint8Array | null = null
     #ended = false
 
-    constructor(readable: IReadable, params?: {
-        internalBufferSize?: number
-    }) {
+    constructor(
+        readable: IReadable,
+        params?: {
+            internalBufferSize?: number
+        },
+    ) {
         this.#readable = readable
         const bufSize = params?.internalBufferSize ?? 1024 * 32
         this.#buf1 = new Uint8Array(bufSize)
@@ -28,6 +38,7 @@ export class ReaderWithFinal implements IReadable {
         this.#buf2 = tmp
     }
 
+    /** read a chunk of data, and whether it is the last one */
     async readWithFinal(into: Uint8Array): Promise<ReaderWithFinalResult> {
         if (this.#ended) {
             return {

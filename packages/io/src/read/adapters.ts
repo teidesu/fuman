@@ -2,6 +2,7 @@ import type { IClosable, IReadable, ISyncReadable } from '../types.js'
 import { Bytes } from '../bytes.js'
 import { isByobCapableStream } from '../streams.js'
 
+/** create an async readable stream from a sync readable stream */
 export function fumanSyncReadableToAsync(readable: ISyncReadable): IReadable {
     return {
         async read(into: Uint8Array): Promise<number> {
@@ -12,6 +13,7 @@ export function fumanSyncReadableToAsync(readable: ISyncReadable): IReadable {
     }
 }
 
+/** convert a web ReadableStream to a fuman readable stream */
 export function webReadableToFuman(readable: ReadableStream<Uint8Array>): IReadable & IClosable {
     if (isByobCapableStream(readable)) {
         const reader = readable.getReader({ mode: 'byob' })
@@ -57,6 +59,7 @@ export function webReadableToFuman(readable: ReadableStream<Uint8Array>): IReada
     }
 }
 
+/** convert a fuman readable stream to a web ReadableStream */
 export function fumanReadableToWeb(readable: IReadable): ReadableStream<Uint8Array> {
     return new ReadableStream({
         type: 'bytes',
