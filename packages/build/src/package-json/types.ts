@@ -14,6 +14,7 @@ export interface PackageJson {
         url: string
     })
     keywords?: string[]
+    catalogs?: Record<string, Record<string, string>>
     workspaces?: string[]
     scripts?: Record<string, string>
     dependencies?: Record<string, string>

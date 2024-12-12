@@ -37,16 +37,28 @@ export async function parseWorkspaceRootPackageJson(workspaceRoot: string | URL)
 
         const workspace = jsyaml.load(yaml) as {
             packages?: string[]
+            catalog?: Record<string, string>
+            catalogs?: Record<string, Record<string, string>>
         }
 
         if (!workspace.packages) {
             throw new Error('No packages found in pnpm-workspace.yaml')
         }
 
-        return {
-            ...parsed,
-            workspaces: workspace.packages,
+        if (workspace.catalog || workspace.catalogs) {
+            const catalogs: Record<string, Record<string, string>> = {}
+            if (workspace.catalog) {
+                catalogs[''] = workspace.catalog
+            }
+            if (workspace.catalogs) {
+                for (const [name, catalog] of Object.entries(workspace.catalogs)) {
+                    catalogs[name] = catalog
+                }
+            }
+            parsed.catalogs = catalogs
         }
+
+        parsed.workspaces = workspace.packages
     }
 
     return parsed

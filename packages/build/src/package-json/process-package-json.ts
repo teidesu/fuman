@@ -57,7 +57,7 @@ export function processPackageJson(params: {
             delete packageJson.distOnlyFields
         }
 
-        function replaceWorkspaceDependencies(field: keyof PackageJson) {
+        function replaceCustomDependencies(field: keyof PackageJson) {
             if (packageJson[field] == null) return
 
             const dependencies = packageJson[field] as Record<string, string>
@@ -98,13 +98,23 @@ export function processPackageJson(params: {
                     const depVersion = value === 'workspace:*' ? workspaceVersion : `^${workspaceVersion}`
                     dependencies[name] = depVersion
                 }
+
+                if (value.startsWith('catalog:')) {
+                    if (!rootPackageJson?.catalogs) throw new Error('catalogs are not available in the workspace root')
+                    const catalogName = value.slice('catalog:'.length)
+                    const catalog = rootPackageJson.catalogs[catalogName]
+                    if (!catalog) throw new Error(`catalog ${catalogName} not found in the workspace root`)
+                    if (!catalog[name]) throw new Error(`catalog ${catalogName} does not contain ${name}`)
+
+                    dependencies[name] = catalog[name]
+                }
             }
         }
 
-        replaceWorkspaceDependencies('dependencies')
-        replaceWorkspaceDependencies('devDependencies')
-        replaceWorkspaceDependencies('peerDependencies')
-        replaceWorkspaceDependencies('optionalDependencies')
+        replaceCustomDependencies('dependencies')
+        replaceCustomDependencies('devDependencies')
+        replaceCustomDependencies('peerDependencies')
+        replaceCustomDependencies('optionalDependencies')
 
         // tool-specific fields
         delete packageJson.typedoc

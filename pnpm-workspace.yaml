@@ -1,2 +1,5 @@
 packages:
   - packages/*
+
+catalog:
+  zod: ^3.0.0

@@ -16,7 +16,7 @@
         "tough-cookie": "^5.0.0 || ^4.0.0",
         "valibot": "^0.42.0",
         "yup": "^1.0.0",
-        "zod": "^3.0.0"
+        "zod": "catalog:"
     },
     "peerDependenciesMeta": {
         "tough-cookie": {
