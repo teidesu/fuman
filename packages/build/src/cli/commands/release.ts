@@ -7,7 +7,7 @@ import { nodeReadableToWeb } from '@fuman/node'
 import { asNonNull, notImplemented } from '@fuman/utils'
 import { sort } from 'semver'
 import { createGithubRelease } from '../../git/github.js'
-import { getFirstCommit, getLatestTag } from '../../git/utils.js'
+import { getFirstCommit, getLatestTag, gitTagExists } from '../../git/utils.js'
 import { jsrCreatePackages } from '../../jsr/create-packages.js'
 import { generateDenoWorkspace } from '../../jsr/generate-workspace.js'
 import { exec } from '../../misc/exec.js'
@@ -108,6 +108,25 @@ export const releaseCli = bc.command({
             }
         } else {
             changedPackages = workspace
+        }
+
+        let tagName: string
+        if (!bumpVersionResult) {
+            // if this is a first release, use the max version as the tag name,
+            // because the bump did not happen
+            const versions = sort(workspace.map(pkg => asNonNull(pkg.json.version)))
+            tagName = `v${versions[versions.length - 1]}`
+        } else {
+            tagName = `v${bumpVersionResult.nextVersion}`
+        }
+
+        // verify the tag does not exist yet
+        if (await gitTagExists(tagName, root)) {
+            console.log(`❗ tag ${tagName} already exists. did the previous release complete successfully?`)
+            console.log('❗ if so, please verify versions in package.json and try again')
+            if (!args.dryRun) {
+                process.exit(1)
+            }
         }
 
         console.log('')
@@ -213,16 +232,6 @@ export const releaseCli = bc.command({
             })
 
             console.log('\x1B[;32m✅ published to jsr\x1B[;0m')
-        }
-
-        let tagName: string
-        if (!bumpVersionResult) {
-            // if this is a first release, use the max version as the tag name,
-            // because the bump did not happen
-            const versions = sort(workspace.map(pkg => asNonNull(pkg.json.version)))
-            tagName = `v${versions[versions.length - 1]}`
-        } else {
-            tagName = `v${bumpVersionResult.nextVersion}`
         }
 
         if (args.dryRun) {

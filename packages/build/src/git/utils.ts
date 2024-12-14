@@ -55,6 +55,14 @@ export async function getCurrentBranch(cwd?: string | URL): Promise<string> {
     return res.stdout.trim()
 }
 
+export async function gitTagExists(tag: string, cwd?: string | URL): Promise<boolean> {
+    const res = await exec(['git', 'tag', '--list', tag], {
+        cwd,
+        throwOnError: true,
+    })
+    return res.stdout.trim() !== ''
+}
+
 /**
  * find changed files between two commits
  *
