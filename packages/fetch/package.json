@@ -1,7 +1,7 @@
 {
     "name": "@fuman/fetch",
     "type": "module",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "tiny wrapper over fetch",
     "license": "MIT",
     "sideEffects": false,

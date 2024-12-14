@@ -1,7 +1,7 @@
 {
     "name": "@fuman/io",
     "type": "module",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "experimental i/o abstractions",
     "license": "MIT",
     "sideEffects": false,
