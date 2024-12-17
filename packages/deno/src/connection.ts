@@ -9,7 +9,10 @@ class BaseConnection<Conn extends Deno.Conn> implements IReadable, IWritable, IC
         readonly conn: Conn,
     ) {}
 
+    #closed = false
+
     async read(into: Uint8Array): Promise<number> {
+        if (this.#closed) throw new ConnectionClosedError()
         try {
             const read = await this.conn.read(into)
             // 0 or null don't mean the connection has ended, so we need to retry
@@ -29,7 +32,8 @@ class BaseConnection<Conn extends Deno.Conn> implements IReadable, IWritable, IC
                 || err instanceof Deno.errors.TimedOut
                 || err instanceof Deno.errors.NetworkUnreachable
             ) {
-                throw new ConnectionClosedError()
+                this.#closed = true
+                throw new ConnectionClosedError(err.message)
             } else {
                 throw err
             }
@@ -37,6 +41,7 @@ class BaseConnection<Conn extends Deno.Conn> implements IReadable, IWritable, IC
     }
 
     async write(bytes: Uint8Array): Promise<void> {
+        if (this.#closed) throw new ConnectionClosedError()
         try {
             let nwritten = 0
             while (nwritten < bytes.length) {
@@ -61,6 +66,8 @@ class BaseConnection<Conn extends Deno.Conn> implements IReadable, IWritable, IC
     }
 
     close(): void {
+        if (this.#closed) return
+        this.#closed = true
         try {
             this.conn.close()
         } catch (err) {
