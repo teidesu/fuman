@@ -31,10 +31,12 @@ abstract class WebSocketConnectionBase implements IClosable {
             this._cv.notify()
         })
         socket.addEventListener('close', (event) => {
+            if (this._error) return // already closed
             this._error = new WebSocketConnectionClosedError(event.code, event.reason)
             this._cv.notify()
         })
         socket.addEventListener('error', (event) => {
+            if (this._error) return // already closed
             this._error = eventToError(event)
             this._cv.notify()
         })
@@ -51,23 +53,20 @@ abstract class WebSocketConnectionBase implements IClosable {
     close(): void {
         this.socket?.close()
         this._error = new ConnectionClosedError()
+        this._cv.notify()
     }
 
     closeWithCode(code: number, reason?: string): void {
         this.socket.close(code, reason)
-        this._error = new ConnectionClosedError()
+        this._error = new WebSocketConnectionClosedError(code, reason ?? '')
+        this._cv.notify()
     }
 
     abstract onMessage(event: MessageEvent): void
 }
 
 export class WebSocketConnection extends WebSocketConnectionBase implements IConnection<string, never> {
-    #buffer: Bytes
-
-    constructor(socket: WebSocket) {
-        super(socket)
-        this.#buffer = Bytes.alloc(0)
-    }
+    #buffer = Bytes.alloc(0)
 
     onMessage(event: MessageEvent): void {
         if (typeof event.data === 'string') {
