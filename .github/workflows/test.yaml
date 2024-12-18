@@ -62,6 +62,8 @@ jobs:
     if: github.repository == 'teidesu/fuman' && github.actor != 'desu-bot'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v3
         with:
           node-version: '20.15'
@@ -73,5 +75,5 @@ jobs:
       - name: 'publish to pkg.pr.new'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx tsx packages/build/src/cli/main.ts cr
+        run: npx tsx packages/build/src/cli/main.ts cr --only-changed
 

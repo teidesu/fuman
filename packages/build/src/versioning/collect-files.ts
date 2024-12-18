@@ -31,6 +31,7 @@ async function defaultShouldInclude(file: ProjectChangedFile): Promise<boolean> 
 export async function findProjectChangedFiles(
     params: {
         params?: VersioningOptions
+        workspace?: WorkspacePackage[]
         root?: string | URL
         since: string
         until?: string
@@ -57,11 +58,9 @@ export async function findProjectChangedFiles(
 
     if (!changed.length) return []
 
-    const packages = await collectPackageJsons(root)
     // update paths to be relative to workspace root
-    for (const pkg of packages) {
-        pkg.path = relative(root, pkg.path)
-    }
+    const packages = (params.workspace ?? (await collectPackageJsons(root)))
+        .map(pkg => ({ ...pkg, path: relative(root, pkg.path) }))
 
     const files: ProjectChangedFile[] = []
 
@@ -94,6 +93,7 @@ export async function findProjectChangedFiles(
 export async function findProjectChangedPackages(
     params: {
         params?: VersioningOptions
+        workspace?: WorkspacePackage[]
         root?: string | URL
         since: string
         until?: string
