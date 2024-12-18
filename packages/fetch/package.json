@@ -10,15 +10,20 @@
         "./zod": "./src/addons/parse/adapters/zod.ts",
         "./valibot": "./src/addons/parse/adapters/valibot.ts",
         "./yup": "./src/addons/parse/adapters/yup.ts",
+        "./valita": "./src/addons/parse/adapters/valita.ts",
         "./tough": "./src/addons/tough-cookie.ts"
     },
     "peerDependencies": {
+        "@badrap/valita": ">=0.4.0",
         "tough-cookie": "^5.0.0 || ^4.0.0",
         "valibot": "^0.42.0",
         "yup": "^1.0.0",
         "zod": "catalog:"
     },
     "peerDependenciesMeta": {
+        "@badrap/valita": {
+            "optional": true
+        },
         "tough-cookie": {
             "optional": true
         },
@@ -36,6 +41,7 @@
         "@fuman/utils": "workspace:^"
     },
     "devDependencies": {
+        "@badrap/valita": "^0.4.2",
         "@fuman/io": "workspace:^",
         "tough-cookie": "^5.0.0",
         "valibot": "^0.42.0",
