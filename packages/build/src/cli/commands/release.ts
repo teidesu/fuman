@@ -1,9 +1,10 @@
 import type { WorkspacePackage } from '../../package-json/collect-package-jsons.js'
 import type { BumpVersionResult } from '../../versioning/bump-version.js'
-import { readFile } from 'node:fs/promises'
+import { createReadStream } from 'node:fs'
 import { basename } from 'node:path'
 import process from 'node:process'
-import { asNonNull, notImplemented, parallelMap } from '@fuman/utils'
+import { nodeReadableToWeb } from '@fuman/node'
+import { asNonNull, notImplemented } from '@fuman/utils'
 import { sort } from 'semver'
 import { createGithubRelease } from '../../git/github.js'
 import { getFirstCommit, getLatestTag, gitTagExists } from '../../git/utils.js'
@@ -277,10 +278,10 @@ export const releaseCli = bc.command({
                     tag: tagName,
                     name: tagName,
                     body: changelog,
-                    artifacts: await parallelMap(tarballs, async file => ({
+                    artifacts: tarballs.map(file => ({
                         name: basename(file),
                         type: 'application/gzip',
-                        body: await readFile(file),
+                        body: nodeReadableToWeb(createReadStream(file)),
                     })),
                 })
 

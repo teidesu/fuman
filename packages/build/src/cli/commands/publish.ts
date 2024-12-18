@@ -193,7 +193,7 @@ export async function publishPackages(params: {
             if (tar.exitCode !== 0) {
                 console.error(tar.stderr)
             } else {
-                tarballs.push(tar.stdout.trim())
+                tarballs.push(join(fullDistDir, tar.stdout.trim()))
             }
         }
     }
