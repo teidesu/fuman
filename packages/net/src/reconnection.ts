@@ -1,8 +1,8 @@
+import type { IClosable } from '@fuman/io'
+
 import type { MaybePromise, UnsafeMutable } from '@fuman/utils'
 
-import type { ConnectFunction, IConnection } from './types.js'
 import { Deferred, timers } from '@fuman/utils'
-
 import { ConnectionClosedError } from './errors.js'
 
 interface ReconnectionState {
@@ -43,14 +43,14 @@ function defaultOnError(err: Error): OnErrorAction {
     return err instanceof ConnectionClosedError ? 'reconnect' : 'close'
 }
 
-export class PersistentConnection<ConnectAddress, Connection extends IConnection<unknown>> {
+export class PersistentConnection<ConnectAddress, Connection extends IClosable> {
     #state: UnsafeMutable<ReconnectionState> = {
         previousWait: null,
         lastError: null,
         consequentFails: 0,
     }
 
-    #connect: ConnectFunction<ConnectAddress, Connection>
+    #connect: (address: ConnectAddress) => Promise<Connection>
 
     #lastAddress?: ConnectAddress
     #connection?: Connection
@@ -64,7 +64,7 @@ export class PersistentConnection<ConnectAddress, Connection extends IConnection
     #closed?: Deferred<void>
 
     constructor(readonly params: {
-        connect: ConnectFunction<ConnectAddress, Connection>
+        connect: (address: ConnectAddress) => Promise<Connection>
         strategy?: ReconnectionStrategy
 
         /**
@@ -238,7 +238,7 @@ export class PersistentConnection<ConnectAddress, Connection extends IConnection
         return this.#closed.promise
     }
 
-    async changeTransport(connect: ConnectFunction<ConnectAddress, Connection>): Promise<void> {
+    async changeTransport(connect: (address: ConnectAddress) => Promise<Connection>): Promise<void> {
         this.#connect = connect
         const addr = this.#lastAddress
 
