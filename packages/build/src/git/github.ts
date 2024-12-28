@@ -56,6 +56,12 @@ export async function createGithubRelease(params: {
                 body: file.body,
                 validateResponse: res => res.status === 201,
             })
+        }, {
+            onError: (item, idx, err) => {
+                console.error('failed to upload artifact:', item.name)
+                console.error(err)
+                return 'ignore'
+            },
         })
     }
 
