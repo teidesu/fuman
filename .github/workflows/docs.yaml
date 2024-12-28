@@ -42,7 +42,7 @@ jobs:
   # Deployment job
   deploy:
     # only run on releases
-    # if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.actor == 'desu-bot'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.actor == 'desu-bot'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
