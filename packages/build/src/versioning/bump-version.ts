@@ -12,7 +12,7 @@ import detectIndent from 'detect-indent'
 import { gt, inc, parse, satisfies } from 'semver'
 
 import { getCommitsBetween, parseConventionalCommit } from '../git/utils.js'
-import { collectVersions } from '../package-json/utils.js'
+import { collectVersions, findRootPackage } from '../package-json/utils.js'
 import { findProjectChangedPackages } from './collect-files.js'
 
 export interface BumpVersionPackage {
@@ -64,6 +64,8 @@ export async function bumpVersion(params: {
     params?: VersioningOptions
     /** whether to not actually write the files */
     dryRun?: boolean
+    /** whether to also bump version of the root package.json */
+    withRoot?: boolean
 }): Promise<BumpVersionResult> {
     const {
         workspace,
@@ -71,10 +73,15 @@ export async function bumpVersion(params: {
         cwd = process.cwd(),
         since,
         dryRun = false,
+        withRoot = false,
     } = params
 
+    const workspaceWithoutRoot = workspace.filter(pkg => !pkg.root)
+
     let maxVersion: string | null = null
-    for (const pkg of workspace) {
+    for (const pkg of workspaceWithoutRoot) {
+        if (pkg.root) continue
+
         const version = asNonNull(pkg.json.version)
 
         if (pkg.json.fuman?.ownVersioning) {
@@ -91,8 +98,9 @@ export async function bumpVersion(params: {
     }
 
     const changedPackages = all
-        ? workspace
+        ? workspaceWithoutRoot
         : await findProjectChangedPackages({
+            workspace: workspaceWithoutRoot,
             root: cwd,
             since,
             params: params.params,
@@ -190,7 +198,12 @@ export async function bumpVersion(params: {
         }
     }
 
-    for (const { package: pkg } of result) {
+    const packagesToBump = [...result.map(it => it.package)]
+    if (withRoot) {
+        packagesToBump.push(findRootPackage(workspace))
+    }
+
+    for (const pkg of packagesToBump) {
         if (!dryRun) {
             const pkgJsonPath = join(pkg.path, 'package.json')
             const pkgJsonText = await fsp.readFile(pkgJsonPath, 'utf8')

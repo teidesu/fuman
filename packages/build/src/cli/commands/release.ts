@@ -83,12 +83,13 @@ export const releaseCli = bc.command({
         let bumpVersionResult: BumpVersionResult | undefined
         if (prevTag != null) {
             bumpVersionResult = await bumpVersion({
-                workspace,
+                workspace: workspaceWithRoot,
                 since: prevTag ?? await getFirstCommit(root),
                 type: args.kind === 'auto' ? undefined : args.kind,
                 cwd: root,
                 params: config?.versioning,
                 dryRun: args.dryRun,
+                withRoot: true,
             })
 
             changedPackages = bumpVersionResult.changedPackages.map(pkg => pkg.package)
