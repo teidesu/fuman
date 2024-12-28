@@ -47,7 +47,7 @@ export async function createGithubRelease(params: {
 
     if (params.artifacts != null && params.artifacts.length > 0) {
         await asyncPool(params.artifacts, async (file) => {
-            await ffetch(`/repos/${params.repo}/releases/${release.id}/assets`, {
+            await ffetch(`https://uploads.github.com/repos/${params.repo}/releases/${release.id}/assets`, {
                 method: 'POST',
                 query: { name: file.name },
                 headers: {
