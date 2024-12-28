@@ -1,7 +1,7 @@
 {
     "name": "@fuman/build",
     "type": "module",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "description": "utils for building packages and managing monorepos",
     "license": "MIT",
     "sideEffects": false,
