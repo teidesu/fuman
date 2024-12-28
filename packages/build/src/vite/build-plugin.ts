@@ -8,7 +8,8 @@ import * as fsp from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import process from 'node:process'
 
-import { asNonNull, assertStartsWith, deepMerge, type MaybeArray, type MaybePromise } from '@fuman/utils'
+import { asNonNull, assertStartsWith, deepMerge, type MaybeArray, type MaybePromise, parallelMap } from '@fuman/utils'
+import { glob } from 'tinyglobby'
 import { loadBuildConfig } from '../misc/_config.js'
 import { directoryExists, fileExists, tryCopy } from '../misc/fs.js'
 import { normalizeFilePath } from '../misc/path.js'
@@ -280,20 +281,18 @@ export async function fumanBuild(params: {
                     }
                 }
 
-                if (buildCjs && (await directoryExists(join(buildDir, 'chunks/cjs')))) {
-                    // write {"type":"commonjs"} into chunks/cjs so that node doesn't complain
-                    const cjsFile = join(buildDir, 'chunks/cjs/package.json')
-                    await fsp.writeFile(cjsFile, JSON.stringify({ type: 'commonjs' }))
+                if (buildCjs) {
+                    if (await directoryExists(join(buildDir, 'chunks/cjs'))) {
+                        // write {"type":"commonjs"} into chunks/cjs so that node doesn't complain
+                        const cjsFile = join(buildDir, 'chunks/cjs/package.json')
+                        await fsp.writeFile(cjsFile, JSON.stringify({ type: 'commonjs' }))
+                    }
 
                     // generate .d.cts files
-                    for (const name of Object.keys(entrypoints)) {
-                        const dTsFile = join(buildDir, `${name}.d.ts`)
-                        if (!(await fileExists(dTsFile))) {
-                            continue
-                        }
-
-                        await fsp.cp(dTsFile, dTsFile.replace(/\.d\.ts$/, '.d.cts'))
-                    }
+                    await parallelMap(await glob('**/*.d.ts', { cwd: buildDir }), async (file) => {
+                        const fullPath = join(buildDir, file)
+                        await fsp.cp(fullPath, fullPath.replace(/\.d\.ts$/, '.d.cts'))
+                    })
                 }
 
                 await params.finalize?.(hookContext)
