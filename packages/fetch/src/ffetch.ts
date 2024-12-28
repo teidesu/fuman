@@ -29,7 +29,12 @@ export interface FfetchOptions {
      */
     readBodyOnError?: boolean
 
-    /** base url to be prepended to the url */
+    /**
+     * base url to be prepended to the url
+     *
+     * this base url is **always** treated as a "base path", i.e. the path passed to `ffetch()`
+     * will always be appended to it (unlike the `new URL()`, which has ambiguous slash semantics)
+     */
     baseUrl?: string
 
     /** body to be passed to fetch() */
@@ -331,8 +336,18 @@ export function createFfetch<
             fetcher = composeMiddlewares(options.middlewares, wrappedFetch)
         }
 
-        if (baseOptions?.baseUrl != null || options.baseUrl != null) {
-            url = new URL(url, options.baseUrl ?? baseOptions?.baseUrl).href
+        if ((baseOptions?.baseUrl != null || options.baseUrl != null) && !url.includes('://')) {
+            // eslint-disable-next-line ts/no-non-null-assertion
+            const baseUrl = (options.baseUrl ?? baseOptions?.baseUrl)!
+
+            let prepend = baseUrl
+            if (prepend[prepend.length - 1] !== '/') {
+                prepend += '/'
+            }
+            if (url[0] === '/') {
+                url = url.slice(1)
+            }
+            url = prepend + url
         }
 
         let init: RequestInit

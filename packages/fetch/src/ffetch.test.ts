@@ -152,12 +152,44 @@ describe('ffetch', () => {
             fetch: fetch_,
             baseUrl: 'https://base.com',
         })
-        const res = await ffetch('/path')
+
+        await ffetch('/path')
+        await ffetch('path')
+        await ffetch('https://not-base.com')
+        await ffetch('/')
 
         const req = fetch_.mock.calls[0][0] as Request
         expect(req.url).toBe('https://base.com/path')
+        const req2 = fetch_.mock.calls[1][0] as Request
+        expect(req2.url).toBe('https://base.com/path')
+        const req3 = fetch_.mock.calls[2][0] as Request
+        expect(req3.url).toBe('https://not-base.com/')
+        const req4 = fetch_.mock.calls[3][0] as Request
+        expect(req4.url).toBe('https://base.com/')
+    })
 
-        expect(await res.text()).toBe('OK')
+    it('should handle baseUrl with a path', async () => {
+        const ffetch = createFfetch({
+            fetch: fetch_,
+            baseUrl: 'https://base.com/api',
+        })
+        const ffetchTrailing = createFfetch({
+            fetch: fetch_,
+            baseUrl: 'https://base.com/api/',
+        })
+        await ffetch('/v1/users')
+        await ffetch('v1/users')
+        await ffetchTrailing('/v1/users')
+        await ffetchTrailing('v1/users')
+
+        const req = fetch_.mock.calls[0][0] as Request
+        expect(req.url).toBe('https://base.com/api/v1/users')
+        const req2 = fetch_.mock.calls[1][0] as Request
+        expect(req2.url).toBe('https://base.com/api/v1/users')
+        const req3 = fetch_.mock.calls[2][0] as Request
+        expect(req3.url).toBe('https://base.com/api/v1/users')
+        const req4 = fetch_.mock.calls[3][0] as Request
+        expect(req4.url).toBe('https://base.com/api/v1/users')
     })
 
     it('should prefer baseUrl from params', async () => {
