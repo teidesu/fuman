@@ -1,6 +1,7 @@
+import type { UnsafeMutable } from '@fuman/utils'
 import type { CombineAddons, FetchLike, FfetchMiddleware } from './_types.js'
 import type { FetchAddonCtx, FfetchAddon } from './addons/types.js'
-import { composeMiddlewares, unknownToError } from '@fuman/utils'
+import { composeMiddlewares, unknownToError, utf8 } from '@fuman/utils'
 
 export interface FfetchOptions {
     /**
@@ -19,6 +20,14 @@ export interface FfetchOptions {
      * @default true
      */
     validateResponse?: false | ((res: Response) => boolean | Promise<boolean>)
+
+    /**
+     * whether to read the body of the response on HttpError (i.e. when `validateResponse` returns false).
+     * useful for debugging, but may be undesirable in some cases.
+     *
+     * @default true
+     */
+    readBodyOnError?: boolean
 
     /** base url to be prepended to the url */
     baseUrl?: string
@@ -114,6 +123,9 @@ export interface Ffetch<RequestMixin, ResponseMixin> {
  * or `validateResponse` returns false
  */
 export class HttpError extends Error {
+    readonly body: Uint8Array | null = null
+    readonly bodyText: string | null = null
+
     constructor(readonly response: Response) {
         super(`HTTP Error ${response.status} ${response.statusText}`)
     }
@@ -178,14 +190,27 @@ class FfetchResultImpl implements FfetchResult {
     async #fetchAndValidate(): Promise<Response> {
         const res = await this.#fetch(new Request(this._url, this._init))
 
+        let err: HttpError | null = null
         if (this._options.validateResponse === undefined || this._options.validateResponse !== false) {
             if (typeof this._options.validateResponse === 'function') {
                 if (!(await this._options.validateResponse(res))) {
-                    throw new HttpError(res)
+                    err = new HttpError(res)
                 }
             } else if (!res.ok) {
-                throw new HttpError(res)
+                err = new HttpError(res)
             }
+        }
+
+        if (err != null) {
+            if (this._options.readBodyOnError !== false) {
+                try {
+                    ;(err as UnsafeMutable<HttpError>).body = new Uint8Array(await res.arrayBuffer())
+                    // eslint-disable-next-line ts/no-non-null-assertion
+                    ;(err as UnsafeMutable<HttpError>).bodyText = utf8.decoder.decode(err.body!)
+                } catch {}
+            }
+
+            throw err
         }
 
         return res

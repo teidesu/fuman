@@ -309,4 +309,38 @@ describe('ffetch', () => {
             validateResponse: () => false,
         }).text()).rejects.toThrow(HttpError)
     })
+
+    it('should read the body on error if readBodyOnError is true', async () => {
+        fetch_.mockImplementation(async () => new Response('Not OK', { status: 403 }))
+
+        let err: unknown
+        try {
+            await ffetch('https://example.com', {
+                readBodyOnError: true,
+            }).text()
+        } catch (e) {
+            err = e
+        }
+
+        expect(err).toBeInstanceOf(HttpError)
+        expect((err as HttpError).body).toEqual(new Uint8Array([78, 111, 116, 32, 79, 75]))
+        expect((err as HttpError).bodyText).toEqual('Not OK')
+    })
+
+    it('should not read the body on error if readBodyOnError is false', async () => {
+        fetch_.mockImplementation(async () => new Response('Not OK', { status: 403 }))
+
+        let err: unknown
+        try {
+            await ffetch('https://example.com', {
+                readBodyOnError: false,
+            }).text()
+        } catch (e) {
+            err = e
+        }
+
+        expect(err).toBeInstanceOf(HttpError)
+        expect((err as HttpError).body).toBeNull()
+        expect((err as HttpError).bodyText).toBeNull()
+    })
 })
