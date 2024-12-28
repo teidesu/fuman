@@ -7,15 +7,17 @@ export const ffetchDefaultAddons: [
     FfetchAddon<ffetchAddons.QueryAddon, object>,
     FfetchAddon<ffetchAddons.FormAddon, object>,
     FfetchAddon<ffetchAddons.MultipartAddon, object>,
+    FfetchAddon<ffetchAddons.RetryAddon, object>,
 ] = [
     /* #__PURE__ */ ffetchAddons.timeout(),
     /* #__PURE__ */ ffetchAddons.query(),
     /* #__PURE__ */ ffetchAddons.form(),
     /* #__PURE__ */ ffetchAddons.multipart(),
+    /* #__PURE__ */ ffetchAddons.retry(),
 ]
 
 /**
- * the default ffetch instance with reasonable default set of addons
+ * the default ffetch instance with a reasonable default set of addons
  *
  * you can use this as a base to create your project-specific fetch instance,
  * or use this as is.
@@ -39,7 +41,8 @@ export const ffetchBase: Ffetch<
     ffetchAddons.TimeoutAddon &
     ffetchAddons.QueryAddon &
     ffetchAddons.FormAddon &
-    ffetchAddons.MultipartAddon,
+    ffetchAddons.MultipartAddon &
+    ffetchAddons.RetryAddon,
     object
 > = /* #__PURE__ */ createFfetch({
     addons: ffetchDefaultAddons,

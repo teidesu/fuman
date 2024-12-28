@@ -64,6 +64,10 @@ export interface RetryOptions {
     returnLastResponse?: boolean
 }
 
+export interface RetryAddon {
+    retry?: RetryOptions | false
+}
+
 function defaultRetryDelay(retryCount: number) {
     if (retryCount >= 5) return 5000
     return retryCount * 1000
@@ -116,7 +120,7 @@ function retryMiddleware(options: RetryOptions): FfetchMiddleware {
     }
 }
 
-export function retry(): FfetchAddon<{ retry?: RetryOptions | false }, object> {
+export function retry(): FfetchAddon<RetryAddon, object> {
     return {
         beforeRequest: (ctx) => {
             if (ctx.options.retry != null || ctx.baseOptions.retry != null) {
