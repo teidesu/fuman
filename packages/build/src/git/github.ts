@@ -14,14 +14,13 @@ export async function createGithubRelease(params: {
     artifacts?: {
         name: string
         type: string
-        body: BodyInit
+        body: Uint8Array
     }[]
     apiUrl?: string
 }): Promise<number> {
     const ffetch = ffetchBase.extend({
         baseUrl: params.apiUrl ?? 'https://api.github.com',
         addons: [
-            ffetchAddons.retry(),
             ffetchAddons.parser(ffetchZodAdapter()),
         ],
         headers: {
@@ -52,6 +51,7 @@ export async function createGithubRelease(params: {
                 query: { name: file.name },
                 headers: {
                     'Content-Type': file.type,
+                    'Content-Length': file.body.length.toString(),
                 },
                 body: file.body,
                 validateResponse: res => res.status === 201,
