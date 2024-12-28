@@ -70,7 +70,7 @@ class FumanTypedocReader implements td.OptionsReader {
                 if (data?.excludePackages?.includes(pkgName)) continue
                 // entrypoints are generated from .exports, so if there aren't any we can't generate docs for the package
                 // however user might want to generate docs for the package even if there are no exports, e.g. by manually setting entrypoints
-                if (pkg.json.exports != null && !data?.includePackages?.includes(pkgName)) continue
+                if (pkg.json.exports == null && !data?.includePackages?.includes(pkgName)) continue
 
                 entrypoints.push(pkg.path)
             }

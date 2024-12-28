@@ -10,4 +10,4 @@ basically a collection of utilities for my own use, though feel free to use, con
 
 ## usage
 
-good luck. api reference coming soon™
+good luck. [api reference](https://teidesu.github.io/fuman/)
