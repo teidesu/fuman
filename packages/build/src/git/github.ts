@@ -36,17 +36,20 @@ export async function createGithubRelease(params: {
             tag_name: params.tag,
             name: params.name,
             body: params.body,
-            draft: params.draft,
-            prerelease: params.prerelease,
+            draft: params.draft ?? false,
+            prerelease: params.prerelease ?? false,
         },
         validateResponse: res => res.status === 201,
     }).parsedJson(z.object({
         id: z.number(),
+        upload_url: z.string(),
     }))
+
+    const uploadUrl = release.upload_url.split('{')[0]
 
     if (params.artifacts != null && params.artifacts.length > 0) {
         await asyncPool(params.artifacts, async (file) => {
-            await ffetch(`https://uploads.github.com/repos/${params.repo}/releases/${release.id}/assets`, {
+            await ffetch(uploadUrl, {
                 method: 'POST',
                 query: { name: file.name },
                 headers: {
