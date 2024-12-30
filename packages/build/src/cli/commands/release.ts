@@ -86,6 +86,7 @@ export const releaseCli = bc.command({
                 workspace: workspaceWithRoot,
                 since: prevTag ?? await getFirstCommit(root),
                 type: args.kind === 'auto' ? undefined : args.kind,
+                all: args.kind !== 'auto',
                 cwd: root,
                 params: config?.versioning,
                 dryRun: args.dryRun,
