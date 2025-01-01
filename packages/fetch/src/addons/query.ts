@@ -34,7 +34,7 @@ export function query(options: QueryAddonOptions = {}): FfetchAddon<QueryAddon, 
                         ...ctx.baseOptions.query,
                         ...ctx.options.query,
                     }
-                    : ctx.options.query
+                    : ctx.options.query ?? ctx.baseOptions.query
 
                 ctx.url = serialize(obj ?? {}, ctx.url)
             }
