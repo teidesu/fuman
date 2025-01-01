@@ -234,7 +234,7 @@ class FfetchResultImpl implements FfetchResult {
             // eslint-disable-next-line ts/no-non-null-assertion
             const stack = this.#stack!.split('\n').slice(2).join('\n')
             err.stack = `${err.name}: ${err.message}\n${stack}`
-            err.cause = { message: origMessage, stack: origStack }
+            err.cause = { message: origMessage, stack: origStack, cause: err.cause }
 
             throw err
         }
