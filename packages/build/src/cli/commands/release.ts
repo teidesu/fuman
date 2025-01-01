@@ -233,6 +233,7 @@ export const releaseCli = bc.command({
                 '--quiet',
                 '--allow-dirty',
                 ...(args.dryRun ? ['--dry-run'] : []),
+                ...(args.jsrToken != null ? ['--token', args.jsrToken] : []),
                 ...(args.jsrPublishArgs?.split(' ') ?? []),
             ], {
                 env: {
