@@ -29,6 +29,9 @@ export const releaseCli = bc.command({
         withGithubRelease: bc.boolean('with-github-release')
             .desc('whether to create a github release (requires GITHUB_TOKEN env var). if false, will only create a commit with the release notes')
             .default(false),
+        gitExtraOrigins: bc.string('git-extra-origins')
+            .desc('extra git origins to push to (e.g. for mirrors). note that these origins will be force-pushed to'),
+        // ...because for some reason forgejo fails to properly push to the mirrors on push :/
         githubToken: bc.string('github-token')
             .desc('github token to use for creating a release (defaults to GITHUB_TOKEN env var)'),
         githubRepo: bc.string('github-repo')
@@ -249,11 +252,35 @@ export const releaseCli = bc.command({
                 throwOnError: true,
             })
 
-            await exec(['git', 'tag', tagName], {
+            await exec(['git', 'tag', tagName, '-m', tagName], {
                 cwd: root,
                 stdio: 'inherit',
                 throwOnError: true,
             })
+        }
+
+        if (!args.dryRun) {
+            // we need to push *before* creating the release, because otherwise github will create a tag on its own
+            await exec(['git', 'push', '--follow-tags'], {
+                cwd: root,
+                stdio: 'inherit',
+                throwOnError: true,
+            })
+
+            if (args.gitExtraOrigins != null) {
+                for (const origin of args.gitExtraOrigins.split(',')) {
+                    await exec(['git', 'push', origin, '--force'], {
+                        cwd: root,
+                        stdio: 'inherit',
+                        throwOnError: true,
+                    })
+                    await exec(['git', 'push', origin, '--force', '--tags'], {
+                        cwd: root,
+                        stdio: 'inherit',
+                        throwOnError: true,
+                    })
+                }
+            }
         }
 
         if (args.withGithubRelease) {
@@ -288,14 +315,6 @@ export const releaseCli = bc.command({
 
                 console.log(`\x1B[;32m✅github release created: https://github.com/${repo}/releases/tag/${tagName}\x1B[;0m`)
             }
-        }
-
-        if (!args.dryRun) {
-            await exec(['git', 'push', '--follow-tags'], {
-                cwd: root,
-                stdio: 'inherit',
-                throwOnError: true,
-            })
         }
 
         console.log('')
