@@ -7,6 +7,7 @@ import * as fsp from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import process from 'node:process'
 import { asyncPool } from '@fuman/utils'
+import picomatch from 'picomatch'
 import { glob } from 'tinyglobby'
 import ts from 'typescript'
 import { loadBuildConfig } from '../misc/_config.js'
@@ -90,15 +91,22 @@ export async function generateDenoWorkspace(params: {
 
         const srcDir = join(packageRoot, normalizeFilePath(packageConfigJsr?.sourceDir ?? rootConfig?.sourceDir ?? ''))
         const excludeFiles = mergeArrays(rootConfig?.exclude, packageConfigJsr?.exclude)
+        const exludeFilesPico = picomatch(excludeFiles)
 
         // copy source files
-        await fsp.cp(srcDir, packageOutRoot, { recursive: true })
+        await fsp.cp(srcDir, packageOutRoot, {
+            recursive: true,
+            filter(source) {
+                if (exludeFilesPico(relative(srcDir, source))) {
+                    return false
+                }
+
+                return true
+            },
+        })
 
         const printer = ts.createPrinter()
-        const tsFiles = await glob('**/*.ts', {
-            cwd: packageOutRoot,
-            ignore: excludeFiles,
-        })
+        const tsFiles = await glob('**/*.ts', { cwd: packageOutRoot })
 
         // process source files
         // once @typescript/api-extractor works properly with multiple entrypoints, we could probably
@@ -174,7 +182,7 @@ export async function generateDenoWorkspace(params: {
         })
 
         const hookContext: BuildHookContext = {
-            outDir: '',
+            outDir: packageOutRoot,
             packageDir: packageOutRoot,
             packageName: pkg.json.name,
             packageJson: pkg.json,
@@ -202,6 +210,9 @@ export async function generateDenoWorkspace(params: {
             packageJsonOrig.version = fixedVersion
         }
 
+        hookContext.packageJson = packageJson
+        await packageConfig?.finalizePackageJson?.(hookContext)
+
         const denoJson = packageJsonToDeno({
             packageJson,
             packageJsonOrig,
@@ -210,6 +221,8 @@ export async function generateDenoWorkspace(params: {
             baseDir: relative(packageRoot, srcDir),
             exclude: excludeFiles,
         })
+
+        packageConfig?.jsr?.finalizeDenoJson?.(hookContext, denoJson)
 
         await fsp.writeFile(join(packageOutRoot, 'deno.json'), JSON.stringify(denoJson, null, 4))
 
@@ -220,9 +233,20 @@ export async function generateDenoWorkspace(params: {
         for (const file of mergeArrays(rootConfig?.copyPackageFiles, packageConfig?.jsr?.copyPackageFiles, ['README.md'])) {
             await tryCopy(join(packageRoot, file), join(packageOutRoot, file), { recursive: true })
         }
+
+        await packageConfig?.jsr?.finalize?.(hookContext)
     }
 
     await fsp.writeFile(join(outDir, 'deno.json'), JSON.stringify(rootDenoJson, null, 4))
+
+    await rootConfig?.finalize?.({
+        outDir,
+        packageDir: outDir,
+        packageName: '<jsr-root>',
+        packageJson: {},
+        jsr: true,
+        typedoc: false,
+    })
 
     if (rootConfig?.dryRun !== false || withDryRun) {
         await exec(['deno', 'publish', '--dry-run', '-q', '--allow-dirty'], {
