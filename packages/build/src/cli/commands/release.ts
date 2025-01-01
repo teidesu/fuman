@@ -133,6 +133,15 @@ export const releaseCli = bc.command({
             }
         }
 
+        // verify the tag matches one of the packages versions
+        if (!changedPackages.some(pkg => pkg.json.version === tagName.replace(/^v/, ''))) {
+            console.log(`❗ tag ${tagName} does not match any of the package versions. did the previous release complete successfully?`)
+            console.log('❗ if so, please verify versions in package.json, tag the commit release and try again')
+            if (!args.dryRun) {
+                process.exit(1)
+            }
+        }
+
         console.log('')
         console.log('📝 generating changelog...')
 
