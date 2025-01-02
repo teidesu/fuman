@@ -153,8 +153,6 @@ export async function bumpVersion(params: {
     const result: BumpVersionPackage[] = []
 
     for (const pkg of changedPackages) {
-        if (pkg.json.fuman?.ownVersioning) continue
-
         result.push({
             package: pkg,
             prevVersion: asNonNull(pkg.json.version),
@@ -204,6 +202,7 @@ export async function bumpVersion(params: {
     }
 
     for (const pkg of packagesToBump) {
+        if (pkg.json.fuman?.ownVersioning) continue
         if (!dryRun) {
             const pkgJsonPath = join(pkg.path, 'package.json')
             const pkgJsonText = await fsp.readFile(pkgJsonPath, 'utf8')
