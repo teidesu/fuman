@@ -1,6 +1,7 @@
 import type { IWritable } from '../types.js'
 
 import type { IFrameEncoder } from './types.js'
+import { u8 } from '@fuman/utils'
 import { Bytes } from '../bytes.js'
 
 /** options for {@link FramedWriter} */
@@ -40,8 +41,11 @@ export class FramedWriter<Frame = Uint8Array> {
         const buffer = this.#buffer.result()
 
         if (buffer.length > 0) {
+            // since we are reusing the buffer, we need to make a copy,
+            // otherwise the buffer might get mutated before it's written to the underlying stream
+            const copy = u8.allocWith(buffer)
             this.#buffer.reset()
-            await this.#writable.write(buffer)
+            await this.#writable.write(copy)
         }
     }
 }
