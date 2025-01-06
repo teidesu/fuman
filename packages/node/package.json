@@ -1,7 +1,7 @@
 {
     "name": "@fuman/node",
     "type": "module",
-    "version": "0.0.8",
+    "version": "0.0.9",
     "description": "node-specific utilities",
     "license": "MIT",
     "sideEffects": false,
