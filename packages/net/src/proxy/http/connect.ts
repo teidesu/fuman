@@ -24,7 +24,7 @@ export async function performHttpProxyHandshake(
     // and then read by 4 bytes at a time until we find \r\n\r\n
     const res1 = await read.async.exactly(reader, 12)
 
-    if (!typed.equal(res1, HTTP1_0_OK) || !typed.equal(res1, HTTP1_1_OK)) {
+    if (!typed.equal(res1, HTTP1_0_OK) && !typed.equal(res1, HTTP1_1_OK)) {
         throw new HttpProxyConnectionError(
             proxy,
             `Invalid HTTP response: ${utf8.decoder.decode(res1)}`,

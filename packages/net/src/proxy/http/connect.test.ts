@@ -36,6 +36,22 @@ describe('performSocksHandshake', () => {
         expect(rx.available).toBe(0)
     })
 
+    it('should handle simple response with http/1.0', async () => {
+        const tx = Bytes.alloc()
+        const rx = Bytes.from(
+            utf8.encoder.encode([
+                'HTTP/1.0 200 Connection established',
+                '',
+                '',
+            ].join('\r\n')),
+        )
+
+        await performHttpProxyHandshake(rx, tx, proxy, endpoint)
+
+        expect(tx.result()).toEqual(buildConnectRequest(proxy, endpoint))
+        expect(rx.available).toBe(0)
+    })
+
     it('should handle response with headers', async () => {
         const tx = Bytes.alloc()
         const rx = Bytes.from(
