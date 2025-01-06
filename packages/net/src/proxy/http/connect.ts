@@ -6,6 +6,7 @@ import { typed, u8, utf8 } from '@fuman/utils'
 import { buildConnectRequest } from './_protocol.js'
 import { HttpProxyConnectionError, type HttpProxySettings } from './types.js'
 
+const HTTP1_0_OK = /* #__PURE__ */ utf8.encoder.encode('HTTP/1.0 200')
 const HTTP1_1_OK = /* #__PURE__ */ utf8.encoder.encode('HTTP/1.1 200')
 const CR = /* #__PURE__ */ '\r'.charCodeAt(0)
 const LF = /* #__PURE__ */ '\n'.charCodeAt(0)
@@ -18,12 +19,12 @@ export async function performHttpProxyHandshake(
 ): Promise<void> {
     await writer.write(buildConnectRequest(proxy, destination))
 
-    // minimum valid response is "HTTP/1.1 200\r\n\r\n"
+    // minimum valid response is "HTTP/1.0 200\r\n\r\n"
     // we can safely read 12 bytes at first, validate them
     // and then read by 4 bytes at a time until we find \r\n\r\n
     const res1 = await read.async.exactly(reader, 12)
 
-    if (!typed.equal(res1, HTTP1_1_OK)) {
+    if (!typed.equal(res1, HTTP1_0_OK) && !typed.equal(res1, HTTP1_1_OK)) {
         throw new HttpProxyConnectionError(
             proxy,
             `Invalid HTTP response: ${utf8.decoder.decode(res1)}`,
