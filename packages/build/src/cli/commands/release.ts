@@ -251,6 +251,8 @@ export const releaseCli = bc.command({
         if (args.dryRun) {
             console.log('dry run, skipping release commit and tag')
         } else {
+            await config?.versioning?.beforeReleaseCommit?.(workspaceWithRoot)
+
             let message = `chore(release): ${tagName}`
             if (!args.withGithubRelease) {
                 message += `\n\n${changelog}`

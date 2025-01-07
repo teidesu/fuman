@@ -2,6 +2,7 @@ import type { MaybePromise } from '@fuman/utils'
 
 import type { CommitInfo, ConventionalCommit } from '../git/utils.js'
 
+import type { WorkspacePackage } from '../package-json/collect-package-jsons.js'
 import type { ProjectChangedFile } from './collect-files.js'
 
 export interface ChangelogGeneratorParams {
@@ -36,4 +37,12 @@ export interface VersioningOptions {
     shouldInclude?: (file: ProjectChangedFile) => MaybePromise<boolean>
 
     changelog?: ChangelogGeneratorParams
+
+    /**
+     * hook that is called after the versions were bumped and pushed to registries,
+     * but before the release commit is created and pushed to git.
+     *
+     * can be used to add something to the release commit
+     */
+    beforeReleaseCommit?: (workspace: WorkspacePackage[]) => MaybePromise<void>
 }
