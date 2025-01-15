@@ -93,7 +93,7 @@ export const PackageJsonSchema: z.AnyZodObject = z.object({
     engines: z.record(z.string()),
     pnpm: z.object({
         overrides: z.record(z.string()),
-    }),
+    }).partial(),
     fuman: z.object({
         jsr: z.union([
             z.literal('skip'),
