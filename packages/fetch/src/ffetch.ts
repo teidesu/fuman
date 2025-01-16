@@ -268,6 +268,10 @@ class FfetchResultImpl implements FfetchResult {
         return res.arrayBuffer()
     }
 
+    async bytes(): Promise<Uint8Array> {
+        return new Uint8Array(await this.arrayBuffer())
+    }
+
     async blob(): Promise<Blob> {
         this._headers ??= {}
         this._headers.Accept ??= OCTET_STREAM_CONTENT_TYPE
