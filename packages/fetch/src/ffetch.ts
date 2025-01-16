@@ -119,7 +119,7 @@ export interface Ffetch<RequestMixin, ResponseMixin> {
             response: object
         } = CombineAddons<Addons>,
     >(
-        baseOptions: FfetchBaseOptions<Addons> & Combined['request']
+        baseOptions: FfetchBaseOptions<Addons> & RequestMixin & Combined['request']
     ) => Ffetch<RequestMixin & Combined['request'], ResponseMixin & Combined['response']>
 }
 
