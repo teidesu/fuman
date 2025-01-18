@@ -73,7 +73,10 @@ export async function validateWorkspaceDeps(params: {
                 }
 
                 for (const [pkgName, pkgDepVersions] of Object.entries(versions[name])) {
-                    if (!satisfies(version, pkgDepVersions)) {
+                    if (
+                        (pkgDepVersions.match(/^https?:\/\//) && version !== pkgDepVersions)
+                        || !satisfies(version, pkgDepVersions)
+                    ) {
                         errors.push({
                             package: pj.name,
                             dependency: name,
@@ -103,6 +106,8 @@ export const validateWorkspaceDepsCli = bc.command({
         noSkipWorkspaceDeps: bc.boolean('no-skip-workspace-deps')
             .desc('whether to not skip validating dependencies of other workspace packages'),
         root: bc.string().desc('path to the root of the workspace (default: cwd)'),
+        withErrorCode: bc.boolean('with-error-code')
+            .desc('whether to exit with a non-zero code if there are mismatches'),
     },
     handler: async (args) => {
         const errors = await validateWorkspaceDeps({
@@ -115,6 +120,9 @@ export const validateWorkspaceDepsCli = bc.command({
             console.error('⚠️ Found external dependencies mismatch:')
             for (const error of errors) {
                 console.error(`  - at ${error.package}: ${error.at} has ${error.dependency}@${error.version}, but ${error.otherPackage} has @${error.otherVersion}`)
+            }
+            if (args.withErrorCode) {
+                process.exit(1)
             }
         } else {
             console.log('✅ All external dependencies match!')
