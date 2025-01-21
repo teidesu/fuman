@@ -1,27 +1,72 @@
 import * as fsp from 'node:fs/promises'
-import path from 'node:path'
+import path, { extname } from 'node:path'
 
 import * as jsyaml from 'js-yaml'
+import * as json5 from 'json5'
+
+import { fileExists } from '../misc/fs.js'
 
 import { normalizeFilePath } from '../misc/path.js'
-
 import { type PackageJson, PackageJsonSchema } from './types.js'
 
 /** parse a package.json from string */
-export function parsePackageJson(packageJson: string): PackageJson {
-    return PackageJsonSchema.parse(JSON.parse(packageJson))
+export function parsePackageJson(packageJson: string, format: 'json' | 'yaml' = 'json'): PackageJson {
+    let obj: unknown
+    if (format === 'json') {
+        // json5 is backwards compatible with json, so we can just use it
+        obj = (json5 as any).default.parse(packageJson)
+    } else {
+        obj = jsyaml.load(packageJson)
+    }
+
+    return PackageJsonSchema.parse(obj)
 }
 
 /** parse a package.json file */
 export async function parsePackageJsonFile(packageJsonPath: string | URL): Promise<PackageJson> {
-    return parsePackageJson(await fsp.readFile(normalizeFilePath(packageJsonPath), 'utf8'))
+    const path = normalizeFilePath(packageJsonPath)
+    const ext = extname(path).slice(1)
+
+    let format: 'json' | 'yaml'
+    if (ext === 'json5' || ext === 'jsonc' || ext === 'json') format = 'json'
+    else if (ext === 'yml' || ext === 'yaml') format = 'yaml'
+    else throw new Error(`Unknown package.json extension: ${ext}`)
+
+    try {
+        return parsePackageJson(await fsp.readFile(normalizeFilePath(packageJsonPath), 'utf8'), format)
+    } catch (err) {
+        throw new Error(`Could not parse package.json at ${packageJsonPath}`, { cause: err })
+    }
+}
+
+const EXT_OPTIONS = ['json', 'json5', 'jsonc', 'yml', 'yaml']
+
+export async function parsePackageJsonFromDir(dir: string | URL): Promise<{ path: string, json: PackageJson }> {
+    dir = normalizeFilePath(dir)
+    let packageJsonPath
+    for (const ext of EXT_OPTIONS) {
+        const tmp = path.join(dir, `package.${ext}`)
+        if (await fileExists(tmp)) {
+            packageJsonPath = tmp
+            break
+        }
+    }
+
+    if (packageJsonPath == null) {
+        throw new Error(`Could not find package.json at ${dir}`, { cause: { notFound: true } })
+    }
+
+    return {
+        path: packageJsonPath,
+        json: await parsePackageJsonFile(packageJsonPath),
+    }
 }
 
 /** parse the package.json file at the root of the workspace */
-export async function parseWorkspaceRootPackageJson(workspaceRoot: string | URL): Promise<PackageJson> {
+export async function parseWorkspaceRootPackageJson(workspaceRoot: string | URL): Promise<{ path: string, json: PackageJson }> {
     workspaceRoot = normalizeFilePath(workspaceRoot)
-    const packageJsonPath = path.join(workspaceRoot, 'package.json')
-    const parsed = await parsePackageJsonFile(packageJsonPath)
+
+    const { path: pjPath, json: parsed } = await parsePackageJsonFromDir(workspaceRoot)
 
     if (!parsed.workspaces) {
         // if we are using pnpm, we are probably using pnpm-workspace.yaml instead
@@ -32,7 +77,7 @@ export async function parseWorkspaceRootPackageJson(workspaceRoot: string | URL)
         } catch (e: any) {
             // eslint-disable-next-line ts/no-unsafe-member-access
             if (e.code !== 'ENOENT') throw e
-            return parsed
+            return { path: pjPath, json: parsed }
         }
 
         const workspace = jsyaml.load(yaml) as {
@@ -61,5 +106,5 @@ export async function parseWorkspaceRootPackageJson(workspaceRoot: string | URL)
         parsed.workspaces = workspace.packages
     }
 
-    return parsed
+    return { path: pjPath, json: parsed }
 }

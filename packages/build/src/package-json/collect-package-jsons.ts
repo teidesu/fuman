@@ -6,7 +6,7 @@ import process from 'node:process'
 
 import { glob } from 'tinyglobby'
 import { normalizeFilePath } from '../misc/path.js'
-import { parsePackageJsonFile, parseWorkspaceRootPackageJson } from './parse.js'
+import { parsePackageJsonFromDir, parseWorkspaceRootPackageJson } from './parse.js'
 
 // defaulting to Infinity takes a lot of time on larger workspaces
 const maxDepth = process.env.FUMAN_BUILD_MAX_DEPTH !== undefined ? Number(process.env.FUMAN_BUILD_MAX_DEPTH) : 5
@@ -15,6 +15,8 @@ const maxDepth = process.env.FUMAN_BUILD_MAX_DEPTH !== undefined ? Number(proces
 export interface WorkspacePackage {
     /** path to the package root */
     path: string
+    /** path to the package.json file (note that it might not be a .json file) */
+    packageJsonPath: string
     /** whether this is the root package */
     root: boolean
     /** package.json of the package */
@@ -30,7 +32,7 @@ export async function collectPackageJsons(
 
     const packageJsons: WorkspacePackage[] = []
 
-    const rootPackageJson = await parseWorkspaceRootPackageJson(workspaceRoot)
+    const { path: rootPackageJsonPath, json: rootPackageJson } = await parseWorkspaceRootPackageJson(workspaceRoot)
 
     if (!rootPackageJson.workspaces) {
         throw new Error('No workspaces found in package.json')
@@ -41,6 +43,7 @@ export async function collectPackageJsons(
             path: workspaceRoot,
             root: true,
             json: rootPackageJson,
+            packageJsonPath: rootPackageJsonPath,
         })
     }
 
@@ -52,15 +55,16 @@ export async function collectPackageJsons(
         deep: maxDepth,
     })) {
         try {
-            const packageJson = await parsePackageJsonFile(path.join(workspaceRoot, dir, 'package.json'))
+            const { json, path: packageJsonPath } = await parsePackageJsonFromDir(path.join(workspaceRoot, dir))
             packageJsons.push({
                 path: path.join(workspaceRoot, dir),
                 root: false,
-                json: packageJson,
+                packageJsonPath,
+                json,
             })
         } catch (err) {
             // eslint-disable-next-line ts/no-unsafe-member-access
-            if ((err as any).code === 'ENOENT') {
+            if ((err as any).code === 'ENOENT' || (err as any).cause?.notFound) {
                 // not a package, ignore
             } else {
                 throw err

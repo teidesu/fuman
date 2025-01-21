@@ -152,6 +152,7 @@ export async function publishPackages(params: {
         const fullDistDir = join(pkg.path, distDir)
 
         if (fixedVersion != null) {
+            // NB: we always generate package.json in dist/ regardless of the original package.json format
             const distPkgJsonPath = join(fullDistDir, 'package.json')
 
             const pkgJson = await parsePackageJsonFile(distPkgJsonPath)
