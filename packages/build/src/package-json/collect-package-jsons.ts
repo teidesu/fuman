@@ -64,7 +64,7 @@ export async function collectPackageJsons(
             })
         } catch (err) {
             // eslint-disable-next-line ts/no-unsafe-member-access
-            if ((err as any).code === 'ENOENT' || (err as any).cause?.notFound) {
+            if ((err as any).code === 'ENOENT' || (err as any).cause?.notFound === true) {
                 // not a package, ignore
             } else {
                 throw err

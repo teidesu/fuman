@@ -11,6 +11,7 @@
         "url": "git+https://github.com/teidesu/fuman.git"
     },
     "scripts": {
+        "postinstall": "tsx packages/build/src/cli/main.ts validate-workspace-deps --skip-peer-deps",
         "prepare": "pnpm run -C packages/build build-vite-plugin",
         "dev": "vitest watch",
         "test": "vitest run --coverage",

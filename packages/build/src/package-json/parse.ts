@@ -2,19 +2,24 @@ import * as fsp from 'node:fs/promises'
 import path, { extname } from 'node:path'
 
 import * as jsyaml from 'js-yaml'
-import * as json5 from 'json5'
+import * as json5_ from 'json5'
 
 import { fileExists } from '../misc/fs.js'
 
 import { normalizeFilePath } from '../misc/path.js'
 import { type PackageJson, PackageJsonSchema } from './types.js'
 
+let json5: typeof json5_ = json5_
+if ('default' in json5_) {
+    // i LOVE commonjs
+    json5 = json5_.default as typeof json5_
+}
+
 /** parse a package.json from string */
 export function parsePackageJson(packageJson: string, format: 'json' | 'yaml' = 'json'): PackageJson {
     let obj: unknown
     if (format === 'json') {
-        // json5 is backwards compatible with json, so we can just use it
-        obj = (json5 as any).default.parse(packageJson)
+        obj = json5.parse(packageJson)
     } else {
         obj = jsyaml.load(packageJson)
     }

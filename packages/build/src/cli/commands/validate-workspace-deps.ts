@@ -42,11 +42,15 @@ export async function validateWorkspaceDeps(params: {
      * @default true
      */
     skipWorkspaceDeps?: boolean
+
+    /** whether to skip validating peer dependencies */
+    skipPeerDeps?: boolean
 }): Promise<WorkspaceDepsError[]> {
     const {
         workspaceRoot,
         includeRoot = true,
         skipWorkspaceDeps = true,
+        skipPeerDeps = true,
     } = params
 
     const pjs = await collectPackageJsons(workspaceRoot, includeRoot)
@@ -63,6 +67,7 @@ export async function validateWorkspaceDeps(params: {
         for (const field of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const) {
             const deps = pj[field]
             if (!deps) continue
+            if (field === 'peerDependencies' && skipPeerDeps) continue
 
             for (const [name, version] of Object.entries(deps)) {
                 if (workspacePackages.has(name)) continue
@@ -73,10 +78,14 @@ export async function validateWorkspaceDeps(params: {
                 }
 
                 for (const [pkgName, pkgDepVersions] of Object.entries(versions[name])) {
-                    if (
-                        (pkgDepVersions.match(/^https?:\/\//) && version !== pkgDepVersions)
-                        || !satisfies(version, pkgDepVersions)
-                    ) {
+                    let ok = true
+                    if (pkgDepVersions.match(/^(?:https?:\/\/|catalog:)/)) {
+                        ok = version === pkgDepVersions
+                    } else {
+                        ok = satisfies(version, pkgDepVersions)
+                    }
+
+                    if (!ok) {
                         errors.push({
                             package: pj.name,
                             dependency: name,
@@ -108,12 +117,15 @@ export const validateWorkspaceDepsCli = bc.command({
         root: bc.string().desc('path to the root of the workspace (default: cwd)'),
         withErrorCode: bc.boolean('with-error-code')
             .desc('whether to exit with a non-zero code if there are mismatches'),
+        skipPeerDeps: bc.boolean('skip-peer-deps')
+            .desc('whether to skip validating peer dependencies'),
     },
     handler: async (args) => {
         const errors = await validateWorkspaceDeps({
             workspaceRoot: args.root ?? process.cwd(),
             includeRoot: args.includeRoot,
             skipWorkspaceDeps: !args.noSkipWorkspaceDeps,
+            skipPeerDeps: args.skipPeerDeps,
         })
 
         if (errors.length > 0) {
