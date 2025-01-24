@@ -1,5 +1,4 @@
 import type { UnsafeMutable } from '../types/misc.js'
-import { asNonNull } from '../misc/assert.js'
 
 import { Deferred } from './deferred.js'
 import { Emitter } from './emitter.js'
@@ -157,8 +156,11 @@ export class AsyncResource<T> {
 
     /**
      * get the resource value, refreshing it if needed
+     *
+     * note: this method still *might* return `null` if the resource wasn't ever cached yet,
+     * and the underlying call to `fetcher` failed
      */
-    async get(): Promise<T> {
+    async get(): Promise<T | null> {
         if (this.params.swr === true && this.#ctx.current !== null) {
             const validator = this.params.swrValidator
 
@@ -172,7 +174,7 @@ export class AsyncResource<T> {
         this.#ctx.isBackground = false
         await this.update()
 
-        return asNonNull(this.#ctx.current)
+        return this.#ctx.current
     }
 
     /**
