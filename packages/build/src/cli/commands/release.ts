@@ -9,7 +9,7 @@ import { createGithubRelease } from '../../git/github.js'
 import { getFirstCommit, getLatestTag, gitTagExists } from '../../git/utils.js'
 import { jsrCreatePackages } from '../../jsr/create-packages.js'
 import { generateDenoWorkspace } from '../../jsr/generate-workspace.js'
-import { exec } from '../../misc/exec.js'
+import { exec, ExecError } from '../../misc/exec.js'
 import { collectPackageJsons } from '../../package-json/collect-package-jsons.js'
 import { bumpVersion } from '../../versioning/bump-version.js'
 import { generateChangelog } from '../../versioning/generate-changelog.js'
@@ -286,11 +286,22 @@ export const releaseCli = bc.command({
                         stdio: 'inherit',
                         throwOnError: true,
                     })
-                    await exec(['git', 'push', origin, '--force', '--tags'], {
-                        cwd: root,
-                        stdio: 'inherit',
-                        throwOnError: true,
-                    })
+                    try {
+                        await exec(['git', 'push', origin, '--force', '--tags'], {
+                            cwd: root,
+                            throwOnError: true,
+                        })
+                    } catch (e) {
+                        if (!(e instanceof ExecError)) throw e
+
+                        // handle "cannot lock ref 'refs/tags/v0.19.10': reference already exists"
+                        // which might happen if the repo was already pushed to the mirror by forgejo
+                        if (e.result.stderr.includes(`cannot lock ref 'refs/tags/${tagName}': reference already exists`)) {
+                            console.log(`❗ tag ${tagName} already exists on ${origin}, skipping`)
+                        } else {
+                            throw e
+                        }
+                    }
                 }
             }
         }

@@ -3,6 +3,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { spawn } from 'cross-spawn'
 import { normalizeFilePath } from './path.js'
+
 /** result of {@link exec} */
 export interface ExecResult {
     /** stdout of the command */
@@ -13,12 +14,20 @@ export interface ExecResult {
     exitCode: number
 }
 
+export class ExecError extends Error {
+    constructor(readonly cmd: string[], readonly result: ExecResult) {
+        super(`Command exited with code ${result.exitCode}`, {
+            cause: result,
+        })
+    }
+}
+
 /**
  * execute a command and return its result
  *
  * **differences from node's `child_process.exec()`**:
  * - if `options.stdio` is set to `'inherit'`, the command will be printed to the console (unless `options.quiet` is set to `true`)
- * - on non-zero exit code, the promise will be rejected with an error if `options.throwOnError` is set to `true`
+ * - on non-zero exit code, the promise will be rejected with an {@link ExecError} if `options.throwOnError` is set to `true`
  *
  * @param cmd  command to execute (first element is the command itself, the rest are arguments to it)
  */
@@ -61,12 +70,10 @@ export function exec(cmd: string[], options?: SpawnOptions & {
 
         proc.on('close', (code) => {
             if (code !== 0 && options?.throwOnError) {
-                reject(new Error(`Command exited with code ${code}`, {
-                    cause: {
-                        stderr: Buffer.concat(stderr).toString(),
-                        exitCode: code,
-                        cmd,
-                    },
+                reject(new ExecError(cmd, {
+                    stdout: Buffer.concat(stdout).toString(),
+                    stderr: Buffer.concat(stderr).toString(),
+                    exitCode: code ?? -1,
                 }))
             }
             resolve({
