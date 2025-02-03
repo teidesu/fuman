@@ -35,7 +35,7 @@ jobs:
       - name: Build docs
         run: pnpm exec tsx packages/build/src/cli/main.ts typedoc
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v4
         with:
           path: docs
 
@@ -52,4 +52,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
