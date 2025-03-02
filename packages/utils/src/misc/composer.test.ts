@@ -178,4 +178,50 @@ describe('composeMiddlewares', () => {
 
         expect(trace).toEqual([1, 'error', 'caught error', 3, 'ok', 'final 4', 5])
     })
+
+    it('should support open-ended middleware', async () => {
+        const trace: unknown[] = []
+
+        const middlewares: Middleware<number>[] = [
+            async (ctx, next) => {
+                trace.push(1)
+                await next(2)
+                trace.push(3)
+                await next(4)
+            },
+        ]
+
+        const composed = composeMiddlewares(middlewares)
+
+        await composed(0, async (ctx) => {
+            trace.push(`final ${ctx}`)
+        })
+
+        expect(trace).toEqual([1, 'final 2', 3, 'final 4'])
+    })
+
+    it('should support composing open-ended middleware', async () => {
+        const trace: unknown[] = []
+
+        const middlewares: Middleware<number>[] = [
+            async (ctx, next) => {
+                trace.push(1)
+                await next(2)
+                trace.push(3)
+                await next(4)
+            },
+        ]
+
+        const composed = composeMiddlewares(middlewares)
+
+        middlewares.push(async (ctx) => {
+            trace.push(`final ${ctx}`)
+        })
+
+        const composed2 = composeMiddlewares(middlewares)
+
+        await composed(0, ctx => composed2(ctx, () => Promise.resolve()))
+
+        expect(trace).toEqual([1, 1, 'final 2', 3, 'final 4', 3, 1, 'final 2', 3, 'final 4'])
+    })
 })
