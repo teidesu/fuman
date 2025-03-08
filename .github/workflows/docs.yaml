@@ -35,7 +35,7 @@ jobs:
       - name: Build docs
         run: pnpm exec tsx packages/build/src/cli/main.ts typedoc
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
           path: docs
 

@@ -107,7 +107,12 @@ export class WebSocketConnection extends WebSocketConnectionBase implements ICon
     }
 }
 
-export class WebSocketConnectionFramed extends WebSocketConnectionBase {
+export interface IWebSocketConnectionFramed extends IClosable {
+    readFrame: () => Promise<Uint8Array | string>
+    writeFrame: (frame: Uint8Array | string) => Promise<void>
+}
+
+export class WebSocketConnectionFramed extends WebSocketConnectionBase implements IWebSocketConnectionFramed {
     #buffer: Deque<string | Uint8Array> = new Deque()
 
     onMessage(event: MessageEvent): void {

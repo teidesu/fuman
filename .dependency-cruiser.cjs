@@ -114,6 +114,8 @@ module.exports = {
                     '[.](?:spec|test|bench)[.](?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$',
                     // it fails for some reason, prob due to pnpm
                     'packages/fetch/src/addons/parse/adapters/.*',
+                    // peer dependency
+                    'packages/node/src/net/websocket.ts',
                 ],
             },
             to: {
