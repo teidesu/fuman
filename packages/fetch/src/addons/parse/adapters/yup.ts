@@ -30,7 +30,7 @@ export function ffetchYupAdapter({
     const safeParse = action === 'cast'
         ? function (schema: unknown, value: unknown): unknown {
             try {
-                const data = (schema as ISchema<any, any>).cast(value, options)
+                const data: unknown = (schema as ISchema<any, any>).cast(value, options)
                 return { success: true, data }
             } catch (e) {
                 return { success: false, error: e }
@@ -38,7 +38,7 @@ export function ffetchYupAdapter({
         }
         : async function (schema: unknown, value: unknown): Promise<unknown> {
             try {
-                const data = await (schema as ISchema<any, any>).validate(value, options)
+                const data: unknown = await (schema as ISchema<any, any>).validate(value, options)
                 return { success: true, data }
             } catch (e) {
                 return { success: false, error: e }
