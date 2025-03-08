@@ -14,6 +14,20 @@ describe('zod', () => {
         expect(res).toEqual('hello')
     })
 
+    it('should safely parse a type (pass)', async () => {
+        const parser = ffetchYupAdapter()
+        const res = await parser.safeParse(y.string(), 'hello')
+
+        expect(res).toMatchObject({ success: true, data: 'hello' })
+    })
+
+    it('should safely parse a type (fail)', async () => {
+        const parser = ffetchYupAdapter({ action: 'validate', options: { strict: true } })
+        const res = await parser.safeParse(y.string(), 42)
+
+        expect(res).toMatchObject({ success: false })
+    })
+
     it('should work with ffetch (pass)', async () => {
         const fetch_ = vi.fn<typeof fetch>()
             .mockImplementation(async () => new Response('{"a": 42}'))
