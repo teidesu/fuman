@@ -326,6 +326,13 @@ describe('ffetch', () => {
         }).text()).toBe('Not OK')
     })
 
+    it('should not throw if validateResponse is false in createFfetch', async () => {
+        fetch_.mockImplementation(async () => new Response('Not OK', { status: 403 }))
+        const ffetch = createFfetch({ fetch: fetch_, validateResponse: false })
+
+        expect(await ffetch('https://example.com').text()).toBe('Not OK')
+    })
+
     it('should not throw if validateResponse is a function that returns true', async () => {
         fetch_.mockImplementation(async () => new Response('Not OK', { status: 403 }))
 
