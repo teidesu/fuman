@@ -384,6 +384,7 @@ export function createFfetch<
         }
 
         init.headers = headers
+        options.validateResponse ??= baseOptions.validateResponse
 
         return new FfetchResultInner(fetcher, url, init, headers, options, stack)
     }
