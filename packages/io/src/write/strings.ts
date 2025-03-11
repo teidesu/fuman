@@ -32,6 +32,28 @@ export function utf8String(writable: ISyncWritable, str: string): void {
     writable.disposeWriteSync()
 }
 
+/** write a utf16-encoded string to the stream */
+export function utf16beString(writable: ISyncWritable, str: string): void {
+    const buf = writable.writeSync(str.length * 2)
+    for (let i = 0, j = 0; i < str.length; i++, j += 2) {
+        const char = str.charCodeAt(i)
+        buf[j + 1] = char & 0xFF
+        buf[j] = (char >> 8) & 0xFF
+    }
+    writable.disposeWriteSync()
+}
+
+/** write a utf16-encoded string to the stream */
+export function utf16leString(writable: ISyncWritable, str: string): void {
+    const buf = writable.writeSync(str.length * 2)
+    for (let i = 0, j = 0; i < str.length; i++, j += 2) {
+        const char = str.charCodeAt(i)
+        buf[j] = char & 0xFF
+        buf[j + 1] = (char >> 8) & 0xFF
+    }
+    writable.disposeWriteSync()
+}
+
 /** write a utf8-encoded string to the stream, with a null terminator */
 export function cUtf8String(writable: ISyncWritable, str: string): void {
     const len = utf8.encodedLength(str)

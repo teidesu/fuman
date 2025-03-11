@@ -13,8 +13,8 @@ export function exactly(readable: ISyncReadable, length: number): Uint8Array {
     return buf
 }
 
-export function rawString(readable: ISyncReadable, length: number): string {
-    const buf = exactly(readable, length)
+export function rawString(readable: ISyncReadable | Uint8Array, length: number): string {
+    const buf = readable instanceof Uint8Array ? readable : exactly(readable, length)
     let result = ''
     for (let i = 0; i < length; i++) {
         result += String.fromCharCode(buf[i])
@@ -24,6 +24,34 @@ export function rawString(readable: ISyncReadable, length: number): string {
 
 export function utf8String(readable: ISyncReadable, length: number): string {
     return utf8.decoder.decode(exactly(readable, length))
+}
+
+export function utf16beString(readable: ISyncReadable | Uint8Array, byteLength: number): string {
+    if (byteLength % 2 !== 0) {
+        throw new Error('utf16beString: byteLength must be even')
+    }
+
+    const buf = readable instanceof Uint8Array ? readable : exactly(readable, byteLength)
+
+    let result = ''
+    for (let i = 0; i < byteLength; i += 2) {
+        result += String.fromCharCode(buf[i + 1] | (buf[i] << 8))
+    }
+    return result
+}
+
+export function utf16leString(readable: ISyncReadable | Uint8Array, byteLength: number): string {
+    if (byteLength % 2 !== 0) {
+        throw new Error('utf16leString: byteLength must be even')
+    }
+
+    const buf = readable instanceof Uint8Array ? readable : exactly(readable, byteLength)
+
+    let result = ''
+    for (let i = 0; i < byteLength; i += 2) {
+        result += String.fromCharCode(buf[i] | (buf[i + 1] << 8))
+    }
+    return result
 }
 
 export function untilCondition(readable: ISyncReadable, condition: (byte: number) => boolean): Uint8Array {
