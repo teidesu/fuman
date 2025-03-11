@@ -1,16 +1,14 @@
+import { hex } from '@fuman/utils'
+
 import { describe, expect, it } from 'vitest'
 
 import { Bytes } from '../bytes.js'
-
 import * as read from './index.js'
 
 describe('read/strings', () => {
     describe('rawString', () => {
         it('should read a raw string', () => {
-            const buffer = new Uint8Array([104, 101, 108, 108, 111])
-            const c = Bytes.from(buffer)
-            expect(read.rawString(c, 5)).toBe('hello')
-            expect(c.available).toBe(0)
+            expect(read.rawString(new Uint8Array([104, 101, 108, 108, 111]), 5)).toBe('hello')
         })
 
         it('should throw if reading past the end', () => {
@@ -47,6 +45,22 @@ describe('read/strings', () => {
             const buffer = new Uint8Array([0xF0, 0x9F, 0x8C, 0xB8])
             const c = Bytes.from(buffer)
             expect(() => read.cUtf8String(c)).toThrow(RangeError)
+        })
+    })
+
+    describe('utf16beString', () => {
+        it('should read a utf16be string', () => {
+            expect(read.utf16beString(hex.decode('006d0065006f0077'), 8)).toEqual('meow')
+            expect(read.utf16beString(hex.decode('d83dde4f'), 4)).toEqual('🙏')
+            expect(read.utf16beString(hex.decode('6211723153174eac59295b8995e8'), 14)).toEqual('我爱北京天安门')
+        })
+    })
+
+    describe('utf16leString', () => {
+        it('should read a utf16be string', () => {
+            expect(read.utf16leString(hex.decode('6d0065006f007700'), 8)).toEqual('meow')
+            expect(read.utf16leString(hex.decode('3dd84fde'), 4)).toEqual('🙏')
+            expect(read.utf16leString(hex.decode('116231721753ac4e2959895be895'), 14)).toEqual('我爱北京天安门')
         })
     })
 
