@@ -8,6 +8,18 @@ export function assert(condition: boolean, message?: unknown): asserts condition
     }
 }
 
+export function assertHasKey<Obj extends object, Key extends string>(obj: Obj, key: Key): asserts obj is Obj & Record<Key, unknown> {
+    if (!(key in obj)) {
+        throw new Error(`key ${JSON.stringify(key)} not found in object`, {
+            cause: { obj, key },
+        })
+    }
+}
+
+export function unsafeCastType<T>(value: unknown): asserts value is T {
+    // :3
+}
+
 export function assertNonNull<T>(value: T): asserts value is Exclude<T, null | undefined> {
     if (value === null || value === undefined) {
         throw new Error(`value is ${value as string}`)

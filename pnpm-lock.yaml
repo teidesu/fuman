@@ -70,6 +70,19 @@ importers:
         specifier: 2.0.5
         version: 2.0.5(@types/node@18.19.67)
 
+  packages/_standalone/plist:
+    dependencies:
+      '@fuman/io':
+        specifier: workspace:^
+        version: link:../../io
+      '@fuman/utils':
+        specifier: workspace:^
+        version: link:../../utils
+    devDependencies:
+      '@xmldom/xmldom':
+        specifier: ^0.9.8
+        version: 0.9.8
+
   packages/build:
     dependencies:
       '@drizzle-team/brocli':
@@ -1176,6 +1189,10 @@ packages:
 
   '@vue/shared@3.4.21':
     resolution: {integrity: sha512-PuJe7vDIi6VYSinuEbUIQgMIRZGgM8e4R+G+/dQTk0X1NEdvgvvgv7m+rfmDH1gZzyA1OjjoWskvHlfRNfQf3g==}
+
+  '@xmldom/xmldom@0.9.8':
+    resolution: {integrity: sha512-p96FSY54r+WJ50FIOsCOjyj/wavs8921hG5+kVMmZgKcvIKxMXHTrjNJvRgWa/zuX3B6t2lijLNFaOyuxUH+2A==}
+    engines: {node: '>=14.6'}
 
   acorn-jsx-walk@2.0.0:
     resolution: {integrity: sha512-uuo6iJj4D4ygkdzd6jPtcxs8vZgDX9YFIkqczGImoypX2fQ4dVImmu3UzA4ynixCIMTrEOWW+95M2HuBaCEOVA==}
@@ -4028,6 +4045,8 @@ snapshots:
       typescript: 5.6.3
 
   '@vue/shared@3.4.21': {}
+
+  '@xmldom/xmldom@0.9.8': {}
 
   acorn-jsx-walk@2.0.0: {}
 
