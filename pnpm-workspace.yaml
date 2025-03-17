@@ -1,5 +1,6 @@
 packages:
   - packages/*
+  - packages/_standalone/*
 
 catalog:
   zod: ^3.0.0
