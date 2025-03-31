@@ -147,6 +147,23 @@ describe('ffetch', () => {
         expect(await res.text()).toBe('OK')
     })
 
+    it('should merge headers when extending and arrays are provided', async () => {
+        const baseFfetch_ = createFfetch({ fetch: fetch_, headers: [['X-Header', 'value']] })
+        const ffetch_ = baseFfetch_.extend({ headers: [['X-Header-2', 'value2']] })
+
+        const res = await ffetch_('https://example.com', { headers: [['X-header-3', 'value3']] })
+
+        expect(fetch_).toHaveBeenCalledOnce()
+        const req = fetch_.mock.calls[0][0] as Request
+        expect(req.url).toBe('https://example.com/')
+        expect(Object.fromEntries(req.headers.entries())).toEqual({
+            'x-header': 'value',
+            'x-header-2': 'value2',
+            'x-header-3': 'value3',
+        })
+        expect(await res.text()).toBe('OK')
+    })
+
     it('should handle baseUrl', async () => {
         const ffetch = createFfetch({
             fetch: fetch_,
