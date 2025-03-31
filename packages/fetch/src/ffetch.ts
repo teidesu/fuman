@@ -412,8 +412,8 @@ export function createFfetch<
                 ...(otherOptions.middlewares ?? []),
             ],
             headers: {
-                ...baseOptions.headers,
-                ...otherOptions.headers,
+                ...headersToObject(baseOptions.headers),
+                ...headersToObject(otherOptions.headers),
             },
         })
     }
