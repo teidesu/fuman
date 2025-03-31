@@ -297,7 +297,7 @@ export function createFfetch<
     baseOptions: FfetchBaseOptions<Addons> & Combined['request'] = {},
 ): Ffetch<Combined['request'], Combined['response']> {
     const captureStackTrace = baseOptions.captureStackTrace ?? true
-    const baseFetch = baseOptions.fetch ?? fetch
+    const baseFetch = baseOptions.fetch ?? globalThis.fetch?.bind(globalThis)
     const wrappedFetch: FetchLike = baseOptions.middlewares !== undefined && baseOptions.middlewares.length > 0 ? composeMiddlewares(baseOptions.middlewares, baseFetch) : baseFetch
     const addons = baseOptions.addons ?? []
 
