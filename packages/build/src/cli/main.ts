@@ -10,12 +10,12 @@ import { findChangedPackagesCli } from './commands/find-changed-packages.js'
 import { generateChangelogCli } from './commands/gen-changelog.js'
 import { generateDepsGraphCli } from './commands/gen-deps-graph.js'
 import { jsrCli } from './commands/jsr.js'
+import { lintCli } from './commands/lint/index.js'
 import { publishPackagesCli } from './commands/publish.js'
 import { releaseCli } from './commands/release.js'
-import { validateWorkspaceDepsCli } from './commands/validate-workspace-deps.js'
 
 await bc.run([
-    validateWorkspaceDepsCli,
+    lintCli,
     generateDepsGraphCli,
     buildPackageCli,
     jsrCli,

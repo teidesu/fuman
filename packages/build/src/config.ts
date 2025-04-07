@@ -1,5 +1,6 @@
 import type { AnyToNever } from '@fuman/utils'
 import type { TypeDocOptions } from 'typedoc'
+import type { LintConfig } from './cli/commands/lint/config.js'
 import type { JsrConfig } from './jsr/config.js'
 import type { PackageJson } from './package-json/types.js'
 import type { VersioningOptions } from './versioning/types.js'
@@ -57,6 +58,9 @@ export interface RootConfigObject {
          */
         excludePackages?: string[]
     }>
+
+    /** `lint` command configuration */
+    lint?: LintConfig
 }
 
 /** root configuration (either an object or a function that returns an object) */

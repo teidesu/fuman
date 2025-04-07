@@ -69,7 +69,6 @@ export const releaseCli = bc.command({
         const root = process.cwd()
         const config = await loadConfig({
             workspaceRoot: root,
-            configPath: 'build.config.js',
             require: false,
         })
         const workspaceWithRoot = await collectPackageJsons(root, true)
@@ -114,35 +113,44 @@ export const releaseCli = bc.command({
             changedPackages = workspace
         }
 
+        const taggingSchema = config?.versioning?.taggingSchema ?? 'semver'
         let tagName: string
-        if (!bumpVersionResult) {
-            // if this is a first release, use the max version as the tag name,
-            // because the bump did not happen
+
+        if (taggingSchema === 'semver') {
             const versions = sort(workspace.map(pkg => asNonNull(pkg.json.version)))
             tagName = `v${versions[versions.length - 1]}`
+
+            // verify the tag does not exist yet
+            if (await gitTagExists(tagName, root)) {
+                console.log(`❗ tag ${tagName} already exists. did the previous release complete successfully?`)
+                console.log('❗ if so, please verify versions in package.json and try again')
+                if (!args.dryRun) {
+                    process.exit(1)
+                }
+            }
+
+            // verify the tag matches one of the packages versions
+            if (!changedPackages.some(pkg => pkg.json.version === tagName.replace(/^v/, ''))) {
+                console.log(`❗ tag ${tagName} does not match any of the package versions. did the previous release complete successfully?`)
+                console.log('❗ if so, please verify versions in package.json, tag the commit release and try again')
+                if (!args.dryRun) {
+                    process.exit(1)
+                }
+            }
+        } else if (taggingSchema === 'date') {
+            const date = new Date()
+            const tagNamePrefix = `v${date.getFullYear()}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`
+            let currentLetter = 'a'
+            do {
+                tagName = `${tagNamePrefix}${currentLetter}`
+                currentLetter = String.fromCharCode(currentLetter.charCodeAt(0) + 1)
+            } while (await gitTagExists(tagName, root))
         } else {
-            tagName = `v${bumpVersionResult.nextVersion}`
-        }
-
-        // verify the tag does not exist yet
-        if (await gitTagExists(tagName, root)) {
-            console.log(`❗ tag ${tagName} already exists. did the previous release complete successfully?`)
-            console.log('❗ if so, please verify versions in package.json and try again')
-            if (!args.dryRun) {
-                process.exit(1)
-            }
-        }
-
-        // verify the tag matches one of the packages versions
-        if (!changedPackages.some(pkg => pkg.json.version === tagName.replace(/^v/, ''))) {
-            console.log(`❗ tag ${tagName} does not match any of the package versions. did the previous release complete successfully?`)
-            console.log('❗ if so, please verify versions in package.json, tag the commit release and try again')
-            if (!args.dryRun) {
-                process.exit(1)
-            }
+            throw new Error(`Unknown tagging schema: ${taggingSchema}`)
         }
 
         console.log('')
+        console.log('🚀 next tag:', tagName)
         console.log('📝 generating changelog...')
 
         const changelog = prevTag != null

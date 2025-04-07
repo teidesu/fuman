@@ -17,9 +17,6 @@ export function formatBumpVersionResult(result: BumpVersionResult, withReleaseTy
         lines.push('')
     }
 
-    lines.push(`next version: ${result.nextVersion}`)
-    lines.push('')
-
     lines.push('list of changed packages:')
     for (const { package: pkg, because, prevVersion } of result.changedPackages) {
         let versionStr = prevVersion
@@ -38,8 +35,6 @@ export const bumpVersionCli = bc.command({
     options: {
         root: bc.string()
             .desc('path to the root of the workspace (default: process.cwd())'),
-        config: bc.string()
-            .desc('path to the build.config.js file'),
         type: bc.string()
             .desc('override type of release (major, minor, patch) (default: auto-detect)')
             .enum('major', 'minor', 'patch', 'auto')
@@ -59,7 +54,6 @@ export const bumpVersionCli = bc.command({
         const workspace = await collectPackageJsons(root)
         const config = await loadConfig({
             workspaceRoot: root,
-            configPath: args.config,
             require: false,
         })
 
@@ -78,13 +72,13 @@ export const bumpVersionCli = bc.command({
         })
 
         if (args.quiet) {
-            console.log(result.nextVersion)
+            console.log(JSON.stringify(result.nextVersions))
         } else {
             console.log(formatBumpVersionResult(result, releaseType == null))
         }
 
         if (isRunningInGithubActions()) {
-            writeGithubActionsOutput('version', result.nextVersion)
+            writeGithubActionsOutput('versions', JSON.stringify(result.nextVersions))
             writeGithubActionsOutput('hasBreakingChanges', String(result.hasBreakingChanges))
             writeGithubActionsOutput('hasFeatures', String(result.hasFeatures))
             writeGithubActionsOutput('changedPackages', result.changedPackages.map(it => it.package.json.name).join(','))
