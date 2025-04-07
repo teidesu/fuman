@@ -15,8 +15,6 @@ export const generateChangelogCli = bc.command({
             .desc('comma-separated list of packages to include'),
         root: bc.string()
             .desc('path to the root of the workspace (default: process.cwd())'),
-        config: bc.string('config')
-            .desc('path to the build.config.js file'),
         since: bc.string()
             .desc('starting point for the changelog (default: latest tag)'),
     },
@@ -24,7 +22,6 @@ export const generateChangelogCli = bc.command({
         const root = args.root ?? process.cwd()
         const config = await loadConfig({
             workspaceRoot: root,
-            configPath: args.config,
             require: false,
         })
 

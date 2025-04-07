@@ -11,7 +11,7 @@ import { asNonNull } from '@fuman/utils'
 import detectIndent from 'detect-indent'
 import { gt, inc, parse, satisfies } from 'semver'
 
-import { getCommitsBetween, parseConventionalCommit } from '../git/utils.js'
+import { getCommitsBetween, getLatestTag, parseConventionalCommit } from '../git/utils.js'
 import { collectVersions, findRootPackage } from '../package-json/utils.js'
 import { findProjectChangedPackages } from './collect-files.js'
 
@@ -32,7 +32,7 @@ export interface BumpVersionResult {
     /** max version of all packages */
     maxVersion: string
     /** next version */
-    nextVersion: string
+    nextVersions: Record<string, string>
     /** changed packages which will be bumped to `nextVersion` */
     changedPackages: BumpVersionPackage[]
 
@@ -53,6 +53,8 @@ export interface BumpVersionResult {
 export async function bumpVersion(params: {
     /** packages for which to generate the changelog */
     workspace: WorkspacePackage[]
+    /** previous tag */
+    prevTag?: string | null
     /** whether to bump version of all packages, not just changed ones */
     all?: boolean
     type?: ReleaseType
@@ -84,7 +86,7 @@ export async function bumpVersion(params: {
 
         const version = asNonNull(pkg.json.version)
 
-        if (pkg.json.fuman?.ownVersioning) {
+        if (pkg.json.fuman?.ownVersioning || pkg.json.fuman?.standalone) {
             continue
         }
 
@@ -201,26 +203,55 @@ export async function bumpVersion(params: {
         packagesToBump.push(findRootPackage(workspace))
     }
 
+    const nextVersions: Record<string, string> = {}
+
+    let prevTag = params.prevTag
+
     for (const pkg of packagesToBump) {
         if (pkg.json.fuman?.ownVersioning) continue
+
+        let newVersion = nextVersion
+
+        if (pkg.json.fuman?.standalone) {
+            // standalone packages each have their own versioning
+            newVersion = asNonNull(pkg.json.version)
+
+            // was this package released before?
+            if (prevTag === undefined) {
+                prevTag = await getLatestTag(pkg.path)
+            }
+
+            if (prevTag != null) {
+                const commits = await getCommitsBetween({
+                    until: prevTag,
+                    cwd,
+                    files: [join(pkg.path, 'package.json')],
+                })
+                if (commits.length > 0) {
+                    newVersion = asNonNull(inc(newVersion, type))
+                }
+            }
+        }
+
         if (!dryRun) {
             const pkgJsonPath = join(pkg.path, 'package.json')
             const pkgJsonText = await fsp.readFile(pkgJsonPath, 'utf8')
             const indent = detectIndent(pkgJsonText).indent || '    '
 
             const pkgJson = JSON.parse(pkgJsonText) as PackageJson
-            pkgJson.version = nextVersion
+            pkgJson.version = newVersion
 
             await fsp.writeFile(pkgJsonPath, `${JSON.stringify(pkgJson, null, indent)}\n`)
         }
 
         // update the version in the object as well, in case it'll be reused in the future as is
-        pkg.json.version = nextVersion
+        pkg.json.version = newVersion
+        nextVersions[asNonNull(pkg.json.name)] = newVersion
     }
 
     return {
         maxVersion,
-        nextVersion,
+        nextVersions,
         changedPackages: result,
         releaseType: type,
         hasBreakingChanges,

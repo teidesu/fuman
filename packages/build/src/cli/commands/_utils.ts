@@ -7,19 +7,17 @@ export { bc }
 
 export async function loadConfig(params: {
     workspaceRoot: string
-    configPath?: string
     require?: boolean
 }): Promise<RootConfigObject | null> {
     const {
         workspaceRoot,
-        configPath = 'build.config.js',
         require = true,
     } = params
 
-    const config = await loadBuildConfig<RootConfigObject>(workspaceRoot, configPath)
+    const config = await loadBuildConfig<RootConfigObject>(workspaceRoot)
 
     if (!config && require) {
-        throw new Error(`Config not found: ${configPath}`)
+        throw new Error(`Config not found at ${workspaceRoot}`)
     }
 
     return config ?? null

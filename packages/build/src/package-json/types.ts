@@ -46,12 +46,21 @@ export interface PackageJson {
          */
         distOnlyFields?: Record<string, unknown>
         /**
-         * whether this package has its own versioning scheme
+         * whether this package has its own versioning scheme, not managed by @fuman/build
          * (be careful with this option! this might break cross-release semver compatibility)
          */
         ownVersioning?: boolean
         /** whether this package should not be published */
         private?: boolean
+        /**
+         * whether this is a "standalone" package
+         *
+         * standalone packages have a few differences from normal ones:
+         *   - (bump-version) each standalone package has independent versioning
+         *   - (lint) normal packages can't depend on standalone packages
+         *   - (lint) unlike normal packages, standalone packages are allowed to depend on older versions of workspace packages
+         */
+        standalone?: boolean
     }
 
     [key: string]: any
@@ -106,6 +115,7 @@ export const PackageJsonSchema: z.AnyZodObject = z.object({
         keepScripts: z.array(z.string()),
         distOnlyFields: z.record(z.unknown()),
         ownVersioning: z.boolean(),
+        standalone: z.boolean(),
         private: z.boolean(),
     }).partial(),
     // todo: properly type this

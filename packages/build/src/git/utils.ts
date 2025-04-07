@@ -129,7 +129,9 @@ export interface CommitInfo {
  */
 export async function getCommitsBetween(params: {
     /** starting point for the diff */
-    since: string
+    since?: string
+    /** only include commits that modified these files */
+    files?: string[]
     /**
      * ending point for the diff
      * @default  'HEAD'
@@ -138,16 +140,23 @@ export async function getCommitsBetween(params: {
     /** override the current working directory */
     cwd?: string | URL
 }): Promise<CommitInfo[]> {
-    const { since, until = 'HEAD', cwd } = params
+    const { since, until = 'HEAD', cwd, files } = params
 
     const delim = `---${randomUUID()}---`
 
-    const res = await exec(['git', 'log', `--pretty=format:%H %s%n%an%n%ae%n%aI%n%cn%n%ce%n%cI%n%b%n${delim}`, `${since}..${until}`], {
+    const res = await exec([
+        'git',
+        'log',
+        `--pretty=format:%H %s%n%an%n%ae%n%aI%n%cn%n%ce%n%cI%n%b%n${delim}`,
+        since ? `${since}..${until}` : until,
+        ...(files?.length ? ['--', ...files] : []),
+    ], {
         cwd,
         throwOnError: true,
     })
 
     const lines = res.stdout.trim().split('\n')
+    if (lines.length === 1 && lines[0] === '') return []
 
     const items: CommitInfo[] = []
 
