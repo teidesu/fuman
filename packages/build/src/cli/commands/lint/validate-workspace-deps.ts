@@ -80,7 +80,10 @@ export async function validateWorkspaceDeps(params: {
                 if (packagesMap.has(name)) {
                     // internal dependency
 
-                    if (!version.startsWith('workspace:')) {
+                    const otherPkg = packagesMap.get(name)
+                    const otherPkgStandalone = Boolean(otherPkg?.json.fuman?.standalone)
+
+                    if (!otherPkgStandalone && !version.startsWith('workspace:')) {
                         errors.push({
                             type: 'internal',
                             package: pj.name,
@@ -90,8 +93,7 @@ export async function validateWorkspaceDeps(params: {
                         continue
                     }
 
-                    const otherPkg = packagesMap.get(name)
-                    if (!pj.fuman?.standalone && otherPkg?.json.fuman?.standalone) {
+                    if (!pj.fuman?.standalone && otherPkgStandalone && version.startsWith('workspace:')) {
                         errors.push({
                             type: 'internal',
                             package: pj.name,
