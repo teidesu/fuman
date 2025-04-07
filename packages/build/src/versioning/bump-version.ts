@@ -173,6 +173,10 @@ export async function bumpVersion(params: {
                 if (obj[pkgName] == null || typeof obj[pkgName] !== 'string') continue
 
                 let expandedVersion = obj[pkgName]
+                if (!expandedVersion.startsWith('workspace:') && otherPkg.json.fuman?.standalone) {
+                    // dependency on standalone package by version (i.e. from registry). ignore
+                    continue
+                }
                 if (expandedVersion === 'workspace:^') expandedVersion = `^${workspaceVersions[pkgName]}`
                 if (expandedVersion === 'workspace:*') expandedVersion = workspaceVersions[pkgName]
 

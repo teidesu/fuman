@@ -1,7 +1,7 @@
 {
     "name": "@fuman/fetch",
     "type": "module",
-    "version": "0.0.13",
+    "version": "0.1.0",
     "description": "tiny wrapper over fetch",
     "license": "MIT",
     "sideEffects": false,
@@ -39,6 +39,9 @@
     },
     "dependencies": {
         "@fuman/utils": "workspace:^"
+    },
+    "fuman": {
+        "standalone": true
     },
     "devDependencies": {
         "@badrap/valita": "^0.4.2",

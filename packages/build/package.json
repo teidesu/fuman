@@ -29,7 +29,7 @@
     },
     "dependencies": {
         "@drizzle-team/brocli": "^0.10.2",
-        "@fuman/fetch": "workspace:^",
+        "@fuman/fetch": "0.0.13",
         "@fuman/io": "workspace:^",
         "@fuman/node": "workspace:^",
         "@fuman/utils": "workspace:^",

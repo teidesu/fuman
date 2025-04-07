@@ -5,7 +5,7 @@ import { validateWorkspaceDeps } from './validate-workspace-deps.js'
 
 const INTERNAL_MESSAGES: Record<InternalDepsError['subtype'], string> = {
     not_workspace_proto: 'internal dependencies must be linked with workspace: protocol',
-    standalone_dep: 'non-standalone packages cannot depend on standalone packages',
+    standalone_dep: 'non-standalone packages cannot depend on standalone packages with workspace: protocol',
     not_workspace_dep: 'workspace: protocol is used to link to a package not found in the workspace',
 }
 
