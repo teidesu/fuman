@@ -4,17 +4,18 @@ import { validateWorkspaceDeps } from './validate-workspace-deps.js'
 
 describe('validateWorkspaceDeps', () => {
     it('should validate a workspace with no mismatches', async () => {
-        const errors = await validateWorkspaceDeps({ workspaceRoot: new URL('../../__fixtures__/workspace', import.meta.url) })
+        const errors = await validateWorkspaceDeps({ workspaceRoot: new URL('../../../__fixtures__/workspace', import.meta.url) })
 
         expect(errors).toHaveLength(0)
     })
 
     it('should validate a workspace with mismatches', async () => {
-        const errors = await validateWorkspaceDeps({ workspaceRoot: new URL('../../__fixtures__/workspace-external-mismatch', import.meta.url) })
+        const errors = await validateWorkspaceDeps({ workspaceRoot: new URL('../../../__fixtures__/workspace-external-mismatch', import.meta.url) })
 
         expect(errors).toHaveLength(1)
         expect(errors[0]).to.deep.oneOf([
             {
+                type: 'external',
                 package: '@fuman-fixtures/package-b',
                 otherPackage: '@fuman-fixtures/package-a',
                 dependency: 'chai',
@@ -23,6 +24,7 @@ describe('validateWorkspaceDeps', () => {
                 otherVersion: '^1.2.3',
             },
             {
+                type: 'external',
                 package: '@fuman-fixtures/package-a',
                 otherPackage: '@fuman-fixtures/package-b',
                 dependency: 'chai',
