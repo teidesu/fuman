@@ -146,7 +146,7 @@ export const releaseCli = bc.command({
                 currentLetter = String.fromCharCode(currentLetter.charCodeAt(0) + 1)
             } while (await gitTagExists(tagName, root))
         } else {
-            throw new Error(`Unknown tagging schema: ${taggingSchema}`)
+            throw new Error(`Unknown tagging schema: ${taggingSchema as string}`)
         }
 
         console.log('')

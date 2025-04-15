@@ -1,8 +1,9 @@
+/* eslint-disable ts/no-unsafe-member-access, ts/no-unsafe-argument */
 import type { KeyedArchiverValueHeader } from './types.js'
 import { assert, assertHasKey, objectEntries, unsafeCastType } from '@fuman/utils'
 import { CORE_DATA_EPOCH, NS_KEYED_ARCHIVER_VERSION } from './_constants.js'
-import { KeyedArchiverValue, PlistValue } from './types.js'
 import { safeToNumber } from './_utils.js'
+import { KeyedArchiverValue, PlistValue } from './types.js'
 
 function isUid(value: unknown): value is PlistValue<'uid'> {
     return value instanceof PlistValue && value.type === 'uid'

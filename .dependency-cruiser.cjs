@@ -2,6 +2,12 @@ const fs = require('node:fs')
 const { join } = require('node:path')
 
 const packages = fs.readdirSync('packages')
+    .filter(it => it !== '_standalone' && !it.startsWith('.'))
+    .concat(
+        fs.readdirSync('packages/_standalone', { withFileTypes: true })
+            .filter(it => it.isDirectory() && !it.name.startsWith('.'))
+            .map(it => `_standalone/${it.name}`),
+    )
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
@@ -113,7 +119,7 @@ module.exports = {
                 pathNot: [
                     '[.](?:spec|test|bench)[.](?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$',
                     // it fails for some reason, prob due to pnpm
-                    'packages/fetch/src/addons/parse/adapters/.*',
+                    'packages/_standalone/fetch/src/addons/parse/adapters/.*',
                     // peer dependency
                     'packages/node/src/net/websocket.ts',
                 ],
@@ -135,7 +141,7 @@ module.exports = {
     ],
     options: {
         doNotFollow: {
-            path: ['node_modules', 'dist', '__fixtures__', 'coverage'],
+            path: ['node_modules', 'dist', '__fixtures__', 'coverage', 'docs'],
         },
         moduleSystems: ['cjs', 'es6'],
         tsPreCompilationDeps: true,
