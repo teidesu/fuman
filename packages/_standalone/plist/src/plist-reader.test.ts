@@ -178,36 +178,43 @@ describe('readXmlPlist', () => {
 
         it('uid', async () => {
             const file = await readFile(join(FIXTURES_DIR, 'uid.plist'))
-            const dict = readXmlPlist(file, { uidAsNumber: true }) as Record<string, unknown>
+            const dict = readXmlPlist(file, { parseUid: true }) as Record<string, unknown>
             expect(dict).toMatchInlineSnapshot(`
               {
                 "$archiver": "NSKeyedArchiver",
                 "$objects": [
                   "$null",
                   {
-                    "$class": {
-                      "CF$UID": 8,
+                    "$class": PlistValue {
+                      "type": "uid",
+                      "value": 8,
                     },
                     "NS.keys": [
-                      {
-                        "CF$UID": 2,
+                      PlistValue {
+                        "type": "uid",
+                        "value": 2,
                       },
-                      {
-                        "CF$UID": 3,
+                      PlistValue {
+                        "type": "uid",
+                        "value": 3,
                       },
-                      {
-                        "CF$UID": 4,
+                      PlistValue {
+                        "type": "uid",
+                        "value": 4,
                       },
                     ],
                     "NS.objects": [
-                      {
-                        "CF$UID": 5,
+                      PlistValue {
+                        "type": "uid",
+                        "value": 5,
                       },
-                      {
-                        "CF$UID": 6,
+                      PlistValue {
+                        "type": "uid",
+                        "value": 6,
                       },
-                      {
-                        "CF$UID": 7,
+                      PlistValue {
+                        "type": "uid",
+                        "value": 7,
                       },
                     ],
                   },
@@ -227,8 +234,9 @@ describe('readXmlPlist', () => {
                   },
                 ],
                 "$top": {
-                  "root": {
-                    "CF$UID": 1,
+                  "root": PlistValue {
+                    "type": "uid",
+                    "value": 1,
                   },
                 },
                 "$version": 100000,
