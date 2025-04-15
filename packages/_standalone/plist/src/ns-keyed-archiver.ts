@@ -1,8 +1,8 @@
 import type { KeyedArchiverValueHeader } from './types.js'
 import { unreachable } from '@fuman/utils'
 import { CORE_DATA_EPOCH, NS_KEYED_ARCHIVER_VERSION } from './_constants.js'
-import { KeyedArchiverValue, PlistValue } from './types.js'
 import { safeToNumber } from './_utils.js'
+import { KeyedArchiverValue, PlistValue } from './types.js'
 
 // this is quite similar to BinaryPlistWriter in its essence, yet at the same time
 // different enough for it to not make sense to refactor stuff somehow.
@@ -77,7 +77,7 @@ class NsKeyedArchiver {
                             'NS.data': value,
                         })
                     }
-                    if (!value || typeof value !== 'object') {
+                    if (value == null || typeof value !== 'object') {
                         throw new Error('invalid value in KeyedArchiverValue', { cause: value })
                     }
                 }
@@ -113,7 +113,7 @@ class NsKeyedArchiver {
                     'NS.objects': valueUids,
                 })
             }
-            default: throw new Error(`invalid value: ${value}`)
+            default: throw new Error(`invalid value: ${JSON.stringify(value)}`)
         }
     }
 

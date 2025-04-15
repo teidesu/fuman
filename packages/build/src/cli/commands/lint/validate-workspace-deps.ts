@@ -129,9 +129,9 @@ export async function validateWorkspaceDeps(params: {
                     let ok = true
                     if (pkgDepVersions.match(/^(?:https?:\/\/|catalog:)/)) {
                         ok = version === pkgDepVersions
-                    } else if (valid(version)) {
+                    } else if (valid(version) != null) {
                         ok = satisfies(version, pkgDepVersions)
-                    } else if (validRange(version)) {
+                    } else if (validRange(version) != null) {
                         ok = subset(pkgDepVersions, version)
                     }
 

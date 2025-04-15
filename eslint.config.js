@@ -69,6 +69,7 @@ export default antfu({
         'no-restricted-syntax': ['error', 'WithStatement'],
         'ts/promise-function-async': 'off',
         'ts/no-unnecessary-type-assertion': 'off',
+        'ts/switch-exhaustiveness-check': 'off',
         ...(process.env.CI
             ? {
                 'dot-notation': 'error',

@@ -1,3 +1,4 @@
+/* eslint-disable ts/unbound-method, ts/no-unsafe-assignment, ts/no-unsafe-argument */
 import { Bytes, write } from '@fuman/io'
 import { BPLIST_MAGIC, CORE_DATA_EPOCH, MAX_OBJECT_COUNT } from './_constants.js'
 import { PlistValue } from './types.js'
@@ -298,7 +299,7 @@ class BinaryPlistWriter {
                         writeSizeHeader(bytes, 0b0111_0000, entry.value.length)
                         write.utf8String(bytes, entry.value)
                         break
-                    default: throw new Error(`invalid string format: ${entry.format}`)
+                    default: throw new Error(`invalid string format: ${entry.format as string}`)
                 }
                 break
             }

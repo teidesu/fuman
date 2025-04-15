@@ -29,14 +29,17 @@ export function readXmlPlist(
         parseUid?: boolean
     },
 ): unknown {
+    // eslint-disable-next-line ts/no-unsafe-assignment
     const { DOMParser = globalThis.DOMParser, parseUid = false } = params ?? {}
 
     // NB: @xmldom/xmldom implements only a subset of the APIs,
     // so to ensure support for it we will use its own typings instead of typescript ones
+    // eslint-disable-next-line ts/no-unsafe-call
     const parser = (new DOMParser()) as DOMParser
     const doc = parser.parseFromString(data, 'text/xml')
 
     const root = doc.getElementsByTagName('plist')[0]
+    // eslint-disable-next-line ts/strict-boolean-expressions
     if (!root) throw new Error('<plist> not found, invalid plist?')
 
     const topObject = root.childNodes.filter(node => node.nodeType === 1)
@@ -92,7 +95,7 @@ export function readXmlPlist(
             }
             case 'date': {
                 const value = new Date(node.textContent?.trim() ?? '')
-                if (Number.isNaN(value.getTime())) throw new Error(`invalid date: ${value}`)
+                if (Number.isNaN(value.getTime())) throw new Error(`invalid date: ${node.textContent}`)
                 return value
             }
             case 'false': return false

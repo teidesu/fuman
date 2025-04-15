@@ -84,12 +84,12 @@ export function writeXmlPlist(data: unknown, options?: {
                             pushLine(`<integer>${object.value}</integer>`)
                             break
                         case 'uid':
-                            writeObject({ CF$UID: object.value })
+                            writeObject({ CF$UID: object.value as number })
                             break
                         case 'ascii':
                         case 'utf16':
                         case 'utf8':
-                            pushLine(`<string>${escapeXml(object.value)}</string>`)
+                            pushLine(`<string>${escapeXml(object.value as string)}</string>`)
                             break
                         default:
                             throw new Error(`unexpected type: ${object.type}`)
@@ -115,6 +115,7 @@ export function writeXmlPlist(data: unknown, options?: {
                         pushIndent()
                         for (const key of keys) {
                             pushLine(`<key>${escapeXml(key)}</key>`)
+                            // eslint-disable-next-line ts/no-unsafe-member-access
                             writeObject((object as any)[key])
                         }
                         popIndent()

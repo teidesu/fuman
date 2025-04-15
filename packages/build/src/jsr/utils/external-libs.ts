@@ -7,7 +7,6 @@ export function getModuleCacheDirectory(): string {
     if (process.env.JSR_CACHE_DIR != null) return process.env.JSR_CACHE_DIR
     if (_cacheDir != null) return _cacheDir
 
-    // eslint-disable-next-line ts/switch-exhaustiveness-check
     switch (process.platform) {
         case 'win32': {
             return _cacheDir = join(process.env.LOCALAPPDATA ?? process.env.APPDATA ?? 'C:', 'jsr-cache')

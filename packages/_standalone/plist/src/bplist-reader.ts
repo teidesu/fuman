@@ -201,7 +201,7 @@ export function readBinaryPlist(data: Uint8Array, options?: {
                         key = key.valueOf()
                     }
                     if (typeof key !== 'string' && typeof key !== 'number') {
-                        throw new TypeError(`invalid key: ${key}`)
+                        throw new TypeError(`invalid key: ${String(key)}`)
                     }
                     const value = readObject(readNumber(valueOffset, objectRefSize))
                     dict[key] = value

@@ -148,7 +148,8 @@ export async function getCommitsBetween(params: {
         'git',
         'log',
         `--pretty=format:%H %s%n%an%n%ae%n%aI%n%cn%n%ce%n%cI%n%b%n${delim}`,
-        since ? `${since}..${until}` : until,
+        since != null ? `${since}..${until}` : until,
+        // eslint-disable-next-line ts/strict-boolean-expressions
         ...(files?.length ? ['--', ...files] : []),
     ], {
         cwd,
