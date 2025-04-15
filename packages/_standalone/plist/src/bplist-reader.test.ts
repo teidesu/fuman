@@ -257,7 +257,7 @@ describe('readBinaryPlist', () => {
           {
             "aBigInt": 9223372036854775764n,
             "aBigInt2": 9223372036854775852n,
-            "aDate": 2004-11-26T07:33:33.000Z,
+            "aDate": 2004-10-26T10:33:33.000Z,
             "aDict": {
               "aFalseValue": false,
               "aTrueValue": true,

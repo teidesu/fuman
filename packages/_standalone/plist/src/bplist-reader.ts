@@ -1,8 +1,8 @@
 import { read } from '@fuman/io'
 import { typed, unreachable, utf8 } from '@fuman/utils'
 import { BPLIST_MAGIC, CORE_DATA_EPOCH, MAX_OBJECT_COUNT } from './_constants.js'
-import { PlistValue } from './types.js'
 import { safeToNumber } from './_utils.js'
+import { PlistValue } from './types.js'
 
 const UINT_SIZES = new Uint8Array([1, 2, 4, 8])
 

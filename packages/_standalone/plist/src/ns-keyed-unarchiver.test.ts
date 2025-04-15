@@ -40,7 +40,7 @@ describe('nsKeyedUnarchive', () => {
               ],
               "type": "Buffer",
             },
-            "MyDate": 2024-03-14T14:40:49.000Z,
+            "MyDate": 2024-02-12T17:40:49.000Z,
             "MyDictionary": {},
             "MyFloat": 2.7,
             "MyInteger": 98,
@@ -128,7 +128,7 @@ describe('nsKeyedUnarchive', () => {
                   ],
                   "$classname": "OC_BuiltinPythonDate",
                 },
-                "value": 2024-03-14T14:40:49.000Z,
+                "value": 2024-02-12T17:40:49.000Z,
               },
               "MyDictionary": KeyedArchiverValue {
                 "header": {
