@@ -5,6 +5,11 @@ import { Bytes } from '@fuman/io'
 import { ConnectionClosedError } from '@fuman/net'
 import { ConditionVariable, Deferred, Deque } from '@fuman/utils'
 
+// NB: classes have better performance than tuples
+class SendBufferItem {
+    constructor(public bytes: Uint8Array, readonly deferred: Deferred<void>) {}
+}
+
 /**
  * Implementation of {@link ITcpConnection} and {@link ITlsConnection} interfaces
  * using Bun's `connect` function.
@@ -14,7 +19,7 @@ export class TcpConnection implements ITcpConnection, ITlsConnection {
     readonly socket!: Socket<any>
     #error: Error | null = null
     #recvBuffer = Bytes.alloc(1024 * 16)
-    #sendBuffer: Deque<[Uint8Array, Deferred<void>]> = new Deque()
+    #sendBuffer: Deque<SendBufferItem> = new Deque()
     #cv = new ConditionVariable()
     #endpoint?: TcpEndpoint
 
@@ -57,7 +62,7 @@ export class TcpConnection implements ITcpConnection, ITlsConnection {
     _handleClose(): void {
         this.#error = new ConnectionClosedError()
         this.#cv.notify()
-        for (const [, deferred] of this.#sendBuffer) {
+        for (const { deferred } of this.#sendBuffer) {
             deferred.reject(this.#error)
         }
     }
@@ -66,11 +71,13 @@ export class TcpConnection implements ITcpConnection, ITlsConnection {
     _handleDrain(): void {
         while (!this.#sendBuffer.isEmpty()) {
             // eslint-disable-next-line ts/no-non-null-assertion
-            const [chunk, deferred] = this.#sendBuffer.popFront()!
+            const item = this.#sendBuffer.popFront()!
+            const { bytes: chunk, deferred } = item
             const written = this.socket.write(chunk)
 
             if (written < chunk.length) {
-                this.#sendBuffer.pushFront([chunk.subarray(written), deferred])
+                item.bytes = chunk.subarray(written)
+                this.#sendBuffer.pushFront(item)
                 break
             }
 
@@ -98,17 +105,16 @@ export class TcpConnection implements ITcpConnection, ITlsConnection {
     }
 
     async write(bytes: Uint8Array): Promise<void> {
-        // ideally we should only resolve once everything was written,
-        // but for now we just resolve immediately
-
         if (this.#error) throw this.#error
-
-        const written = this.socket.write(bytes)
-        if (written < bytes.length) {
-            const deferred = new Deferred<void>()
-            this.#sendBuffer.pushBack([bytes.subarray(written), deferred])
-            return deferred.promise
+        if (this.#sendBuffer.isEmpty()) {
+            const written = this.socket.write(bytes)
+            if (written === bytes.length) return
+            bytes = bytes.subarray(written)
         }
+
+        const deferred = new Deferred()
+        this.#sendBuffer.pushBack(new SendBufferItem(bytes, deferred))
+        return deferred.promise
     }
 
     close(): void {
