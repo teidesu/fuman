@@ -56,4 +56,49 @@ export interface JsrConfig {
   transformAst?: (ast: ts.SourceFile) => boolean
   /** similar to transformAst, but for the code itself (runs after transformAst) */
   transformCode?: (path: string, code: string) => string
+
+  /**
+   * whether to enable pre-processor directives when processing typescript files.
+   * this is useful to provide deno-specific typings for stuff.
+   *
+   * **note**: this is run *before* the transformCode hook, but *after* the transformAst hook
+   *
+   * supported directives:
+   *
+   * `<deno-insert>`: inserts the given code at transform time. example:
+   * ```ts
+   * // <deno-insert>
+   * // declare type SharedWorker = never
+   * // </deno-insert>
+   * ```
+   * transforms to:
+   * ```ts
+   * declare type SharedWorker = never
+   * ```
+   *
+   * `<deno-remove>`: remove the given code at transform time. example:
+   * ```ts
+   * // <deno-remove>
+   * if (self instanceof SharedWorkerGlobalScope) {
+   *   // do something
+   * }
+   * // </deno-remove>
+   * ```
+   * transforms to: (nothing)
+   *
+   * `<deno-tsignore>`: insert a `// @ts-ignore` comment when building for deno at the given position
+   * example:
+   * ```ts
+   * // <deno-tsignore>
+   * const foo: string = 123
+   * ```
+   * transforms to:
+   * ```ts
+   * // @ts-ignore
+   * const foo = 123
+   * ```
+   *
+   * @default false
+   */
+  enableDenoDirectives?: boolean
 }
