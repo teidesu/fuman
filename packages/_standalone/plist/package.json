@@ -14,7 +14,6 @@
     "@xmldom/xmldom": "^0.9.8"
   },
   "fuman": {
-    "jsr": "skip",
     "standalone": true
   }
 }

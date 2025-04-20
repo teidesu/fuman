@@ -6,6 +6,7 @@ export default {
   jsr: {
     exclude: ['**/*.{test,bench}.ts', '**/__fixtures__/**'],
     sourceDir: 'src',
+    enableDenoDirectives: true,
   },
   typedoc: {
     validation: {
