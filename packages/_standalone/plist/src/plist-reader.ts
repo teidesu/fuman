@@ -29,6 +29,7 @@ export function readXmlPlist(
     parseUid?: boolean
   },
 ): unknown {
+  // <deno-tsignore>
   // eslint-disable-next-line ts/no-unsafe-assignment
   const { DOMParser = globalThis.DOMParser, parseUid = false } = params ?? {}
 
