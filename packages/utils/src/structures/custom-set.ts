@@ -9,128 +9,128 @@ import { maybeWrapIterator } from './_iter.js'
  * > This might change in the future.
  */
 export class CustomSet<ExternalKey, InternalKey> implements Set<ExternalKey> {
-    #set: Set<InternalKey>
-    #mapperTo: (key: ExternalKey) => InternalKey
-    #mapperFrom: (key: InternalKey) => ExternalKey
+  #set: Set<InternalKey>
+  #mapperTo: (key: ExternalKey) => InternalKey
+  #mapperFrom: (key: InternalKey) => ExternalKey
 
-    readonly clear: Set<ExternalKey>['clear']
+  readonly clear: Set<ExternalKey>['clear']
 
-    constructor(
-        externalToInternal: (key: ExternalKey) => InternalKey,
-        internalToExternal: (key: InternalKey) => ExternalKey,
-    ) {
-        this.#mapperTo = externalToInternal
-        this.#mapperFrom = internalToExternal
+  constructor(
+    externalToInternal: (key: ExternalKey) => InternalKey,
+    internalToExternal: (key: InternalKey) => ExternalKey,
+  ) {
+    this.#mapperTo = externalToInternal
+    this.#mapperFrom = internalToExternal
 
-        const set = this.#set = new Set()
-        this.clear = set.clear.bind(set)
-    }
+    const set = this.#set = new Set()
+    this.clear = set.clear.bind(set)
+  }
 
-    get size(): number {
-        return this.#set.size
-    }
+  get size(): number {
+    return this.#set.size
+  }
 
-    add(value: ExternalKey): this {
-        this.#set.add(this.#mapperTo(value))
-        return this
-    }
+  add(value: ExternalKey): this {
+    this.#set.add(this.#mapperTo(value))
+    return this
+  }
 
-    delete(value: ExternalKey): boolean {
-        return this.#set.delete(this.#mapperTo(value))
-    }
+  delete(value: ExternalKey): boolean {
+    return this.#set.delete(this.#mapperTo(value))
+  }
 
-    forEach(callbackfn: (value: ExternalKey, value2: ExternalKey, set: Set<ExternalKey>) => void, thisArg?: any): void {
-        this.#set.forEach((value) => {
-            const mapped = this.#mapperFrom(value)
-            callbackfn.call(thisArg, mapped, mapped, this)
-        })
-    }
+  forEach(callbackfn: (value: ExternalKey, value2: ExternalKey, set: Set<ExternalKey>) => void, thisArg?: any): void {
+    this.#set.forEach((value) => {
+      const mapped = this.#mapperFrom(value)
+      callbackfn.call(thisArg, mapped, mapped, this)
+    })
+  }
 
-    has(value: ExternalKey): boolean {
-        return this.#set.has(this.#mapperTo(value))
-    }
+  has(value: ExternalKey): boolean {
+    return this.#set.has(this.#mapperTo(value))
+  }
 
-    entries(): ReturnType<Set<ExternalKey>['entries']> {
-        const inner = this.#set.entries()
+  entries(): ReturnType<Set<ExternalKey>['entries']> {
+    const inner = this.#set.entries()
 
-        const iterator: IterableIterator<[ExternalKey, ExternalKey]> = {
-            [Symbol.iterator]: () => iterator,
-            next: () => {
-                const { done, value } = inner.next() as IteratorResult<[InternalKey, InternalKey], undefined>
-                if (done) return { done, value }
+    const iterator: IterableIterator<[ExternalKey, ExternalKey]> = {
+      [Symbol.iterator]: () => iterator,
+      next: () => {
+        const { done, value } = inner.next() as IteratorResult<[InternalKey, InternalKey], undefined>
+        if (done) return { done, value }
 
-                const mapped = this.#mapperFrom(value[0])
+        const mapped = this.#mapperFrom(value[0])
 
-                return {
-                    done,
-                    value: [mapped, mapped] as const,
-                }
-            },
+        return {
+          done,
+          value: [mapped, mapped] as const,
         }
-
-        return maybeWrapIterator(iterator) as ReturnType<Set<ExternalKey>['entries']>
+      },
     }
 
-    keys(): ReturnType<Set<ExternalKey>['keys']> {
-        const inner = this.#set.keys()
+    return maybeWrapIterator(iterator) as ReturnType<Set<ExternalKey>['entries']>
+  }
 
-        const iterator: IterableIterator<ExternalKey> = {
-            [Symbol.iterator]: () => iterator,
-            next: () => {
-                const { done, value } = inner.next() as IteratorResult<InternalKey, undefined>
-                if (done) return { done, value: undefined }
+  keys(): ReturnType<Set<ExternalKey>['keys']> {
+    const inner = this.#set.keys()
 
-                return {
-                    done,
-                    value: this.#mapperFrom(value),
-                }
-            },
+    const iterator: IterableIterator<ExternalKey> = {
+      [Symbol.iterator]: () => iterator,
+      next: () => {
+        const { done, value } = inner.next() as IteratorResult<InternalKey, undefined>
+        if (done) return { done, value: undefined }
+
+        return {
+          done,
+          value: this.#mapperFrom(value),
         }
-
-        return maybeWrapIterator(iterator) as ReturnType<Set<ExternalKey>['keys']>
+      },
     }
 
-    values(): ReturnType<Set<ExternalKey>['keys']> {
-        return this.keys()
-    }
+    return maybeWrapIterator(iterator) as ReturnType<Set<ExternalKey>['keys']>
+  }
 
-    union<U>(): Set<ExternalKey | U> {
-        throw new Error('Method not supported.')
-    }
+  values(): ReturnType<Set<ExternalKey>['keys']> {
+    return this.keys()
+  }
 
-    intersection<U>(): Set<ExternalKey & U> {
-        throw new Error('Method not supported.')
-    }
+  union<U>(): Set<ExternalKey | U> {
+    throw new Error('Method not supported.')
+  }
 
-    difference(): Set<ExternalKey> {
-        throw new Error('Method not supported.')
-    }
+  intersection<U>(): Set<ExternalKey & U> {
+    throw new Error('Method not supported.')
+  }
 
-    symmetricDifference<U>(): Set<ExternalKey | U> {
-        throw new Error('Method not supported.')
-    }
+  difference(): Set<ExternalKey> {
+    throw new Error('Method not supported.')
+  }
 
-    isSubsetOf(): boolean {
-        throw new Error('Method not supported.')
-    }
+  symmetricDifference<U>(): Set<ExternalKey | U> {
+    throw new Error('Method not supported.')
+  }
 
-    isSupersetOf(): boolean {
-        throw new Error('Method not supported.')
-    }
+  isSubsetOf(): boolean {
+    throw new Error('Method not supported.')
+  }
 
-    isDisjointFrom(): boolean {
-        throw new Error('Method not supported.')
-    }
+  isSupersetOf(): boolean {
+    throw new Error('Method not supported.')
+  }
 
-    [Symbol.iterator](): ReturnType<Set<ExternalKey>['keys']> {
-        return this.keys()
-    }
+  isDisjointFrom(): boolean {
+    throw new Error('Method not supported.')
+  }
 
-    get [Symbol.toStringTag](): string {
-        return this.#set[Symbol.toStringTag]
-    }
+  [Symbol.iterator](): ReturnType<Set<ExternalKey>['keys']> {
+    return this.keys()
+  }
 
-    getInternalSet(): Set<InternalKey> {
-        return this.#set
-    }
+  get [Symbol.toStringTag](): string {
+    return this.#set[Symbol.toStringTag]
+  }
+
+  getInternalSet(): Set<InternalKey> {
+    return this.#set
+  }
 }

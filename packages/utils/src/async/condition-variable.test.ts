@@ -3,26 +3,26 @@ import { describe, expect, it } from 'vitest'
 import { ConditionVariable } from './condition-variable.js'
 
 describe('ConditionVariable', () => {
-    it('should correctly unlock execution', async () => {
-        const cv = new ConditionVariable()
+  it('should correctly unlock execution', async () => {
+    const cv = new ConditionVariable()
 
-        setTimeout(() => cv.notify(), 10)
+    setTimeout(() => cv.notify(), 10)
 
-        await cv.wait()
+    await cv.wait()
 
-        expect(true).toBeTruthy()
-    })
+    expect(true).toBeTruthy()
+  })
 
-    it('should only unlock once', async () => {
-        const cv = new ConditionVariable()
+  it('should only unlock once', async () => {
+    const cv = new ConditionVariable()
 
-        setTimeout(() => {
-            cv.notify()
-            cv.notify()
-        }, 10)
+    setTimeout(() => {
+      cv.notify()
+      cv.notify()
+    }, 10)
 
-        await cv.wait()
+    await cv.wait()
 
-        expect(true).toBeTruthy()
-    })
+    expect(true).toBeTruthy()
+  })
 })

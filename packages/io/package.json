@@ -1,17 +1,17 @@
 {
-    "name": "@fuman/io",
-    "type": "module",
-    "version": "0.0.14",
-    "description": "experimental i/o abstractions",
-    "license": "MIT",
-    "sideEffects": false,
-    "exports": {
-        ".": "./src/index.ts"
-    },
-    "scripts": {
-        "dev": "vitest watch"
-    },
-    "dependencies": {
-        "@fuman/utils": "workspace:^"
-    }
+  "name": "@fuman/io",
+  "type": "module",
+  "version": "0.0.14",
+  "description": "experimental i/o abstractions",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "vitest watch"
+  },
+  "dependencies": {
+    "@fuman/utils": "workspace:^"
+  }
 }

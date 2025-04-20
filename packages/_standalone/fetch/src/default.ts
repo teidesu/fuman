@@ -1,19 +1,20 @@
 import type { FfetchAddon } from './addons/index.js'
+import type { Ffetch } from './ffetch.js'
 import { ffetchAddons } from './addons/index.js'
-import { createFfetch, type Ffetch } from './ffetch.js'
+import { createFfetch } from './ffetch.js'
 
 export const ffetchDefaultAddons: [
-    FfetchAddon<ffetchAddons.TimeoutAddon, object>,
-    FfetchAddon<ffetchAddons.QueryAddon, object>,
-    FfetchAddon<ffetchAddons.FormAddon, object>,
-    FfetchAddon<ffetchAddons.MultipartAddon, object>,
-    FfetchAddon<ffetchAddons.RetryAddon, object>,
+  FfetchAddon<ffetchAddons.TimeoutAddon, object>,
+  FfetchAddon<ffetchAddons.QueryAddon, object>,
+  FfetchAddon<ffetchAddons.FormAddon, object>,
+  FfetchAddon<ffetchAddons.MultipartAddon, object>,
+  FfetchAddon<ffetchAddons.RetryAddon, object>,
 ] = [
-    /* #__PURE__ */ ffetchAddons.timeout(),
-    /* #__PURE__ */ ffetchAddons.query(),
-    /* #__PURE__ */ ffetchAddons.form(),
-    /* #__PURE__ */ ffetchAddons.multipart(),
-    /* #__PURE__ */ ffetchAddons.retry(),
+  /* #__PURE__ */ ffetchAddons.timeout(),
+  /* #__PURE__ */ ffetchAddons.query(),
+  /* #__PURE__ */ ffetchAddons.form(),
+  /* #__PURE__ */ ffetchAddons.multipart(),
+  /* #__PURE__ */ ffetchAddons.retry(),
 ]
 
 /**
@@ -38,12 +39,12 @@ export const ffetchDefaultAddons: [
  * ```
  */
 export const ffetchBase: Ffetch<
-    ffetchAddons.TimeoutAddon &
-    ffetchAddons.QueryAddon &
-    ffetchAddons.FormAddon &
-    ffetchAddons.MultipartAddon &
-    ffetchAddons.RetryAddon,
+  ffetchAddons.TimeoutAddon &
+  ffetchAddons.QueryAddon &
+  ffetchAddons.FormAddon &
+  ffetchAddons.MultipartAddon &
+  ffetchAddons.RetryAddon,
     object
 > = /* #__PURE__ */ createFfetch({
-    addons: ffetchDefaultAddons,
+  addons: ffetchDefaultAddons,
 })

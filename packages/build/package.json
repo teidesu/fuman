@@ -1,54 +1,54 @@
 {
-    "name": "@fuman/build",
-    "type": "module",
-    "version": "0.0.14",
-    "description": "utils for building packages and managing monorepos",
-    "license": "MIT",
-    "sideEffects": false,
-    "exports": {
-        ".": "./src/index.ts",
-        "./vite": "./src/vite/index.ts",
-        "./jsr": "./src/jsr/index.ts",
-        "./vite-internal": "./dist_vite-internal.js"
-    },
-    "bin": {
-        "fuman-build": "./src/cli/main.ts"
-    },
-    "scripts": {
-        "build-vite-plugin": "esbuild ./src/vite/index.ts --bundle --external:tinyglobby --platform=node --format=esm --outfile=dist_vite-internal.js --log-level=error"
-    },
-    "peerDependencies": {
-        "typedoc": ">=0.24.0",
-        "typescript": "^5.2.2",
-        "vite": "^5.4.0 || ^6.0.0"
-    },
-    "peerDependenciesMeta": {
-        "typedoc": {
-            "optional": true
-        }
-    },
-    "dependencies": {
-        "@drizzle-team/brocli": "^0.10.2",
-        "@fuman/fetch": "0.0.13",
-        "@fuman/io": "workspace:^",
-        "@fuman/node": "workspace:^",
-        "@fuman/utils": "workspace:^",
-        "cross-spawn": "^7.0.5",
-        "detect-indent": "^7.0.1",
-        "js-yaml": "^4.1.0",
-        "json5": "^2.2.3",
-        "picomatch": "^4.0.2",
-        "semver": "^7.6.3",
-        "tinyglobby": "^0.2.6",
-        "zod": "catalog:"
-    },
-    "devDependencies": {
-        "@types/cross-spawn": "^6.0.6",
-        "@types/js-yaml": "^4.0.5",
-        "@types/picomatch": "^3.0.1",
-        "@types/semver": "7.5.4"
-    },
-    "fuman": {
-        "jsr": "skip"
+  "name": "@fuman/build",
+  "type": "module",
+  "version": "0.0.14",
+  "description": "utils for building packages and managing monorepos",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./vite": "./src/vite/index.ts",
+    "./jsr": "./src/jsr/index.ts",
+    "./vite-internal": "./dist_vite-internal.js"
+  },
+  "bin": {
+    "fuman-build": "./src/cli/main.ts"
+  },
+  "scripts": {
+    "build-vite-plugin": "esbuild ./src/vite/index.ts --bundle --external:tinyglobby --platform=node --format=esm --outfile=dist_vite-internal.js --log-level=error"
+  },
+  "peerDependencies": {
+    "typedoc": ">=0.24.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.4.0 || ^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "typedoc": {
+      "optional": true
     }
+  },
+  "dependencies": {
+    "@drizzle-team/brocli": "^0.10.2",
+    "@fuman/fetch": "0.0.13",
+    "@fuman/io": "workspace:^",
+    "@fuman/node": "workspace:^",
+    "@fuman/utils": "workspace:^",
+    "cross-spawn": "^7.0.5",
+    "detect-indent": "^7.0.1",
+    "js-yaml": "^4.1.0",
+    "json5": "^2.2.3",
+    "picomatch": "^4.0.2",
+    "semver": "^7.6.3",
+    "tinyglobby": "^0.2.6",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
+    "@types/js-yaml": "^4.0.5",
+    "@types/picomatch": "^3.0.1",
+    "@types/semver": "7.5.4"
+  },
+  "fuman": {
+    "jsr": "skip"
+  }
 }

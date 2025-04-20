@@ -10,23 +10,23 @@ import { readXmlPlist } from './plist-reader.js'
 const FIXTURES_DIR = fileURLToPath(new URL('__fixtures__', import.meta.url))
 
 describe('nsKeyedUnarchive', () => {
-    it('node-bplist-parser fixture', async () => {
-        const data = await readFile(join(FIXTURES_DIR, 'uid.bplist'))
-        const dict = nsKeyedUnarchive(readBinaryPlist(data))
-        expect(dict).toMatchInlineSnapshot(`
+  it('node-bplist-parser fixture', async () => {
+    const data = await readFile(join(FIXTURES_DIR, 'uid.bplist'))
+    const dict = nsKeyedUnarchive(readBinaryPlist(data))
+    expect(dict).toMatchInlineSnapshot(`
           {
             "key1": "obj1",
             "key2": "obj2",
             "key3": "obj3",
           }
         `)
-    })
+  })
 
-    it('plist-kb fixture', async () => {
-        // sourced from https://github.com/libyal/plist-kb/, Apache-2.0 license
-        const data = await readFile(join(FIXTURES_DIR, 'plist-kb.bplist'))
-        const dict = nsKeyedUnarchive(readBinaryPlist(data))
-        expect(dict).toMatchInlineSnapshot(`
+  it('plist-kb fixture', async () => {
+    // sourced from https://github.com/libyal/plist-kb/, Apache-2.0 license
+    const data = await readFile(join(FIXTURES_DIR, 'plist-kb.bplist'))
+    const dict = nsKeyedUnarchive(readBinaryPlist(data))
+    expect(dict).toMatchInlineSnapshot(`
           {
             "MyArray": [],
             "MyBool": true,
@@ -47,13 +47,13 @@ describe('nsKeyedUnarchive', () => {
             "MyString": "Some string",
           }
         `)
-    })
+  })
 
-    it('plist-kb fixture (preseveType)', async () => {
-        // this one is interesting because it was generated with extra types in the hierarchy by some python code
-        const data = await readFile(join(FIXTURES_DIR, 'plist-kb.bplist'))
-        const dict = nsKeyedUnarchive(readBinaryPlist(data), { preserveType: true })
-        expect(dict).toMatchInlineSnapshot(`
+  it('plist-kb fixture (preseveType)', async () => {
+    // this one is interesting because it was generated with extra types in the hierarchy by some python code
+    const data = await readFile(join(FIXTURES_DIR, 'plist-kb.bplist'))
+    const dict = nsKeyedUnarchive(readBinaryPlist(data), { preserveType: true })
+    expect(dict).toMatchInlineSnapshot(`
           KeyedArchiverValue {
             "header": {
               "$classes": [
@@ -168,15 +168,15 @@ describe('nsKeyedUnarchive', () => {
             },
           }
         `)
-    })
+  })
 
-    describe('danielpaulus/nskeyedarchiver fixtures', () => {
-        // sourced from https://github.com/danielpaulus/nskeyedarchiver, MIT license
+  describe('danielpaulus/nskeyedarchiver fixtures', () => {
+    // sourced from https://github.com/danielpaulus/nskeyedarchiver, MIT license
 
-        it('arrays', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-arrays.bplist'))
-            const dict = nsKeyedUnarchive(readBinaryPlist(data))
-            expect(dict).toMatchInlineSnapshot(`
+    it('arrays', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-arrays.bplist'))
+      const dict = nsKeyedUnarchive(readBinaryPlist(data))
+      expect(dict).toMatchInlineSnapshot(`
               [
                 [
                   1,
@@ -227,12 +227,12 @@ describe('nsKeyedUnarchive', () => {
                 },
               ]
             `)
-        })
+    })
 
-        it('dict', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-dict.bplist'))
-            const dict = nsKeyedUnarchive(readBinaryPlist(data))
-            expect(dict).toMatchInlineSnapshot(`
+    it('dict', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-dict.bplist'))
+      const dict = nsKeyedUnarchive(readBinaryPlist(data))
+      expect(dict).toMatchInlineSnapshot(`
               [
                 {
                   "array": [
@@ -245,12 +245,12 @@ describe('nsKeyedUnarchive', () => {
                 },
               ]
             `)
-        })
+    })
 
-        it('nestedarrays', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-nestedarrays.bplist'))
-            const dict = nsKeyedUnarchive(readBinaryPlist(data))
-            expect(dict).toMatchInlineSnapshot(`
+    it('nestedarrays', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-nestedarrays.bplist'))
+      const dict = nsKeyedUnarchive(readBinaryPlist(data))
+      expect(dict).toMatchInlineSnapshot(`
               [
                 [
                   Set {
@@ -264,22 +264,22 @@ describe('nsKeyedUnarchive', () => {
                 ],
               ]
             `)
-        })
+    })
 
-        it('onevalue', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-onevalue.bplist'))
-            const dict = nsKeyedUnarchive(readBinaryPlist(data))
-            expect(dict).toMatchInlineSnapshot(`
+    it('onevalue', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-onevalue.bplist'))
+      const dict = nsKeyedUnarchive(readBinaryPlist(data))
+      expect(dict).toMatchInlineSnapshot(`
               [
                 true,
               ]
             `)
-        })
+    })
 
-        it('primitives', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-primitives.bplist'))
-            const dict = nsKeyedUnarchive(readBinaryPlist(data))
-            expect(dict).toMatchInlineSnapshot(`
+    it('primitives', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-primitives.bplist'))
+      const dict = nsKeyedUnarchive(readBinaryPlist(data))
+      expect(dict).toMatchInlineSnapshot(`
               [
                 1,
                 1,
@@ -315,38 +315,38 @@ describe('nsKeyedUnarchive', () => {
                 42,
               ]
             `)
-        })
-
-        it('missing_archiver', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-missing_archiver.plist'), 'utf8')
-            expect(() => nsKeyedUnarchive(readXmlPlist(data, { DOMParser }))).toThrowErrorMatchingInlineSnapshot('[Error: invalid or missing $archiver]')
-        })
-
-        it('missing_objects', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-missing_objects.plist'), 'utf8')
-            expect(() => nsKeyedUnarchive(readXmlPlist(data, { DOMParser }))).toThrowErrorMatchingInlineSnapshot('[Error: key "$objects" not found in object]')
-        })
-
-        it('missing_top', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-missing_top.plist'), 'utf8')
-            expect(() => nsKeyedUnarchive(readXmlPlist(data, { DOMParser }))).toThrowErrorMatchingInlineSnapshot('[Error: key "$top" not found in object]')
-        })
-
-        it('missing_version', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-missing_version.plist'), 'utf8')
-            expect(() => nsKeyedUnarchive(readXmlPlist(data, { DOMParser }))).toThrowErrorMatchingInlineSnapshot('[Error: unsupported NSKeyedArchiver version]')
-        })
     })
 
-    it('handles circular references', async () => {
-        // <ref *1> {
-        //   meow: 123,
-        //   purr: <ref *2> [ [Circular *1], [Circular *2] ]
-        // }
-        const data = await readFile(join(FIXTURES_DIR, 'nska-circular.bplist'))
-        const dict = nsKeyedUnarchive(readBinaryPlist(data)) as Record<string, unknown>
-        expect(dict.meow).toBe(123)
-        expect((dict.purr as unknown[])[0]).toBe(dict)
-        expect((dict.purr as unknown[])[1]).toBe(dict.purr)
+    it('missing_archiver', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-missing_archiver.plist'), 'utf8')
+      expect(() => nsKeyedUnarchive(readXmlPlist(data, { DOMParser }))).toThrowErrorMatchingInlineSnapshot('[Error: invalid or missing $archiver]')
     })
+
+    it('missing_objects', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-missing_objects.plist'), 'utf8')
+      expect(() => nsKeyedUnarchive(readXmlPlist(data, { DOMParser }))).toThrowErrorMatchingInlineSnapshot('[Error: key "$objects" not found in object]')
+    })
+
+    it('missing_top', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-missing_top.plist'), 'utf8')
+      expect(() => nsKeyedUnarchive(readXmlPlist(data, { DOMParser }))).toThrowErrorMatchingInlineSnapshot('[Error: key "$top" not found in object]')
+    })
+
+    it('missing_version', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-missing_version.plist'), 'utf8')
+      expect(() => nsKeyedUnarchive(readXmlPlist(data, { DOMParser }))).toThrowErrorMatchingInlineSnapshot('[Error: unsupported NSKeyedArchiver version]')
+    })
+  })
+
+  it('handles circular references', async () => {
+    // <ref *1> {
+    //   meow: 123,
+    //   purr: <ref *2> [ [Circular *1], [Circular *2] ]
+    // }
+    const data = await readFile(join(FIXTURES_DIR, 'nska-circular.bplist'))
+    const dict = nsKeyedUnarchive(readBinaryPlist(data)) as Record<string, unknown>
+    expect(dict.meow).toBe(123)
+    expect((dict.purr as unknown[])[0]).toBe(dict)
+    expect((dict.purr as unknown[])[1]).toBe(dict.purr)
+  })
 })

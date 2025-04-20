@@ -9,79 +9,79 @@ import { bumpVersion } from '../../versioning/bump-version.js'
 import { bc, loadConfig } from './_utils.js'
 
 export function formatBumpVersionResult(result: BumpVersionResult, withReleaseType: boolean): string {
-    const lines: string[] = []
-    if (withReleaseType) {
-        lines.push(`detected release type: ${result.releaseType}`)
-        lines.push(`  has breaking changes: ${result.hasBreakingChanges}`)
-        lines.push(`  has new features: ${result.hasFeatures}`)
-        lines.push('')
-    }
+  const lines: string[] = []
+  if (withReleaseType) {
+    lines.push(`detected release type: ${result.releaseType}`)
+    lines.push(`  has breaking changes: ${result.hasBreakingChanges}`)
+    lines.push(`  has new features: ${result.hasFeatures}`)
+    lines.push('')
+  }
 
-    lines.push('list of changed packages:')
-    for (const { package: pkg, because, prevVersion } of result.changedPackages) {
-        let versionStr = prevVersion
-        if (!pkg.json.fuman?.ownVersioning) {
-            versionStr += ` → ${pkg.json.version}`
-        }
-        lines.push(`  ${pkg.json.name}${because ? ` (because of ${because.join(', ')})` : ''}: ${versionStr}`)
+  lines.push('list of changed packages:')
+  for (const { package: pkg, because, prevVersion } of result.changedPackages) {
+    let versionStr = prevVersion
+    if (!pkg.json.fuman?.ownVersioning) {
+      versionStr += ` → ${pkg.json.version}`
     }
+    lines.push(`  ${pkg.json.name}${because ? ` (because of ${because.join(', ')})` : ''}: ${versionStr}`)
+  }
 
-    return lines.join('\n')
+  return lines.join('\n')
 }
 
 export const bumpVersionCli = bc.command({
-    name: 'bump-version',
-    desc: 'bump the version of changed packages',
-    options: {
-        root: bc.string()
-            .desc('path to the root of the workspace (default: process.cwd())'),
-        type: bc.string()
-            .desc('override type of release (major, minor, patch) (default: auto-detect)')
-            .enum('major', 'minor', 'patch', 'auto')
-            .default('auto'),
-        since: bc.string()
-            .desc('starting point for the changelog (default: latest tag)'),
-        dryRun: bc.boolean('dry-run')
-            .desc('whether to only print the detected changes without actually modifying anything'),
-        quiet: bc.boolean()
-            .desc('whether to only print the new version number')
-            .alias('q'),
-    },
-    handler: async (args) => {
-        const root = args.root ?? process.cwd()
-        const releaseType = args.type === 'auto' ? undefined : args.type
+  name: 'bump-version',
+  desc: 'bump the version of changed packages',
+  options: {
+    root: bc.string()
+      .desc('path to the root of the workspace (default: process.cwd())'),
+    type: bc.string()
+      .desc('override type of release (major, minor, patch) (default: auto-detect)')
+      .enum('major', 'minor', 'patch', 'auto')
+      .default('auto'),
+    since: bc.string()
+      .desc('starting point for the changelog (default: latest tag)'),
+    dryRun: bc.boolean('dry-run')
+      .desc('whether to only print the detected changes without actually modifying anything'),
+    quiet: bc.boolean()
+      .desc('whether to only print the new version number')
+      .alias('q'),
+  },
+  handler: async (args) => {
+    const root = args.root ?? process.cwd()
+    const releaseType = args.type === 'auto' ? undefined : args.type
 
-        const workspace = await collectPackageJsons(root)
-        const config = await loadConfig({
-            workspaceRoot: root,
-            require: false,
-        })
+    const workspace = await collectPackageJsons(root)
+    const config = await loadConfig({
+      workspaceRoot: root,
+      require: false,
+    })
 
-        const since = args.since ?? (await getLatestTag(root))
-        if (since == null) {
-            throw new Error('no previous tag found, cannot determine changeset')
-        }
+    const since = args.since ?? (await getLatestTag(root))
+    if (since == null) {
+      throw new Error('no previous tag found, cannot determine changeset')
+    }
 
-        const result = await bumpVersion({
-            workspace,
-            type: releaseType,
-            cwd: root,
-            since,
-            params: config?.versioning,
-            dryRun: args.dryRun,
-        })
+    const result = await bumpVersion({
+      workspace,
+      type: releaseType,
+      cwd: root,
+      since,
+      params: config?.versioning,
+      dryRun: args.dryRun,
+    })
 
-        if (args.quiet) {
-            console.log(JSON.stringify(result.nextVersions))
-        } else {
-            console.log(formatBumpVersionResult(result, releaseType == null))
-        }
+    if (args.quiet) {
+      console.log(JSON.stringify(result.nextVersions))
+    } else {
+      console.log(formatBumpVersionResult(result, releaseType == null))
+    }
 
-        if (isRunningInGithubActions()) {
-            writeGithubActionsOutput('versions', JSON.stringify(result.nextVersions))
-            writeGithubActionsOutput('hasBreakingChanges', String(result.hasBreakingChanges))
-            writeGithubActionsOutput('hasFeatures', String(result.hasFeatures))
-            writeGithubActionsOutput('changedPackages', result.changedPackages.map(it => it.package.json.name).join(','))
-        }
-    },
+    if (isRunningInGithubActions()) {
+      writeGithubActionsOutput('versions', JSON.stringify(result.nextVersions))
+      writeGithubActionsOutput('hasBreakingChanges', String(result.hasBreakingChanges))
+      writeGithubActionsOutput('hasFeatures', String(result.hasFeatures))
+      writeGithubActionsOutput('changedPackages', result.changedPackages.map(it => it.package.json.name).join(','))
+    }
+  },
 })

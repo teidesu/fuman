@@ -15,24 +15,24 @@ import { publishPackagesCli } from './commands/publish.js'
 import { releaseCli } from './commands/release.js'
 
 await bc.run([
-    lintCli,
-    generateDepsGraphCli,
-    buildPackageCli,
-    jsrCli,
-    generateChangelogCli,
-    findChangedPackagesCli,
-    bumpVersionCli,
-    publishPackagesCli,
-    releaseCli,
-    runContinuousReleaseCli,
-    generateDocsCli,
+  lintCli,
+  generateDepsGraphCli,
+  buildPackageCli,
+  jsrCli,
+  generateChangelogCli,
+  findChangedPackagesCli,
+  bumpVersionCli,
+  publishPackagesCli,
+  releaseCli,
+  runContinuousReleaseCli,
+  generateDocsCli,
 ], {
-    theme: (event) => {
-        if (event.type === 'error' && event.violation === 'unknown_error') {
-            console.error(event.error)
-            process.exit(1)
-        }
+  theme: (event) => {
+    if (event.type === 'error' && event.violation === 'unknown_error') {
+      console.error(event.error)
+      process.exit(1)
+    }
 
-        return false
-    },
+    return false
+  },
 })

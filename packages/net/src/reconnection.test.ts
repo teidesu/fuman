@@ -8,807 +8,807 @@ import { defaultReconnectionStrategy, PersistentConnection } from './reconnectio
 class FakeConnection2 extends FakeConnection {}
 
 describe('defaultReconnectionStrategy', () => {
-    it('first - immediate reconnection', () => {
-        const wait = defaultReconnectionStrategy({
-            previousWait: null,
-            lastError: null,
-            consequentFails: 0,
-        })
-
-        expect(wait).toBe(0)
+  it('first - immediate reconnection', () => {
+    const wait = defaultReconnectionStrategy({
+      previousWait: null,
+      lastError: null,
+      consequentFails: 0,
     })
 
-    it('second - linear increase up to 5s', () => {
-        const wait = defaultReconnectionStrategy({
-            previousWait: 0,
-            lastError: null,
-            consequentFails: 1,
-        })
+    expect(wait).toBe(0)
+  })
 
-        expect(wait).toBe(1000)
+  it('second - linear increase up to 5s', () => {
+    const wait = defaultReconnectionStrategy({
+      previousWait: 0,
+      lastError: null,
+      consequentFails: 1,
     })
 
-    it('third - linear increase up to 5s', () => {
-        const wait = defaultReconnectionStrategy({
-            previousWait: 1000,
-            lastError: null,
-            consequentFails: 2,
-        })
+    expect(wait).toBe(1000)
+  })
 
-        expect(wait).toBe(2000)
+  it('third - linear increase up to 5s', () => {
+    const wait = defaultReconnectionStrategy({
+      previousWait: 1000,
+      lastError: null,
+      consequentFails: 2,
     })
 
-    it('fourth - linear increase up to 5s', () => {
-        const wait = defaultReconnectionStrategy({
-            previousWait: 2000,
-            lastError: null,
-            consequentFails: 3,
-        })
+    expect(wait).toBe(2000)
+  })
 
-        expect(wait).toBe(3000)
+  it('fourth - linear increase up to 5s', () => {
+    const wait = defaultReconnectionStrategy({
+      previousWait: 2000,
+      lastError: null,
+      consequentFails: 3,
     })
 
-    it('fifth - linear increase up to 5s', () => {
-        const wait = defaultReconnectionStrategy({
-            previousWait: 3000,
-            lastError: null,
-            consequentFails: 4,
-        })
-        expect(wait).toBe(4000)
-    })
+    expect(wait).toBe(3000)
+  })
 
-    it('sixth - linear increase up to 5s', () => {
-        const wait = defaultReconnectionStrategy({
-            previousWait: 4000,
-            lastError: null,
-            consequentFails: 5,
-        })
-        expect(wait).toBe(5000)
+  it('fifth - linear increase up to 5s', () => {
+    const wait = defaultReconnectionStrategy({
+      previousWait: 3000,
+      lastError: null,
+      consequentFails: 4,
     })
+    expect(wait).toBe(4000)
+  })
 
-    it('seventh - linear increase up to 5s (max)', () => {
-        const wait = defaultReconnectionStrategy({
-            previousWait: 5000,
-            lastError: null,
-            consequentFails: 6,
-        })
-        expect(wait).toBe(5000)
+  it('sixth - linear increase up to 5s', () => {
+    const wait = defaultReconnectionStrategy({
+      previousWait: 4000,
+      lastError: null,
+      consequentFails: 5,
     })
+    expect(wait).toBe(5000)
+  })
+
+  it('seventh - linear increase up to 5s (max)', () => {
+    const wait = defaultReconnectionStrategy({
+      previousWait: 5000,
+      lastError: null,
+      consequentFails: 6,
+    })
+    expect(wait).toBe(5000)
+  })
 })
 
 describe('PersistentConnection', () => {
-    beforeEach(() => void vi.useFakeTimers())
-    afterEach(() => void vi.useRealTimers())
+  beforeEach(() => void vi.useFakeTimers())
+  afterEach(() => void vi.useRealTimers())
 
-    const echoClient = async (conn: FakeConnection) => {
-        const buf = Bytes.alloc()
-        while (true) {
-            const read = await conn.read(buf.writeSync(1024))
-            if (read === 0) break
-            await conn.write(buf.readSync(read))
-        }
+  const echoClient = async (conn: FakeConnection) => {
+    const buf = Bytes.alloc()
+    while (true) {
+      const read = await conn.read(buf.writeSync(1024))
+      if (read === 0) break
+      await conn.write(buf.readSync(read))
+    }
+  }
+
+  it('should open a connection', async () => {
+    const log: string[] = []
+
+    const opened = new ConditionVariable()
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect ${addr}`)
+        return new FakeConnection(addr)
+      },
+      onOpen: async (conn) => {
+        log.push('onOpen')
+        opened.notify()
+        await echoClient(conn)
+      },
+      onClose: () => { log.push('onClose') },
+      onWait: (time) => { log.push(`onWait ${time}`) },
+      onError: (err) => { log.push(`onError ${err.message}`); return 'close' },
+    })
+
+    reconn.connect('127.0.0.1:1234')
+    await opened.wait()
+
+    expect(reconn.connection).toBeInstanceOf(FakeConnection)
+    expect(reconn.connection?.address).toBe('127.0.0.1:1234')
+
+    await reconn.close()
+
+    expect(log).toEqual([
+      'connect 127.0.0.1:1234',
+      'onOpen',
+      'onClose',
+    ])
+  })
+
+  it('should open a new connection if the old one is closed', async () => {
+    const log: string[] = []
+    let opened = new Deferred<void>()
+    const wait = new Deferred<number>()
+
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect start ${addr}`)
+        await sleep(10)
+        log.push(`connect end ${addr}`)
+        return new FakeConnection(addr)
+      },
+      onOpen: async (conn) => {
+        log.push('onOpen')
+        opened.resolve()
+        await echoClient(conn)
+      },
+      onWait: (time) => {
+        log.push(`onWait ${time}`)
+        wait.resolve(time)
+      },
+      onClose: () => { log.push('onClose') },
+    })
+
+    expect(reconn.isConnected).toBe(false)
+    expect(reconn.isConnecting).toBe(false)
+
+    reconn.connect('127.0.0.1:1234')
+    expect(reconn.isConnecting).toBe(true)
+    expect(reconn.isConnected).toBe(false)
+    expect(reconn.isWaiting).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(10)
+    expect(reconn.isConnecting).toBe(false)
+    expect(reconn.isConnected).toBe(true)
+    expect(reconn.isWaiting).toBe(false)
+
+    await opened.promise
+    opened = new Deferred()
+
+    const oldConn = reconn.connection
+    expect(oldConn).toBeInstanceOf(FakeConnection)
+    expect(oldConn?.address).toBe('127.0.0.1:1234')
+    expect(reconn.isConnecting).toBe(false)
+    expect(reconn.isConnected).toBe(true)
+    expect(reconn.isWaiting).toBe(false)
+
+    // eslint-disable-next-line ts/no-non-null-assertion
+    oldConn!.close()
+    expect(await wait.promise).toBe(0)
+    expect(reconn.isConnecting).toBe(true)
+    expect(reconn.isConnected).toBe(false)
+    expect(reconn.isWaiting).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(10)
+    await opened.promise
+
+    expect(reconn.connection).toBeInstanceOf(FakeConnection)
+    expect(reconn.connection?.address).toBe('127.0.0.1:1234')
+    expect(reconn.connection).not.toBe(oldConn)
+    expect(reconn.isConnecting).toBe(false)
+    expect(reconn.isConnected).toBe(true)
+    expect(reconn.isWaiting).toBe(false)
+
+    await reconn.close()
+
+    expect(log).toEqual([
+      'connect start 127.0.0.1:1234',
+      'connect end 127.0.0.1:1234',
+      'onOpen',
+      'onClose',
+      'onWait 0',
+      'connect start 127.0.0.1:1234',
+      'connect end 127.0.0.1:1234',
+      'onOpen',
+      'onClose',
+    ])
+  })
+
+  it('should throw if connection is already open', async () => {
+    const reconn = new PersistentConnection({
+      connect: async () => new FakeConnection('127.0.0.1:1234'),
+      onOpen: echoClient,
+    })
+
+    reconn.connect('127.0.0.1:1234')
+
+    expect(() => reconn.connect('127.0.0.2:1234')).toThrow(Error)
+  })
+
+  it('should cleanly change transport', async () => {
+    const log: string[] = []
+
+    let opened = new Deferred<void>()
+    const connect1 = async (addr: string) => {
+      log.push(`connect1 ${addr}`)
+      return new FakeConnection(addr)
+    }
+    const connect2 = async (addr: string) => {
+      log.push(`connect2 ${addr}`)
+      return new FakeConnection2(addr)
     }
 
-    it('should open a connection', async () => {
-        const log: string[] = []
-
-        const opened = new ConditionVariable()
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect ${addr}`)
-                return new FakeConnection(addr)
-            },
-            onOpen: async (conn) => {
-                log.push('onOpen')
-                opened.notify()
-                await echoClient(conn)
-            },
-            onClose: () => { log.push('onClose') },
-            onWait: (time) => { log.push(`onWait ${time}`) },
-            onError: (err) => { log.push(`onError ${err.message}`); return 'close' },
-        })
-
-        reconn.connect('127.0.0.1:1234')
-        await opened.wait()
-
-        expect(reconn.connection).toBeInstanceOf(FakeConnection)
-        expect(reconn.connection?.address).toBe('127.0.0.1:1234')
-
-        await reconn.close()
-
-        expect(log).toEqual([
-            'connect 127.0.0.1:1234',
-            'onOpen',
-            'onClose',
-        ])
+    const reconn = new PersistentConnection({
+      connect: connect1,
+      onOpen: async (conn) => {
+        log.push(`onOpen FakeConnection${conn instanceof FakeConnection2 ? '2' : '1'}`)
+        opened.resolve()
+        await echoClient(conn)
+      },
+      onClose: () => { log.push('onClose') },
     })
 
-    it('should open a new connection if the old one is closed', async () => {
-        const log: string[] = []
-        let opened = new Deferred<void>()
-        const wait = new Deferred<number>()
+    reconn.connect('127.0.0.1:1234')
+    await opened.promise
 
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect start ${addr}`)
-                await sleep(10)
-                log.push(`connect end ${addr}`)
-                return new FakeConnection(addr)
-            },
-            onOpen: async (conn) => {
-                log.push('onOpen')
-                opened.resolve()
-                await echoClient(conn)
-            },
-            onWait: (time) => {
-                log.push(`onWait ${time}`)
-                wait.resolve(time)
-            },
-            onClose: () => { log.push('onClose') },
-        })
+    opened = new Deferred<void>()
 
-        expect(reconn.isConnected).toBe(false)
-        expect(reconn.isConnecting).toBe(false)
+    await reconn.changeTransport(connect2)
+    await opened.promise
 
-        reconn.connect('127.0.0.1:1234')
-        expect(reconn.isConnecting).toBe(true)
-        expect(reconn.isConnected).toBe(false)
-        expect(reconn.isWaiting).toBe(false)
+    await reconn.close()
 
-        await vi.advanceTimersByTimeAsync(10)
-        expect(reconn.isConnecting).toBe(false)
-        expect(reconn.isConnected).toBe(true)
-        expect(reconn.isWaiting).toBe(false)
+    expect(log).toEqual([
+      'connect1 127.0.0.1:1234',
+      'onOpen FakeConnection1',
+      'onClose',
+      'connect2 127.0.0.1:1234',
+      'onOpen FakeConnection2',
+      'onClose',
+    ])
+  })
 
-        await opened.promise
-        opened = new Deferred()
+  it('should forcefully reconnect while waiting', async () => {
+    const log: string[] = []
 
-        const oldConn = reconn.connection
-        expect(oldConn).toBeInstanceOf(FakeConnection)
-        expect(oldConn?.address).toBe('127.0.0.1:1234')
-        expect(reconn.isConnecting).toBe(false)
-        expect(reconn.isConnected).toBe(true)
-        expect(reconn.isWaiting).toBe(false)
-
-        // eslint-disable-next-line ts/no-non-null-assertion
-        oldConn!.close()
-        expect(await wait.promise).toBe(0)
-        expect(reconn.isConnecting).toBe(true)
-        expect(reconn.isConnected).toBe(false)
-        expect(reconn.isWaiting).toBe(false)
-
-        await vi.advanceTimersByTimeAsync(10)
-        await opened.promise
-
-        expect(reconn.connection).toBeInstanceOf(FakeConnection)
-        expect(reconn.connection?.address).toBe('127.0.0.1:1234')
-        expect(reconn.connection).not.toBe(oldConn)
-        expect(reconn.isConnecting).toBe(false)
-        expect(reconn.isConnected).toBe(true)
-        expect(reconn.isWaiting).toBe(false)
-
-        await reconn.close()
-
-        expect(log).toEqual([
-            'connect start 127.0.0.1:1234',
-            'connect end 127.0.0.1:1234',
-            'onOpen',
-            'onClose',
-            'onWait 0',
-            'connect start 127.0.0.1:1234',
-            'connect end 127.0.0.1:1234',
-            'onOpen',
-            'onClose',
-        ])
+    let opened = new Deferred<void>()
+    const wait = new Deferred<number>()
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect ${addr}`)
+        return new FakeConnection(addr)
+      },
+      strategy: () => 1000,
+      onOpen: async (conn) => {
+        log.push('onOpen')
+        opened.resolve()
+        await echoClient(conn)
+      },
+      onClose: () => { log.push('onClose') },
+      onWait: (time) => {
+        wait.resolve(time)
+        log.push(`onWait ${time}`)
+      },
     })
 
-    it('should throw if connection is already open', async () => {
-        const reconn = new PersistentConnection({
-            connect: async () => new FakeConnection('127.0.0.1:1234'),
-            onOpen: echoClient,
-        })
+    reconn.connect('127.0.0.1:1234')
+    await opened.promise
 
-        reconn.connect('127.0.0.1:1234')
+    reconn.connection?.close()
+    expect(await wait.promise).toBe(1000)
+    expect(reconn.isWaiting).toBe(true)
 
-        expect(() => reconn.connect('127.0.0.2:1234')).toThrow(Error)
+    opened = new Deferred<void>()
+    reconn.reconnect(false)
+    await opened.promise
+
+    await reconn.close()
+
+    expect(log).toEqual([
+      'connect 127.0.0.1:1234',
+      'onOpen',
+      'onClose',
+      'onWait 1000',
+      'connect 127.0.0.1:1234',
+      'onOpen',
+      'onClose',
+    ])
+  })
+
+  it('should forcefully reconnect while connected', async () => {
+    const log: string[] = []
+
+    let opened = new Deferred<void>()
+    const wait = new Deferred<number>()
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect ${addr}`)
+        return new FakeConnection(addr)
+      },
+      onOpen: async (conn) => {
+        log.push('onOpen')
+        opened.resolve()
+        await echoClient(conn)
+      },
+      onClose: () => { log.push('onClose') },
+      onWait: (time) => {
+        wait.resolve(time)
+        log.push(`onWait ${time}`)
+      },
     })
 
-    it('should cleanly change transport', async () => {
-        const log: string[] = []
+    reconn.connect('127.0.0.1:1234')
+    await opened.promise
 
-        let opened = new Deferred<void>()
-        const connect1 = async (addr: string) => {
-            log.push(`connect1 ${addr}`)
-            return new FakeConnection(addr)
-        }
-        const connect2 = async (addr: string) => {
-            log.push(`connect2 ${addr}`)
-            return new FakeConnection2(addr)
-        }
+    opened = new Deferred<void>()
+    reconn.reconnect(true)
+    await opened.promise
 
-        const reconn = new PersistentConnection({
-            connect: connect1,
-            onOpen: async (conn) => {
-                log.push(`onOpen FakeConnection${conn instanceof FakeConnection2 ? '2' : '1'}`)
-                opened.resolve()
-                await echoClient(conn)
-            },
-            onClose: () => { log.push('onClose') },
-        })
+    await reconn.close()
 
-        reconn.connect('127.0.0.1:1234')
-        await opened.promise
+    expect(log).toEqual([
+      'connect 127.0.0.1:1234',
+      'onOpen',
+      'onClose',
+      'onWait 0',
+      'connect 127.0.0.1:1234',
+      'onOpen',
+      'onClose',
+    ])
+  })
 
-        opened = new Deferred<void>()
+  it('should not forcefully reconnect while connected if false is passed', async () => {
+    const log: string[] = []
 
-        await reconn.changeTransport(connect2)
-        await opened.promise
-
-        await reconn.close()
-
-        expect(log).toEqual([
-            'connect1 127.0.0.1:1234',
-            'onOpen FakeConnection1',
-            'onClose',
-            'connect2 127.0.0.1:1234',
-            'onOpen FakeConnection2',
-            'onClose',
-        ])
+    let opened = new Deferred<void>()
+    const wait = new Deferred<number>()
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect ${addr}`)
+        return new FakeConnection(addr)
+      },
+      onOpen: async (conn) => {
+        log.push('onOpen')
+        opened.resolve()
+        await echoClient(conn)
+      },
+      onClose: () => { log.push('onClose') },
+      onWait: (time) => {
+        wait.resolve(time)
+        log.push(`onWait ${time}`)
+      },
     })
 
-    it('should forcefully reconnect while waiting', async () => {
-        const log: string[] = []
+    reconn.connect('127.0.0.1:1234')
+    await opened.promise
 
-        let opened = new Deferred<void>()
-        const wait = new Deferred<number>()
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect ${addr}`)
-                return new FakeConnection(addr)
-            },
-            strategy: () => 1000,
-            onOpen: async (conn) => {
-                log.push('onOpen')
-                opened.resolve()
-                await echoClient(conn)
-            },
-            onClose: () => { log.push('onClose') },
-            onWait: (time) => {
-                wait.resolve(time)
-                log.push(`onWait ${time}`)
-            },
-        })
+    opened = new Deferred<void>()
+    reconn.reconnect(false)
 
-        reconn.connect('127.0.0.1:1234')
-        await opened.promise
+    await reconn.close()
 
-        reconn.connection?.close()
-        expect(await wait.promise).toBe(1000)
-        expect(reconn.isWaiting).toBe(true)
+    expect(log).toEqual([
+      'connect 127.0.0.1:1234',
+      'onOpen',
+      'onClose',
+    ])
+  })
 
-        opened = new Deferred<void>()
-        reconn.reconnect(false)
-        await opened.promise
+  it('should stop when .close() is called while waiting', async () => {
+    const log: string[] = []
 
-        await reconn.close()
-
-        expect(log).toEqual([
-            'connect 127.0.0.1:1234',
-            'onOpen',
-            'onClose',
-            'onWait 1000',
-            'connect 127.0.0.1:1234',
-            'onOpen',
-            'onClose',
-        ])
+    const opened = new Deferred<void>()
+    const wait = new Deferred<number>()
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect ${addr}`)
+        return new FakeConnection(addr)
+      },
+      strategy: () => 1000,
+      onOpen: async (conn) => {
+        log.push('onOpen')
+        opened.resolve()
+        await echoClient(conn)
+      },
+      onClose: () => { log.push('onClose') },
+      onWait: (time) => {
+        wait.resolve(time)
+        log.push(`onWait ${time}`)
+      },
     })
 
-    it('should forcefully reconnect while connected', async () => {
-        const log: string[] = []
+    reconn.connect('127.0.0.1:1234')
+    await opened.promise
 
-        let opened = new Deferred<void>()
-        const wait = new Deferred<number>()
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect ${addr}`)
-                return new FakeConnection(addr)
-            },
-            onOpen: async (conn) => {
-                log.push('onOpen')
-                opened.resolve()
-                await echoClient(conn)
-            },
-            onClose: () => { log.push('onClose') },
-            onWait: (time) => {
-                wait.resolve(time)
-                log.push(`onWait ${time}`)
-            },
-        })
+    reconn.connection?.close()
+    expect(await wait.promise).toBe(1000)
+    expect(reconn.isWaiting).toBe(true)
 
-        reconn.connect('127.0.0.1:1234')
-        await opened.promise
+    await reconn.close()
 
-        opened = new Deferred<void>()
-        reconn.reconnect(true)
-        await opened.promise
+    expect(log).toEqual([
+      'connect 127.0.0.1:1234',
+      'onOpen',
+      'onClose',
+      'onWait 1000',
+    ])
+  })
 
-        await reconn.close()
+  it('should stop when .close() is called while connecting', async () => {
+    const log: string[] = []
 
-        expect(log).toEqual([
-            'connect 127.0.0.1:1234',
-            'onOpen',
-            'onClose',
-            'onWait 0',
-            'connect 127.0.0.1:1234',
-            'onOpen',
-            'onClose',
-        ])
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect start ${addr}`)
+        await sleep(10)
+        log.push(`connect end ${addr}`)
+        return new FakeConnection(addr)
+      },
+      onOpen: async (conn) => {
+        log.push('onOpen')
+        await echoClient(conn)
+      },
+      onClose: () => { log.push('onClose') },
     })
 
-    it('should not forcefully reconnect while connected if false is passed', async () => {
-        const log: string[] = []
+    reconn.connect('127.0.0.1:1234')
+    const closePromise = reconn.close()
+    log.push('close start')
+    await vi.advanceTimersByTimeAsync(10)
+    await closePromise
+    log.push('close end')
 
-        let opened = new Deferred<void>()
-        const wait = new Deferred<number>()
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect ${addr}`)
-                return new FakeConnection(addr)
-            },
-            onOpen: async (conn) => {
-                log.push('onOpen')
-                opened.resolve()
-                await echoClient(conn)
-            },
-            onClose: () => { log.push('onClose') },
-            onWait: (time) => {
-                wait.resolve(time)
-                log.push(`onWait ${time}`)
-            },
-        })
+    expect(log).toEqual([
+      'connect start 127.0.0.1:1234',
+      'close start',
+      'connect end 127.0.0.1:1234',
+      'close end',
+    ])
+  })
 
-        reconn.connect('127.0.0.1:1234')
-        await opened.promise
+  it('should handle multiple .close() calls', async () => {
+    const log: string[] = []
 
-        opened = new Deferred<void>()
-        reconn.reconnect(false)
-
-        await reconn.close()
-
-        expect(log).toEqual([
-            'connect 127.0.0.1:1234',
-            'onOpen',
-            'onClose',
-        ])
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect start ${addr}`)
+        await sleep(10)
+        log.push(`connect end ${addr}`)
+        return new FakeConnection(addr)
+      },
+      onOpen: async (conn) => {
+        log.push('onOpen')
+        await echoClient(conn)
+      },
+      onClose: () => { log.push('onClose') },
     })
 
-    it('should stop when .close() is called while waiting', async () => {
-        const log: string[] = []
+    reconn.connect('127.0.0.1:1234')
+    const closePromise = reconn.close()
+    const closePromise2 = reconn.close()
+    log.push('close start')
+    await vi.advanceTimersByTimeAsync(10)
+    await Promise.all([closePromise, closePromise2])
+    log.push('close end')
 
-        const opened = new Deferred<void>()
-        const wait = new Deferred<number>()
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect ${addr}`)
-                return new FakeConnection(addr)
-            },
-            strategy: () => 1000,
-            onOpen: async (conn) => {
-                log.push('onOpen')
-                opened.resolve()
-                await echoClient(conn)
-            },
-            onClose: () => { log.push('onClose') },
-            onWait: (time) => {
-                wait.resolve(time)
-                log.push(`onWait ${time}`)
-            },
-        })
+    expect(log).toEqual([
+      'connect start 127.0.0.1:1234',
+      'close start',
+      'connect end 127.0.0.1:1234',
+      'close end',
+    ])
+  })
 
-        reconn.connect('127.0.0.1:1234')
-        await opened.promise
+  it('should stop when strategy returns false', async () => {
+    const log: string[] = []
 
-        reconn.connection?.close()
-        expect(await wait.promise).toBe(1000)
-        expect(reconn.isWaiting).toBe(true)
-
-        await reconn.close()
-
-        expect(log).toEqual([
-            'connect 127.0.0.1:1234',
-            'onOpen',
-            'onClose',
-            'onWait 1000',
-        ])
+    const opened = new Deferred<void>()
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect ${addr}`)
+        return new FakeConnection(addr)
+      },
+      strategy: () => false,
+      onOpen: async (conn) => {
+        log.push('onOpen')
+        opened.resolve()
+        await echoClient(conn)
+      },
+      onClose: () => { log.push('onClose') },
+      onWait: (time) => { log.push(`onWait ${time}`) },
     })
 
-    it('should stop when .close() is called while connecting', async () => {
-        const log: string[] = []
+    reconn.connect('127.0.0.1:1234')
+    await opened.promise
 
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect start ${addr}`)
-                await sleep(10)
-                log.push(`connect end ${addr}`)
-                return new FakeConnection(addr)
-            },
-            onOpen: async (conn) => {
-                log.push('onOpen')
-                await echoClient(conn)
-            },
-            onClose: () => { log.push('onClose') },
-        })
+    reconn.connection?.close()
 
-        reconn.connect('127.0.0.1:1234')
-        const closePromise = reconn.close()
-        log.push('close start')
-        await vi.advanceTimersByTimeAsync(10)
-        await closePromise
-        log.push('close end')
-
-        expect(log).toEqual([
-            'connect start 127.0.0.1:1234',
-            'close start',
-            'connect end 127.0.0.1:1234',
-            'close end',
-        ])
+    await vi.waitFor(() => {
+      expect(reconn.isWaiting).toBe(false)
+      expect(reconn.isConnected).toBe(false)
+      expect(reconn.isConnecting).toBe(false)
     })
 
-    it('should handle multiple .close() calls', async () => {
-        const log: string[] = []
+    expect(log).toEqual([
+      'connect 127.0.0.1:1234',
+      'onOpen',
+      'onClose',
+    ])
+  })
 
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect start ${addr}`)
-                await sleep(10)
-                log.push(`connect end ${addr}`)
-                return new FakeConnection(addr)
-            },
-            onOpen: async (conn) => {
-                log.push('onOpen')
-                await echoClient(conn)
-            },
-            onClose: () => { log.push('onClose') },
-        })
+  it('should stop when onOpen returns', async () => {
+    const log: string[] = []
 
-        reconn.connect('127.0.0.1:1234')
-        const closePromise = reconn.close()
-        const closePromise2 = reconn.close()
-        log.push('close start')
-        await vi.advanceTimersByTimeAsync(10)
-        await Promise.all([closePromise, closePromise2])
-        log.push('close end')
+    const opened = new Deferred<void>()
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect ${addr}`)
+        return new FakeConnection(addr)
+      },
+      strategy: () => false,
+      onOpen: async () => {
+        log.push('onOpen start')
+        opened.resolve()
 
-        expect(log).toEqual([
-            'connect start 127.0.0.1:1234',
-            'close start',
-            'connect end 127.0.0.1:1234',
-            'close end',
-        ])
+        await sleep(10)
+        log.push('onOpen end')
+      },
+      onClose: () => { log.push('onClose') },
+      onWait: (time) => { log.push(`onWait ${time}`) },
     })
 
-    it('should stop when strategy returns false', async () => {
-        const log: string[] = []
+    reconn.connect('127.0.0.1:1234')
+    await opened.promise
 
-        const opened = new Deferred<void>()
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect ${addr}`)
-                return new FakeConnection(addr)
-            },
-            strategy: () => false,
-            onOpen: async (conn) => {
-                log.push('onOpen')
-                opened.resolve()
-                await echoClient(conn)
-            },
-            onClose: () => { log.push('onClose') },
-            onWait: (time) => { log.push(`onWait ${time}`) },
-        })
+    await vi.advanceTimersByTimeAsync(10)
 
-        reconn.connect('127.0.0.1:1234')
-        await opened.promise
+    expect(reconn.isWaiting).toBe(false)
+    expect(reconn.isConnected).toBe(false)
+    expect(reconn.isConnecting).toBe(false)
 
-        reconn.connection?.close()
+    expect(log).toEqual([
+      'connect 127.0.0.1:1234',
+      'onOpen start',
+      'onOpen end',
+    ])
+  })
 
-        await vi.waitFor(() => {
-            expect(reconn.isWaiting).toBe(false)
-            expect(reconn.isConnected).toBe(false)
-            expect(reconn.isConnecting).toBe(false)
-        })
+  it('should stop when onOpen errors', async () => {
+    const log: string[] = []
 
-        expect(log).toEqual([
-            'connect 127.0.0.1:1234',
-            'onOpen',
-            'onClose',
-        ])
+    const opened = new Deferred<void>()
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect ${addr}`)
+        return new FakeConnection(addr)
+      },
+      strategy: () => false,
+      onOpen: async () => {
+        log.push('onOpen start')
+        opened.resolve()
+
+        await sleep(10)
+        log.push('onOpen error')
+        throw new Error('lol')
+      },
+      onClose: () => { log.push('onClose') },
+      onWait: (time) => { log.push(`onWait ${time}`) },
     })
 
-    it('should stop when onOpen returns', async () => {
-        const log: string[] = []
+    reconn.connect('127.0.0.1:1234')
+    await opened.promise
 
-        const opened = new Deferred<void>()
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect ${addr}`)
-                return new FakeConnection(addr)
-            },
-            strategy: () => false,
-            onOpen: async () => {
-                log.push('onOpen start')
-                opened.resolve()
+    await vi.advanceTimersByTimeAsync(10)
 
-                await sleep(10)
-                log.push('onOpen end')
-            },
-            onClose: () => { log.push('onClose') },
-            onWait: (time) => { log.push(`onWait ${time}`) },
-        })
+    expect(reconn.isWaiting).toBe(false)
+    expect(reconn.isConnected).toBe(false)
+    expect(reconn.isConnecting).toBe(false)
 
-        reconn.connect('127.0.0.1:1234')
-        await opened.promise
+    expect(log).toEqual([
+      'connect 127.0.0.1:1234',
+      'onOpen start',
+      'onOpen error',
+      'onClose',
+    ])
+  })
 
-        await vi.advanceTimersByTimeAsync(10)
+  it('should reconnect when onOpen errors and onError returns reconnect', async () => {
+    const log: string[] = []
 
-        expect(reconn.isWaiting).toBe(false)
-        expect(reconn.isConnected).toBe(false)
-        expect(reconn.isConnecting).toBe(false)
+    const opened = new Deferred<void>()
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect ${addr}`)
+        return new FakeConnection(addr)
+      },
+      strategy: () => 1000,
+      onOpen: async () => {
+        log.push('onOpen start')
+        opened.resolve()
 
-        expect(log).toEqual([
-            'connect 127.0.0.1:1234',
-            'onOpen start',
-            'onOpen end',
-        ])
+        await sleep(10)
+
+        log.push('onOpen error')
+        throw new Error('lol')
+      },
+      onClose: () => { log.push('onClose') },
+      onWait: (time) => { log.push(`onWait ${time}`) },
+      onError: (err) => { log.push(`onError ${err.message}`); return 'reconnect' },
     })
 
-    it('should stop when onOpen errors', async () => {
-        const log: string[] = []
+    reconn.connect('127.0.0.1:1234')
+    await opened.promise
 
-        const opened = new Deferred<void>()
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect ${addr}`)
-                return new FakeConnection(addr)
-            },
-            strategy: () => false,
-            onOpen: async () => {
-                log.push('onOpen start')
-                opened.resolve()
+    await vi.advanceTimersByTimeAsync(10)
 
-                await sleep(10)
-                log.push('onOpen error')
-                throw new Error('lol')
-            },
-            onClose: () => { log.push('onClose') },
-            onWait: (time) => { log.push(`onWait ${time}`) },
-        })
+    await reconn.close()
 
-        reconn.connect('127.0.0.1:1234')
-        await opened.promise
+    expect(reconn.isWaiting).toBe(false)
+    expect(reconn.isConnected).toBe(false)
+    expect(reconn.isConnecting).toBe(false)
 
-        await vi.advanceTimersByTimeAsync(10)
+    expect(log).toEqual([
+      'connect 127.0.0.1:1234',
+      'onOpen start',
+      'onOpen error',
+      'onClose',
+      'onError lol',
+      'onWait 1000',
+    ])
+  })
 
-        expect(reconn.isWaiting).toBe(false)
-        expect(reconn.isConnected).toBe(false)
-        expect(reconn.isConnecting).toBe(false)
+  it('should reconnect without wait when onOpen errors and onError returns reconnect-now', async () => {
+    const log: string[] = []
 
-        expect(log).toEqual([
-            'connect 127.0.0.1:1234',
-            'onOpen start',
-            'onOpen error',
-            'onClose',
-        ])
+    const opened = new Deferred<void>()
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect ${addr}`)
+        return new FakeConnection(addr)
+      },
+      strategy: () => 1000,
+      onOpen: async () => {
+        log.push('onOpen start')
+        opened.resolve()
+
+        await sleep(10)
+
+        log.push('onOpen error')
+        throw new Error('lol')
+      },
+      onClose: () => { log.push('onClose') },
+      onWait: (time) => { log.push(`onWait ${time}`) },
+      onError: (err) => { log.push(`onError ${err.message}`); return 'reconnect-now' },
     })
 
-    it('should reconnect when onOpen errors and onError returns reconnect', async () => {
-        const log: string[] = []
+    reconn.connect('127.0.0.1:1234')
+    await opened.promise
 
-        const opened = new Deferred<void>()
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect ${addr}`)
-                return new FakeConnection(addr)
-            },
-            strategy: () => 1000,
-            onOpen: async () => {
-                log.push('onOpen start')
-                opened.resolve()
+    await vi.advanceTimersByTimeAsync(10)
 
-                await sleep(10)
+    const closePromise = reconn.close()
+    log.push('close start')
 
-                log.push('onOpen error')
-                throw new Error('lol')
-            },
-            onClose: () => { log.push('onClose') },
-            onWait: (time) => { log.push(`onWait ${time}`) },
-            onError: (err) => { log.push(`onError ${err.message}`); return 'reconnect' },
-        })
+    await vi.runAllTimersAsync()
 
-        reconn.connect('127.0.0.1:1234')
-        await opened.promise
+    await closePromise
+    log.push('close end')
 
-        await vi.advanceTimersByTimeAsync(10)
+    expect(reconn.isWaiting).toBe(false)
+    expect(reconn.isConnected).toBe(false)
+    expect(reconn.isConnecting).toBe(false)
 
-        await reconn.close()
+    expect(log).toEqual([
+      'connect 127.0.0.1:1234',
+      'onOpen start',
+      'onOpen error',
+      'onClose',
+      'onError lol',
+      'onWait 0',
+      'connect 127.0.0.1:1234',
+      'onOpen start',
+      'close start',
+      'onOpen error',
+      'onClose',
+      'close end',
+    ])
+  })
 
-        expect(reconn.isWaiting).toBe(false)
-        expect(reconn.isConnected).toBe(false)
-        expect(reconn.isConnecting).toBe(false)
+  it('should close when onOpen errors and onError returns close', async () => {
+    const log: string[] = []
 
-        expect(log).toEqual([
-            'connect 127.0.0.1:1234',
-            'onOpen start',
-            'onOpen error',
-            'onClose',
-            'onError lol',
-            'onWait 1000',
-        ])
+    const opened = new Deferred<void>()
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect ${addr}`)
+        return new FakeConnection(addr)
+      },
+      strategy: () => 1000,
+      onOpen: async () => {
+        log.push('onOpen start')
+        opened.resolve()
+
+        await sleep(10)
+
+        log.push('onOpen error')
+        throw new Error('lol')
+      },
+      onClose: () => { log.push('onClose') },
+      onWait: (time) => { log.push(`onWait ${time}`) },
+      onError: (err) => { log.push(`onError ${err.message}`); return 'close' },
     })
 
-    it('should reconnect without wait when onOpen errors and onError returns reconnect-now', async () => {
-        const log: string[] = []
+    reconn.connect('127.0.0.1:1234')
+    await opened.promise
 
-        const opened = new Deferred<void>()
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect ${addr}`)
-                return new FakeConnection(addr)
-            },
-            strategy: () => 1000,
-            onOpen: async () => {
-                log.push('onOpen start')
-                opened.resolve()
+    await vi.advanceTimersByTimeAsync(10)
 
-                await sleep(10)
+    await reconn.close()
 
-                log.push('onOpen error')
-                throw new Error('lol')
-            },
-            onClose: () => { log.push('onClose') },
-            onWait: (time) => { log.push(`onWait ${time}`) },
-            onError: (err) => { log.push(`onError ${err.message}`); return 'reconnect-now' },
-        })
+    expect(reconn.isWaiting).toBe(false)
+    expect(reconn.isConnected).toBe(false)
+    expect(reconn.isConnecting).toBe(false)
 
-        reconn.connect('127.0.0.1:1234')
-        await opened.promise
+    expect(log).toEqual([
+      'connect 127.0.0.1:1234',
+      'onOpen start',
+      'onOpen error',
+      'onClose',
+      'onError lol',
+    ])
+  })
 
-        await vi.advanceTimersByTimeAsync(10)
+  it('should be reusable with another address', async () => {
+    const log: string[] = []
+    let opened = new Deferred<void>()
+    const wait = new Deferred<number>()
 
-        const closePromise = reconn.close()
-        log.push('close start')
-
-        await vi.runAllTimersAsync()
-
-        await closePromise
-        log.push('close end')
-
-        expect(reconn.isWaiting).toBe(false)
-        expect(reconn.isConnected).toBe(false)
-        expect(reconn.isConnecting).toBe(false)
-
-        expect(log).toEqual([
-            'connect 127.0.0.1:1234',
-            'onOpen start',
-            'onOpen error',
-            'onClose',
-            'onError lol',
-            'onWait 0',
-            'connect 127.0.0.1:1234',
-            'onOpen start',
-            'close start',
-            'onOpen error',
-            'onClose',
-            'close end',
-        ])
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        log.push(`connect ${addr}`)
+        return new FakeConnection(addr)
+      },
+      onOpen: async (conn) => {
+        log.push('onOpen')
+        opened.resolve()
+        await echoClient(conn)
+      },
+      onWait: (time) => {
+        log.push(`onWait ${time}`)
+        wait.resolve(time)
+      },
+      onClose: () => { log.push('onClose') },
     })
 
-    it('should close when onOpen errors and onError returns close', async () => {
-        const log: string[] = []
+    expect(reconn.isConnected).toBe(false)
+    expect(reconn.isConnecting).toBe(false)
 
-        const opened = new Deferred<void>()
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect ${addr}`)
-                return new FakeConnection(addr)
-            },
-            strategy: () => 1000,
-            onOpen: async () => {
-                log.push('onOpen start')
-                opened.resolve()
+    reconn.connect('127.0.0.1:1234')
 
-                await sleep(10)
+    await vi.runAllTimersAsync()
+    expect(reconn.isConnecting).toBe(false)
+    expect(reconn.isConnected).toBe(true)
+    expect(reconn.isWaiting).toBe(false)
 
-                log.push('onOpen error')
-                throw new Error('lol')
-            },
-            onClose: () => { log.push('onClose') },
-            onWait: (time) => { log.push(`onWait ${time}`) },
-            onError: (err) => { log.push(`onError ${err.message}`); return 'close' },
-        })
+    await opened.promise
+    opened = new Deferred()
 
-        reconn.connect('127.0.0.1:1234')
-        await opened.promise
+    const oldConn = reconn.connection
+    expect(oldConn).toBeInstanceOf(FakeConnection)
+    expect(oldConn?.address).toBe('127.0.0.1:1234')
+    expect(reconn.isConnecting).toBe(false)
+    expect(reconn.isConnected).toBe(true)
+    expect(reconn.isWaiting).toBe(false)
 
-        await vi.advanceTimersByTimeAsync(10)
+    await reconn.close()
 
-        await reconn.close()
+    reconn.connect('127.0.0.2:1234')
+    await opened.promise
 
-        expect(reconn.isWaiting).toBe(false)
-        expect(reconn.isConnected).toBe(false)
-        expect(reconn.isConnecting).toBe(false)
+    expect(reconn.connection).toBeInstanceOf(FakeConnection)
+    expect(reconn.connection?.address).toBe('127.0.0.2:1234')
+    expect(reconn.connection).not.toBe(oldConn)
+    expect(reconn.isConnecting).toBe(false)
+    expect(reconn.isConnected).toBe(true)
+    expect(reconn.isWaiting).toBe(false)
 
-        expect(log).toEqual([
-            'connect 127.0.0.1:1234',
-            'onOpen start',
-            'onOpen error',
-            'onClose',
-            'onError lol',
-        ])
-    })
+    await reconn.close()
 
-    it('should be reusable with another address', async () => {
-        const log: string[] = []
-        let opened = new Deferred<void>()
-        const wait = new Deferred<number>()
-
-        const reconn = new PersistentConnection({
-            connect: async (addr: string) => {
-                log.push(`connect ${addr}`)
-                return new FakeConnection(addr)
-            },
-            onOpen: async (conn) => {
-                log.push('onOpen')
-                opened.resolve()
-                await echoClient(conn)
-            },
-            onWait: (time) => {
-                log.push(`onWait ${time}`)
-                wait.resolve(time)
-            },
-            onClose: () => { log.push('onClose') },
-        })
-
-        expect(reconn.isConnected).toBe(false)
-        expect(reconn.isConnecting).toBe(false)
-
-        reconn.connect('127.0.0.1:1234')
-
-        await vi.runAllTimersAsync()
-        expect(reconn.isConnecting).toBe(false)
-        expect(reconn.isConnected).toBe(true)
-        expect(reconn.isWaiting).toBe(false)
-
-        await opened.promise
-        opened = new Deferred()
-
-        const oldConn = reconn.connection
-        expect(oldConn).toBeInstanceOf(FakeConnection)
-        expect(oldConn?.address).toBe('127.0.0.1:1234')
-        expect(reconn.isConnecting).toBe(false)
-        expect(reconn.isConnected).toBe(true)
-        expect(reconn.isWaiting).toBe(false)
-
-        await reconn.close()
-
-        reconn.connect('127.0.0.2:1234')
-        await opened.promise
-
-        expect(reconn.connection).toBeInstanceOf(FakeConnection)
-        expect(reconn.connection?.address).toBe('127.0.0.2:1234')
-        expect(reconn.connection).not.toBe(oldConn)
-        expect(reconn.isConnecting).toBe(false)
-        expect(reconn.isConnected).toBe(true)
-        expect(reconn.isWaiting).toBe(false)
-
-        await reconn.close()
-
-        expect(log).toEqual([
-            'connect 127.0.0.1:1234',
-            'onOpen',
-            'onClose',
-            'connect 127.0.0.2:1234',
-            'onOpen',
-            'onClose',
-        ])
-    })
+    expect(log).toEqual([
+      'connect 127.0.0.1:1234',
+      'onOpen',
+      'onClose',
+      'connect 127.0.0.2:1234',
+      'onOpen',
+      'onClose',
+    ])
+  })
 })

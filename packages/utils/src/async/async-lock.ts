@@ -9,45 +9,45 @@ type LockInfo = [Promise<void>, () => void]
  * behaviour.
  */
 export class AsyncLock {
-    private _queue = new Deque<LockInfo>()
+  private _queue = new Deque<LockInfo>()
 
-    async acquire(): Promise<void> {
-        let info
+  async acquire(): Promise<void> {
+    let info
 
-        while ((info = this._queue.peekFront())) {
-            await info[0]
-        }
-
-        let unlock: () => void
-        const prom = new Promise<void>((resolve) => {
-            unlock = resolve
-        })
-
-        // eslint-disable-next-line ts/no-non-null-assertion
-        this._queue.pushBack([prom, unlock!])
+    while ((info = this._queue.peekFront())) {
+      await info[0]
     }
 
-    release(): void {
-        if (!this._queue.length) throw new Error('Nothing to release')
+    let unlock: () => void
+    const prom = new Promise<void>((resolve) => {
+      unlock = resolve
+    })
 
-        // eslint-disable-next-line ts/no-non-null-assertion
-        this._queue.popFront()![1]()
-    }
+    // eslint-disable-next-line ts/no-non-null-assertion
+    this._queue.pushBack([prom, unlock!])
+  }
 
-    with(func: () => Promise<void>): Promise<void> {
-        return (async () => {
-            let err: unknown = null
+  release(): void {
+    if (!this._queue.length) throw new Error('Nothing to release')
 
-            await this.acquire()
-            try {
-                await func()
-            } catch (e) {
-                err = e
-            } finally {
-                this.release()
-            }
+    // eslint-disable-next-line ts/no-non-null-assertion
+    this._queue.popFront()![1]()
+  }
 
-            if (err != null) throw err
-        })()
-    }
+  with(func: () => Promise<void>): Promise<void> {
+    return (async () => {
+      let err: unknown = null
+
+      await this.acquire()
+      try {
+        await func()
+      } catch (e) {
+        err = e
+      } finally {
+        this.release()
+      }
+
+      if (err != null) throw err
+    })()
+  }
 }

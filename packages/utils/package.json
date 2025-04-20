@@ -1,11 +1,11 @@
 {
-    "name": "@fuman/utils",
-    "type": "module",
-    "version": "0.0.14",
-    "description": "various utils",
-    "license": "MIT",
-    "sideEffects": false,
-    "exports": {
-        ".": "./src/index.ts"
-    }
+  "name": "@fuman/utils",
+  "type": "module",
+  "version": "0.0.14",
+  "description": "various utils",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  }
 }

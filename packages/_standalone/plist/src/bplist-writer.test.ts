@@ -8,22 +8,22 @@ import { writeBinaryPlist } from './bplist-writer.js'
 const FIXTURES_DIR = fileURLToPath(new URL('__fixtures__', import.meta.url))
 
 describe('writeBinaryPlist', () => {
-    describe('node-bplist-parser fixtures (write then read)', () => {
-        // sourced from https://github.com/joeferner/node-bplist-parser/tree/master/test, MIT license
-        it('iTunes Small', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'iTunes-small.bplist'))
-            const written = writeBinaryPlist(readBinaryPlist(file))
-            const read = readBinaryPlist(written) as Record<string, unknown>
+  describe('node-bplist-parser fixtures (write then read)', () => {
+    // sourced from https://github.com/joeferner/node-bplist-parser/tree/master/test, MIT license
+    it('iTunes Small', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'iTunes-small.bplist'))
+      const written = writeBinaryPlist(readBinaryPlist(file))
+      const read = readBinaryPlist(written) as Record<string, unknown>
 
-            expect(read['Application Version']).toBe('9.0.3')
-            expect(read['Library Persistent ID']).toBe('6F81D37F95101437')
-        })
+      expect(read['Application Version']).toBe('9.0.3')
+      expect(read['Library Persistent ID']).toBe('6F81D37F95101437')
+    })
 
-        it('sample1', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'sample1.bplist'))
-            const written = writeBinaryPlist(readBinaryPlist(file))
-            const read = readBinaryPlist(written) as Record<string, unknown>
-            expect(read).toMatchInlineSnapshot(`
+    it('sample1', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'sample1.bplist'))
+      const written = writeBinaryPlist(readBinaryPlist(file))
+      const read = readBinaryPlist(written) as Record<string, unknown>
+      expect(read).toMatchInlineSnapshot(`
               {
                 "CFBundleDevelopmentRegion": "English",
                 "CFBundleIdentifier": "com.apple.dictionary.MySample",
@@ -42,13 +42,13 @@ describe('writeBinaryPlist', () => {
                 "DCSDictionaryXSL": "MyDictionary.xsl",
               }
             `)
-        })
+    })
 
-        it('sample2', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'sample2.bplist'))
-            const written = writeBinaryPlist(readBinaryPlist(file))
-            const read = readBinaryPlist(written) as Record<string, unknown>
-            expect(read).toMatchInlineSnapshot(`
+    it('sample2', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'sample2.bplist'))
+      const written = writeBinaryPlist(readBinaryPlist(file))
+      const read = readBinaryPlist(written) as Record<string, unknown>
+      expect(read).toMatchInlineSnapshot(`
               {
                 "OptionsLabel": "Product",
                 "PopupMenu": [
@@ -79,13 +79,13 @@ describe('writeBinaryPlist', () => {
                 },
               }
             `)
-        })
+    })
 
-        it('airplay', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'airplay.bplist'))
-            const written = writeBinaryPlist(readBinaryPlist(file))
-            const read = readBinaryPlist(written) as Record<string, unknown>
-            expect(read).toMatchInlineSnapshot(`
+    it('airplay', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'airplay.bplist'))
+      const written = writeBinaryPlist(readBinaryPlist(file))
+      const read = readBinaryPlist(written) as Record<string, unknown>
+      expect(read).toMatchInlineSnapshot(`
               {
                 "duration": 5555.0495,
                 "loadedTimeRanges": [
@@ -108,13 +108,13 @@ describe('writeBinaryPlist', () => {
                 ],
               }
             `)
-        })
+    })
 
-        it('utf16', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'utf16.bplist'))
-            const written = writeBinaryPlist(readBinaryPlist(file))
-            const read = readBinaryPlist(written) as Record<string, unknown>
-            expect(read).toMatchInlineSnapshot(`
+    it('utf16', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'utf16.bplist'))
+      const written = writeBinaryPlist(readBinaryPlist(file))
+      const read = readBinaryPlist(written) as Record<string, unknown>
+      expect(read).toMatchInlineSnapshot(`
               {
                 "BuildIdentifier": "rc1_build2",
                 "BuildMachineOSBuild": "11E53",
@@ -164,21 +164,21 @@ describe('writeBinaryPlist', () => {
                 "UIRequiresPersistentWiFi": true,
               }
             `)
-        })
+    })
 
-        it('utf16chinese', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'utf16_chinese.bplist'))
-            const written = writeBinaryPlist(readBinaryPlist(file))
-            const read = readBinaryPlist(written) as Record<string, unknown>
-            expect(read.CFBundleName).toMatchInlineSnapshot('"天翼阅读"')
-            expect(read.CFBundleDisplayName).toMatchInlineSnapshot('"天翼阅读"')
-        })
+    it('utf16chinese', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'utf16_chinese.bplist'))
+      const written = writeBinaryPlist(readBinaryPlist(file))
+      const read = readBinaryPlist(written) as Record<string, unknown>
+      expect(read.CFBundleName).toMatchInlineSnapshot('"天翼阅读"')
+      expect(read.CFBundleDisplayName).toMatchInlineSnapshot('"天翼阅读"')
+    })
 
-        it('uid', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'uid.bplist'))
-            const written = writeBinaryPlist(readBinaryPlist(file, { preserveType: true }))
-            const read = readBinaryPlist(written, { preserveType: true }) as Record<string, unknown>
-            expect(read).toMatchInlineSnapshot(`
+    it('uid', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'uid.bplist'))
+      const written = writeBinaryPlist(readBinaryPlist(file, { preserveType: true }))
+      const read = readBinaryPlist(written, { preserveType: true }) as Record<string, unknown>
+      expect(read).toMatchInlineSnapshot(`
               {
                 "$archiver": PlistValue {
                   "type": "ascii",
@@ -280,13 +280,13 @@ describe('writeBinaryPlist', () => {
                 },
               }
             `)
-        })
+    })
 
-        it('int64', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'int64.bplist'))
-            const written = writeBinaryPlist(readBinaryPlist(file))
-            const read = readBinaryPlist(written) as Record<string, unknown>
-            expect(read).toMatchInlineSnapshot(`
+    it('int64', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'int64.bplist'))
+      const written = writeBinaryPlist(readBinaryPlist(file))
+      const read = readBinaryPlist(written) as Record<string, unknown>
+      expect(read).toMatchInlineSnapshot(`
               {
                 "int32item": 1234567890,
                 "int32itemsigned": -1234567890n,
@@ -294,15 +294,15 @@ describe('writeBinaryPlist', () => {
                 "zero": 0,
               }
             `)
-        })
     })
+  })
 
-    it('plistlib fixture (write then read)', async () => {
-        // sourced from https://github.com/python/cpython/blob/main/Lib/test/test_plistlib.py, PSF license
-        const file = await readFile(join(FIXTURES_DIR, 'plistlib.bplist'))
-        const written = writeBinaryPlist(readBinaryPlist(file))
-        const read = readBinaryPlist(written) as Record<string, unknown>
-        expect(read).toMatchInlineSnapshot(`
+  it('plistlib fixture (write then read)', async () => {
+    // sourced from https://github.com/python/cpython/blob/main/Lib/test/test_plistlib.py, PSF license
+    const file = await readFile(join(FIXTURES_DIR, 'plistlib.bplist'))
+    const written = writeBinaryPlist(readBinaryPlist(file))
+    const read = readBinaryPlist(written) as Record<string, unknown>
+    expect(read).toMatchInlineSnapshot(`
           {
             "aBigInt": 9223372036854775764n,
             "aBigInt2": 9223372036854775852n,
@@ -864,5 +864,5 @@ describe('writeBinaryPlist', () => {
             "Åbenraa": "That was a unicode key.",
           }
         `)
-    })
+  })
 })

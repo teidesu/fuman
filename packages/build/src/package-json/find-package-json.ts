@@ -13,28 +13,28 @@ const _findPackageJsonCache = new LruMap<string, string | null>(32)
  * @example `findPackageJson(import.meta.url)` // returns the package.json file of this package
  */
 export async function findPackageJson(from: string | URL): Promise<string | null> {
-    from = normalizeFilePath(from)
+  from = normalizeFilePath(from)
 
-    const cached = _findPackageJsonCache.get(from)
-    if (cached != null) return cached
+  const cached = _findPackageJsonCache.get(from)
+  if (cached != null) return cached
 
-    let current = from
+  let current = from
 
-    while (true) {
-        if (current === '/') return null
+  while (true) {
+    if (current === '/') return null
 
-        const file = path.join(current, 'package.json')
-        if (await fileExists(file)) {
-            _findPackageJsonCache.set(from, file)
-            return file
-        }
-
-        const parent = path.join(current, '..')
-        if (parent === current) {
-            _findPackageJsonCache.set(from, null)
-            return null
-        }
-
-        current = parent
+    const file = path.join(current, 'package.json')
+    if (await fileExists(file)) {
+      _findPackageJsonCache.set(from, file)
+      return file
     }
+
+    const parent = path.join(current, '..')
+    if (parent === current) {
+      _findPackageJsonCache.set(from, null)
+      return null
+    }
+
+    current = parent
+  }
 }
