@@ -4,11 +4,11 @@
  * The part that was read is available in the `part` property.
  */
 export class PartialReadError extends RangeError {
-    constructor(
-        /** the part that was read */
-        readonly part: Uint8Array,
-        expectedLength: number,
-    ) {
-        super(`expected to read ${expectedLength} bytes, but only ${part.length} are available`)
-    }
+  constructor(
+    /** the part that was read */
+    readonly part: Uint8Array,
+    expectedLength: number,
+  ) {
+    super(`expected to read ${expectedLength} bytes, but only ${part.length} are available`)
+  }
 }

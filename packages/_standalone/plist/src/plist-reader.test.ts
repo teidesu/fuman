@@ -9,27 +9,27 @@ import { readXmlPlist as readXmlPlist_ } from './plist-reader.js'
 const FIXTURES_DIR = fileURLToPath(new URL('__fixtures__', import.meta.url))
 
 function readXmlPlist(file: Buffer | string, params?: Parameters<typeof readXmlPlist_>[1]): unknown {
-    if (typeof file !== 'string') file = utf8.decoder.decode(file)
-    return readXmlPlist_(file, {
-        DOMParser,
-        ...params,
-    })
+  if (typeof file !== 'string') file = utf8.decoder.decode(file)
+  return readXmlPlist_(file, {
+    DOMParser,
+    ...params,
+  })
 }
 
 describe('readXmlPlist', () => {
-    describe('node-bplist-parser fixtures', () => {
-        // sourced from https://github.com/joeferner/node-bplist-parser/tree/master/test, MIT license
-        it('iTunes Small', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'iTunes-small.plist'))
-            const dict = readXmlPlist(file) as Record<string, unknown>
-            expect(dict['Application Version']).toBe('9.0.3')
-            expect(dict['Library Persistent ID']).toBe('6F81D37F95101437')
-        })
+  describe('node-bplist-parser fixtures', () => {
+    // sourced from https://github.com/joeferner/node-bplist-parser/tree/master/test, MIT license
+    it('iTunes Small', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'iTunes-small.plist'))
+      const dict = readXmlPlist(file) as Record<string, unknown>
+      expect(dict['Application Version']).toBe('9.0.3')
+      expect(dict['Library Persistent ID']).toBe('6F81D37F95101437')
+    })
 
-        it('sample1', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'sample1.plist'))
-            const dict = readXmlPlist(file) as Record<string, unknown>
-            expect(dict).toMatchInlineSnapshot(`
+    it('sample1', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'sample1.plist'))
+      const dict = readXmlPlist(file) as Record<string, unknown>
+      expect(dict).toMatchInlineSnapshot(`
               {
                 "CFBundleDevelopmentRegion": "English",
                 "CFBundleIdentifier": "com.apple.dictionary.MySample",
@@ -48,12 +48,12 @@ describe('readXmlPlist', () => {
                 "DCSDictionaryXSL": "MyDictionary.xsl",
               }
             `)
-        })
+    })
 
-        it('sample2', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'sample2.plist'))
-            const dict = readXmlPlist(file) as Record<string, unknown>
-            expect(dict).toMatchInlineSnapshot(`
+    it('sample2', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'sample2.plist'))
+      const dict = readXmlPlist(file) as Record<string, unknown>
+      expect(dict).toMatchInlineSnapshot(`
               {
                 "OptionsLabel": "Product",
                 "PopupMenu": [
@@ -84,12 +84,12 @@ describe('readXmlPlist', () => {
                 },
               }
             `)
-        })
+    })
 
-        it('airplay', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'airplay.plist'))
-            const dict = readXmlPlist(file) as Record<string, unknown>
-            expect(dict).toMatchInlineSnapshot(`
+    it('airplay', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'airplay.plist'))
+      const dict = readXmlPlist(file) as Record<string, unknown>
+      expect(dict).toMatchInlineSnapshot(`
               {
                 "duration": 5555.0495,
                 "loadedTimeRanges": [
@@ -112,12 +112,12 @@ describe('readXmlPlist', () => {
                 ],
               }
             `)
-        })
+    })
 
-        it('utf16', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'utf16.plist'))
-            const dict = readXmlPlist(file) as Record<string, unknown>
-            expect(dict).toMatchInlineSnapshot(`
+    it('utf16', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'utf16.plist'))
+      const dict = readXmlPlist(file) as Record<string, unknown>
+      expect(dict).toMatchInlineSnapshot(`
               {
                 "BuildIdentifier": "rc1_build2",
                 "BuildMachineOSBuild": "11E53",
@@ -167,19 +167,19 @@ describe('readXmlPlist', () => {
                 "UIRequiresPersistentWiFi": true,
               }
             `)
-        })
+    })
 
-        it('utf16chinese', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'utf16_chinese.plist'))
-            const dict = readXmlPlist(file) as Record<string, unknown>
-            expect(dict.CFBundleName).toMatchInlineSnapshot('"天翼阅读"')
-            expect(dict.CFBundleDisplayName).toMatchInlineSnapshot('"天翼阅读"')
-        })
+    it('utf16chinese', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'utf16_chinese.plist'))
+      const dict = readXmlPlist(file) as Record<string, unknown>
+      expect(dict.CFBundleName).toMatchInlineSnapshot('"天翼阅读"')
+      expect(dict.CFBundleDisplayName).toMatchInlineSnapshot('"天翼阅读"')
+    })
 
-        it('uid', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'uid.plist'))
-            const dict = readXmlPlist(file, { parseUid: true }) as Record<string, unknown>
-            expect(dict).toMatchInlineSnapshot(`
+    it('uid', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'uid.plist'))
+      const dict = readXmlPlist(file, { parseUid: true }) as Record<string, unknown>
+      expect(dict).toMatchInlineSnapshot(`
               {
                 "$archiver": "NSKeyedArchiver",
                 "$objects": [
@@ -242,12 +242,12 @@ describe('readXmlPlist', () => {
                 "$version": 100000,
               }
             `)
-        })
+    })
 
-        it('int64', async () => {
-            const file = await readFile(join(FIXTURES_DIR, 'int64.plist'))
-            const dict = readXmlPlist(file) as Record<string, unknown>
-            expect(dict).toMatchInlineSnapshot(`
+    it('int64', async () => {
+      const file = await readFile(join(FIXTURES_DIR, 'int64.plist'))
+      const dict = readXmlPlist(file) as Record<string, unknown>
+      expect(dict).toMatchInlineSnapshot(`
               {
                 "int32item": 1234567890,
                 "int32itemsigned": -1234567890,
@@ -255,14 +255,14 @@ describe('readXmlPlist', () => {
                 "zero": 0,
               }
             `)
-        })
     })
+  })
 
-    it('plistlib fixture', async () => {
-        // sourced from https://github.com/python/cpython/blob/main/Lib/test/test_plistlib.py, PSF license
-        const file = await readFile(join(FIXTURES_DIR, 'plistlib.plist'))
-        const dict = readXmlPlist(file) as Record<string, unknown>
-        expect(dict).toMatchInlineSnapshot(`
+  it('plistlib fixture', async () => {
+    // sourced from https://github.com/python/cpython/blob/main/Lib/test/test_plistlib.py, PSF license
+    const file = await readFile(join(FIXTURES_DIR, 'plistlib.plist'))
+    const dict = readXmlPlist(file) as Record<string, unknown>
+    expect(dict).toMatchInlineSnapshot(`
           {
             "aBigInt": 9223372036854775764n,
             "aBigInt2": 9223372036854775852n,
@@ -824,62 +824,62 @@ describe('readXmlPlist', () => {
             "Åbenraa": "That was a unicode key.",
           }
         `)
-    })
+  })
 
-    it('funny xml features', async () => {
-        const file = await readFile(join(FIXTURES_DIR, 'funny.plist'))
-        expect(readXmlPlist(file)).toMatchInlineSnapshot(`
+  it('funny xml features', async () => {
+    const file = await readFile(join(FIXTURES_DIR, 'funny.plist'))
+    expect(readXmlPlist(file)).toMatchInlineSnapshot(`
           {
             "A": "&entity;",
             "B": "</string>",
           }
         `)
-    })
+  })
 
-    describe('malformed plist', async () => {
-        it('missing <plist> tag', async () => {
-            const file = `<?xml version="1.0" encoding="UTF-8"?>
+  describe('malformed plist', async () => {
+    it('missing <plist> tag', async () => {
+      const file = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <dict>
     <key>CFBundleIdentifier</key>
     <string>com.apple.dictionary.MySample</string>
 </dict>`
-            expect(() => readXmlPlist(file)).toThrowErrorMatchingInlineSnapshot('[Error: <plist> not found, invalid plist?]')
-        })
-
-        it('missing top object', async () => {
-            const file = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-</plist>`
-            expect(() => readXmlPlist(file)).toThrowErrorMatchingInlineSnapshot('[Error: expected exactly one top object]')
-        })
-
-        it('multiple top objects', async () => {
-            const file = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-    <dict>
-        <key>CFBundleIdentifier</key>
-        <string>com.apple.dictionary.MySample</string>
-    </dict>
-    <dict>
-        <key>CFBundleIdentifier</key>
-        <string>com.apple.dictionary.MySample</string>
-    </dict>
-</plist>`
-            expect(() => readXmlPlist(file)).toThrowErrorMatchingInlineSnapshot('[Error: expected exactly one top object]')
-        })
-
-        it('no value for key', async () => {
-            const file = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-    <dict>
-        <key>CFBundleIdentifier</key>
-    </dict>
-</plist>`
-            expect(() => readXmlPlist(file)).toThrowErrorMatchingInlineSnapshot('[Error: value for CFBundleIdentifier not found]')
-        })
+      expect(() => readXmlPlist(file)).toThrowErrorMatchingInlineSnapshot('[Error: <plist> not found, invalid plist?]')
     })
+
+    it('missing top object', async () => {
+      const file = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+</plist>`
+      expect(() => readXmlPlist(file)).toThrowErrorMatchingInlineSnapshot('[Error: expected exactly one top object]')
+    })
+
+    it('multiple top objects', async () => {
+      const file = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>CFBundleIdentifier</key>
+        <string>com.apple.dictionary.MySample</string>
+    </dict>
+    <dict>
+        <key>CFBundleIdentifier</key>
+        <string>com.apple.dictionary.MySample</string>
+    </dict>
+</plist>`
+      expect(() => readXmlPlist(file)).toThrowErrorMatchingInlineSnapshot('[Error: expected exactly one top object]')
+    })
+
+    it('no value for key', async () => {
+      const file = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>CFBundleIdentifier</key>
+    </dict>
+</plist>`
+      expect(() => readXmlPlist(file)).toThrowErrorMatchingInlineSnapshot('[Error: value for CFBundleIdentifier not found]')
+    })
+  })
 })

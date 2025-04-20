@@ -8,28 +8,28 @@ import { DelimiterCodec } from './delimiter.js'
 
 /** wrapper over {@link DelimiterCodec} that handles text frames */
 export class TextDelimiterCodec implements IFrameDecoder<string>, IFrameEncoder<string> {
-    #inner: DelimiterCodec
+  #inner: DelimiterCodec
 
-    constructor(
-        delimiter: Uint8Array | string,
-        options?: DelimiterCodecOptions,
-    ) {
-        if (typeof delimiter === 'string') {
-            delimiter = utf8.encoder.encode(delimiter)
-        }
-        this.#inner = new DelimiterCodec(delimiter, options)
+  constructor(
+    delimiter: Uint8Array | string,
+    options?: DelimiterCodecOptions,
+  ) {
+    if (typeof delimiter === 'string') {
+      delimiter = utf8.encoder.encode(delimiter)
     }
+    this.#inner = new DelimiterCodec(delimiter, options)
+  }
 
-    decode(buf: Bytes, eof: boolean): string | null {
-        const data = this.#inner.decode(buf, eof)
-        return data === null ? null : utf8.decoder.decode(data)
-    }
+  decode(buf: Bytes, eof: boolean): string | null {
+    const data = this.#inner.decode(buf, eof)
+    return data === null ? null : utf8.decoder.decode(data)
+  }
 
-    encode(data: string, into: ISyncWritable): void {
-        this.#inner.encode(utf8.encoder.encode(data), into)
-    }
+  encode(data: string, into: ISyncWritable): void {
+    this.#inner.encode(utf8.encoder.encode(data), into)
+  }
 
-    reset(): void {
-        this.#inner.reset()
-    }
+  reset(): void {
+    this.#inner.reset()
+  }
 }

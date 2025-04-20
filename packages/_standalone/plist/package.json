@@ -1,20 +1,20 @@
 {
-    "name": "@fuman/plist",
-    "type": "module",
-    "version": "0.1.0",
-    "description": "apple property list reader and writer",
-    "license": "MIT",
-    "sideEffects": false,
-    "exports": "./src/index.ts",
-    "dependencies": {
-        "@fuman/io": "workspace:^",
-        "@fuman/utils": "workspace:^"
-    },
-    "devDependencies": {
-        "@xmldom/xmldom": "^0.9.8"
-    },
-    "fuman": {
-        "jsr": "skip",
-        "standalone": true
-    }
+  "name": "@fuman/plist",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "apple property list reader and writer",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@fuman/io": "workspace:^",
+    "@fuman/utils": "workspace:^"
+  },
+  "devDependencies": {
+    "@xmldom/xmldom": "^0.9.8"
+  },
+  "fuman": {
+    "jsr": "skip",
+    "standalone": true
+  }
 }

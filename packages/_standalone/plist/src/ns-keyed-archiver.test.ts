@@ -9,11 +9,11 @@ import { nsKeyedUnarchive } from './ns-keyed-unarchiver.js'
 const FIXTURES_DIR = fileURLToPath(new URL('__fixtures__', import.meta.url))
 
 describe('nsKeyedArchive', () => {
-    it('node-bplist-parser fixture', async () => {
-        const data = readBinaryPlist(await readFile(join(FIXTURES_DIR, 'uid.bplist')))
-        const dict = nsKeyedUnarchive(data, { preserveType: true })
-        const archived = nsKeyedArchive(dict)
-        expect(archived).toMatchInlineSnapshot(`
+  it('node-bplist-parser fixture', async () => {
+    const data = readBinaryPlist(await readFile(join(FIXTURES_DIR, 'uid.bplist')))
+    const dict = nsKeyedUnarchive(data, { preserveType: true })
+    const archived = nsKeyedArchive(dict)
+    expect(archived).toMatchInlineSnapshot(`
           {
             "$archiver": "NSKeyedArchiver",
             "$objects": [
@@ -76,14 +76,14 @@ describe('nsKeyedArchive', () => {
             "$version": 100000,
           }
         `)
-    })
+  })
 
-    it('plist-kb fixture', async () => {
-        // sourced from https://github.com/libyal/plist-kb/, Apache-2.0 license
-        const data = await readFile(join(FIXTURES_DIR, 'plist-kb.bplist'))
-        const dict = nsKeyedUnarchive(readBinaryPlist(data))
-        const archived = nsKeyedArchive(dict)
-        expect(archived).toMatchInlineSnapshot(`
+  it('plist-kb fixture', async () => {
+    // sourced from https://github.com/libyal/plist-kb/, Apache-2.0 license
+    const data = await readFile(join(FIXTURES_DIR, 'plist-kb.bplist'))
+    const dict = nsKeyedUnarchive(readBinaryPlist(data))
+    const archived = nsKeyedArchive(dict)
+    expect(archived).toMatchInlineSnapshot(`
           {
             "$archiver": "NSKeyedArchiver",
             "$objects": [
@@ -237,15 +237,15 @@ describe('nsKeyedArchive', () => {
             "$version": 100000,
           }
         `)
-    })
+  })
 
-    describe('danielpaulus/nskeyedarchiver fixtures', () => {
-        // sourced from https://github.com/danielpaulus/nskeyedarchiver, MIT license
+  describe('danielpaulus/nskeyedarchiver fixtures', () => {
+    // sourced from https://github.com/danielpaulus/nskeyedarchiver, MIT license
 
-        it('arrays', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-arrays.bplist'))
-            const dict = nsKeyedUnarchive(readBinaryPlist(data))
-            expect(nsKeyedArchive(dict)).toMatchInlineSnapshot(`
+    it('arrays', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-arrays.bplist'))
+      const dict = nsKeyedUnarchive(readBinaryPlist(data))
+      expect(nsKeyedArchive(dict)).toMatchInlineSnapshot(`
               {
                 "$archiver": "NSKeyedArchiver",
                 "$objects": [
@@ -414,12 +414,12 @@ describe('nsKeyedArchive', () => {
                 "$version": 100000,
               }
             `)
-        })
+    })
 
-        it('dict', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-dict.bplist'))
-            const dict = nsKeyedUnarchive(readBinaryPlist(data))
-            expect(nsKeyedArchive(dict)).toMatchInlineSnapshot(`
+    it('dict', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-dict.bplist'))
+      const dict = nsKeyedUnarchive(readBinaryPlist(data))
+      expect(nsKeyedArchive(dict)).toMatchInlineSnapshot(`
               {
                 "$archiver": "NSKeyedArchiver",
                 "$objects": [
@@ -509,12 +509,12 @@ describe('nsKeyedArchive', () => {
                 "$version": 100000,
               }
             `)
-        })
+    })
 
-        it('nestedarrays', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-nestedarrays.bplist'))
-            const dict = nsKeyedUnarchive(readBinaryPlist(data))
-            expect(nsKeyedArchive(dict)).toMatchInlineSnapshot(`
+    it('nestedarrays', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-nestedarrays.bplist'))
+      const dict = nsKeyedUnarchive(readBinaryPlist(data))
+      expect(nsKeyedArchive(dict)).toMatchInlineSnapshot(`
               {
                 "$archiver": "NSKeyedArchiver",
                 "$objects": [
@@ -587,12 +587,12 @@ describe('nsKeyedArchive', () => {
                 "$version": 100000,
               }
             `)
-        })
+    })
 
-        it('onevalue', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-onevalue.bplist'))
-            const dict = nsKeyedUnarchive(readBinaryPlist(data))
-            expect(nsKeyedArchive(dict)).toMatchInlineSnapshot(`
+    it('onevalue', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-onevalue.bplist'))
+      const dict = nsKeyedUnarchive(readBinaryPlist(data))
+      expect(nsKeyedArchive(dict)).toMatchInlineSnapshot(`
               {
                 "$archiver": "NSKeyedArchiver",
                 "$objects": [
@@ -608,12 +608,12 @@ describe('nsKeyedArchive', () => {
                 "$version": 100000,
               }
             `)
-        })
+    })
 
-        it('primitives', async () => {
-            const data = await readFile(join(FIXTURES_DIR, 'nska-primitives.bplist'))
-            const dict = nsKeyedUnarchive(readBinaryPlist(data))
-            expect(nsKeyedArchive(dict)).toMatchInlineSnapshot(`
+    it('primitives', async () => {
+      const data = await readFile(join(FIXTURES_DIR, 'nska-primitives.bplist'))
+      const dict = nsKeyedUnarchive(readBinaryPlist(data))
+      expect(nsKeyedArchive(dict)).toMatchInlineSnapshot(`
               {
                 "$archiver": "NSKeyedArchiver",
                 "$objects": [
@@ -699,21 +699,21 @@ describe('nsKeyedArchive', () => {
                 "$version": 100000,
               }
             `)
-        })
     })
+  })
 
-    it('handles circular references', async () => {
-        // <ref *1> {
-        //   meow: 123,
-        //   purr: <ref *2> [ [Circular *1], [Circular *2] ]
-        // }
-        const obj: Record<string, unknown> = {
-            meow: 123,
-        }
-        obj.purr = [obj]
-        ;(obj.purr as unknown[]).push(obj.purr)
+  it('handles circular references', async () => {
+    // <ref *1> {
+    //   meow: 123,
+    //   purr: <ref *2> [ [Circular *1], [Circular *2] ]
+    // }
+    const obj: Record<string, unknown> = {
+      meow: 123,
+    }
+    obj.purr = [obj]
+    ;(obj.purr as unknown[]).push(obj.purr)
 
-        expect(nsKeyedArchive(obj)).toMatchInlineSnapshot(`
+    expect(nsKeyedArchive(obj)).toMatchInlineSnapshot(`
           {
             "$archiver": "NSKeyedArchiver",
             "$objects": [
@@ -787,5 +787,5 @@ describe('nsKeyedArchive', () => {
             "$version": 100000,
           }
         `)
-    })
+  })
 })

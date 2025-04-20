@@ -8,47 +8,47 @@ import { generateChangelog } from '../../versioning/generate-changelog.js'
 import { bc, loadConfig } from './_utils.js'
 
 export const generateChangelogCli = bc.command({
-    name: 'gen-changelog',
-    desc: 'generate a changelog for the workspace',
-    options: {
-        only: bc.string()
-            .desc('comma-separated list of packages to include'),
-        root: bc.string()
-            .desc('path to the root of the workspace (default: process.cwd())'),
-        since: bc.string()
-            .desc('starting point for the changelog (default: latest tag)'),
-    },
-    handler: async (args) => {
-        const root = args.root ?? process.cwd()
-        const config = await loadConfig({
-            workspaceRoot: root,
-            require: false,
-        })
+  name: 'gen-changelog',
+  desc: 'generate a changelog for the workspace',
+  options: {
+    only: bc.string()
+      .desc('comma-separated list of packages to include'),
+    root: bc.string()
+      .desc('path to the root of the workspace (default: process.cwd())'),
+    since: bc.string()
+      .desc('starting point for the changelog (default: latest tag)'),
+  },
+  handler: async (args) => {
+    const root = args.root ?? process.cwd()
+    const config = await loadConfig({
+      workspaceRoot: root,
+      require: false,
+    })
 
-        let workspacePackages = await collectPackageJsons(root, false)
-        if (args.only !== undefined) {
-            const only = new Set(args.only.split(',').map(s => s.trim()))
-            // eslint-disable-next-line ts/no-non-null-assertion
-            workspacePackages = workspacePackages.filter(pkg => only.has(pkg.json.name!))
-        }
+    let workspacePackages = await collectPackageJsons(root, false)
+    if (args.only !== undefined) {
+      const only = new Set(args.only.split(',').map(s => s.trim()))
+      // eslint-disable-next-line ts/no-non-null-assertion
+      workspacePackages = workspacePackages.filter(pkg => only.has(pkg.json.name!))
+    }
 
-        const since = args.since ?? (await getLatestTag(root))
-        if (since == null) {
-            throw new Error('no previous tag found, cannot determine changeset')
-        }
+    const since = args.since ?? (await getLatestTag(root))
+    if (since == null) {
+      throw new Error('no previous tag found, cannot determine changeset')
+    }
 
-        const changelog = await generateChangelog({
-            workspace: workspacePackages,
-            cwd: root,
-            since,
-            params: config?.versioning,
-        })
+    const changelog = await generateChangelog({
+      workspace: workspacePackages,
+      cwd: root,
+      since,
+      params: config?.versioning,
+    })
 
-        if (isRunningInGithubActions()) {
-            writeGithubActionsOutput('changelog', changelog)
-            console.log('Written changelog to `changelog` output')
-        } else {
-            console.log(changelog)
-        }
-    },
+    if (isRunningInGithubActions()) {
+      writeGithubActionsOutput('changelog', changelog)
+      console.log('Written changelog to `changelog` output')
+    } else {
+      console.log(changelog)
+    }
+  },
 })

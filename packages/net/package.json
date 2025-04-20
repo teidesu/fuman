@@ -1,21 +1,21 @@
 {
-    "name": "@fuman/net",
-    "type": "module",
-    "version": "0.0.11",
-    "description": "experimental network abstractions",
-    "license": "MIT",
-    "sideEffects": false,
-    "exports": {
-        ".": "./src/index.ts"
-    },
-    "scripts": {
-        "dev": "vitest watch"
-    },
-    "dependencies": {
-        "@fuman/io": "workspace:^",
-        "@fuman/utils": "workspace:^"
-    },
-    "devDependencies": {
-        "ipaddr.js": "2.2.0"
-    }
+  "name": "@fuman/net",
+  "type": "module",
+  "version": "0.0.11",
+  "description": "experimental network abstractions",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "vitest watch"
+  },
+  "dependencies": {
+    "@fuman/io": "workspace:^",
+    "@fuman/utils": "workspace:^"
+  },
+  "devDependencies": {
+    "ipaddr.js": "2.2.0"
+  }
 }

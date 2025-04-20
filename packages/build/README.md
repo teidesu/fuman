@@ -16,12 +16,12 @@ this package works on some assumptions, allowing to abstract some of the complex
  - `.exports` and `.bin` fields in package.json are build entrypoints, e.g.:
    ```json
    {
-       "exports": {
-           ".": "./src/index.ts"
-       },
-       "bin": {
-           "fuman-build": "./src/cli.ts"
-       }
+     "exports": {
+       ".": "./src/index.ts"
+     },
+     "bin": {
+       "fuman-build": "./src/cli.ts"
+     }
    }
  - `.main`, `.module`, `.types`, `.browser` are explicitly **not** supported. for browser-specific code, you should make a secondary entrypoint/package instead of relying on bundle-time magic
  - package versioning is continous and semver-compliant (except "fixed version" releases, which all share the same version)
@@ -71,15 +71,15 @@ just put this in your `vite.config.js`:
 import { fumanBuild } from '@fuman/build/vite'
 
 export default {
-    plugins: [
-        fumanBuild({
-            root: __dirname,
-            // if you're using `vite-plugin-dts`, make sure to add this option,
-            // otherwise additional entrypoints will not have proper types
-            // (and DO NOT add this option to the dts plugin itself)
-            insertTypesEntry: true,
-        }),
-    ],
+  plugins: [
+    fumanBuild({
+      root: __dirname,
+      // if you're using `vite-plugin-dts`, make sure to add this option,
+      // otherwise additional entrypoints will not have proper types
+      // (and DO NOT add this option to the dts plugin itself)
+      insertTypesEntry: true,
+    }),
+  ],
 }
 ```
 

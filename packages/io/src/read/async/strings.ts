@@ -14,33 +14,33 @@ import { PartialReadError } from '../../errors.js'
  *  - `truncate` - truncate the buffer to the number of bytes that were read. note that this might return 0 bytes
  */
 export async function exactly(
-    readable: IReadable,
-    length: number | Uint8Array,
-    onEof: 'error' | 'truncate' = 'error',
+  readable: IReadable,
+  length: number | Uint8Array,
+  onEof: 'error' | 'truncate' = 'error',
 ): Promise<Uint8Array> {
-    const res = typeof length === 'number' ? u8.alloc(length) : length
-    let remaining = res.length
-    let pos = 0
+  const res = typeof length === 'number' ? u8.alloc(length) : length
+  let remaining = res.length
+  let pos = 0
 
-    while (remaining > 0) {
-        const read = await readable.read(res.subarray(pos, pos + remaining))
+  while (remaining > 0) {
+    const read = await readable.read(res.subarray(pos, pos + remaining))
 
-        if (read === 0) {
-            if (onEof === 'error') {
-                throw new PartialReadError(
-                    res.subarray(0, pos),
-                    res.length,
-                )
-            } else {
-                return res.subarray(0, pos)
-            }
-        }
-
-        remaining -= read
-        pos += read
+    if (read === 0) {
+      if (onEof === 'error') {
+        throw new PartialReadError(
+          res.subarray(0, pos),
+          res.length,
+        )
+      } else {
+        return res.subarray(0, pos)
+      }
     }
 
-    return res
+    remaining -= read
+    pos += read
+  }
+
+  return res
 }
 
 /**
@@ -50,17 +50,17 @@ export async function exactly(
  * @param chunkSize  size of the chunks to read
  */
 export async function untilEnd(readable: IReadable, chunkSize: number = 1024 * 16): Promise<Uint8Array> {
-    const buf = Bytes.alloc(chunkSize)
+  const buf = Bytes.alloc(chunkSize)
 
-    while (true) {
-        const into = buf.writeSync(chunkSize)
-        const read = await readable.read(into)
-        buf.disposeWriteSync(read)
+  while (true) {
+    const into = buf.writeSync(chunkSize)
+    const read = await readable.read(into)
+    buf.disposeWriteSync(read)
 
-        if (read === 0) {
-            break
-        }
+    if (read === 0) {
+      break
     }
+  }
 
-    return buf.result()
+  return buf.result()
 }

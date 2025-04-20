@@ -4,9 +4,9 @@
 // because the latter does not align with Map#entries under esnext (precisely because of the new iterators)
 
 export function maybeWrapIterator<T>(iter: IterableIterator<T>): IterableIterator<T> {
-    if (typeof Iterator !== 'undefined' && 'from' in Iterator) {
-        return Iterator.from(iter)
-    }
+  if (typeof Iterator !== 'undefined' && 'from' in Iterator) {
+    return Iterator.from(iter)
+  }
 
-    return iter
+  return iter
 }

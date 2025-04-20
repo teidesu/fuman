@@ -14,5 +14,5 @@ export type Truthy<T> = T extends false | '' | 0 | null | undefined ? never : T 
  * Considered unsafe as removing `readonly` modifiers may break semantics in some cases
  */
 export type UnsafeMutable<T> = {
-    -readonly [P in keyof T]: T[P]
+  -readonly [P in keyof T]: T[P]
 }

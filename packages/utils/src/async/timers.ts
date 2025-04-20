@@ -17,30 +17,30 @@ export type Interval = Brand<object, 'Interval'>
 /* c8 ignore start */
 
 const setTimeoutWrap = (
-    (...args: Parameters<typeof setTimeout>) => setTimeout(...args)
+  (...args: Parameters<typeof setTimeout>) => setTimeout(...args)
 ) as unknown as <T extends (...args: any[]) => any>(
-    fn: T,
-    ms: number,
-    ...args: Parameters<T>
+  fn: T,
+  ms: number,
+  ...args: Parameters<T>
 ) => Timer
 const setIntervalWrap = (
-    (...args: Parameters<typeof setInterval>) => setInterval(...args)
+  (...args: Parameters<typeof setInterval>) => setInterval(...args)
 ) as unknown as <T extends (...args: any[]) => any>(
-    fn: T,
-    ms: number,
-    ...args: Parameters<T>
+  fn: T,
+  ms: number,
+  ...args: Parameters<T>
 ) => Interval
 
 const clearTimeoutWrap = (
-    (...args: Parameters<typeof clearTimeout>) => clearTimeout(...args)
+  (...args: Parameters<typeof clearTimeout>) => clearTimeout(...args)
 ) as unknown as (timer?: Timer) => void
 const clearIntervalWrap = (
-    (...args: Parameters<typeof clearInterval>) => clearInterval(...args)
+  (...args: Parameters<typeof clearInterval>) => clearInterval(...args)
 ) as unknown as (timer?: Interval) => void
 
 export {
-    clearIntervalWrap as clearInterval,
-    clearTimeoutWrap as clearTimeout,
-    setIntervalWrap as setInterval,
-    setTimeoutWrap as setTimeout,
+  clearIntervalWrap as clearInterval,
+  clearTimeoutWrap as clearTimeout,
+  setIntervalWrap as setInterval,
+  setTimeoutWrap as setTimeout,
 }
