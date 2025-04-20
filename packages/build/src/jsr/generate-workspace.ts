@@ -17,6 +17,7 @@ import { normalizeFilePath } from '../misc/path.js'
 import { collectPackageJsons, filterPackageJsonsForPublish } from '../package-json/collect-package-jsons.js'
 import { processPackageJson } from '../package-json/process-package-json.js'
 import { collectVersions, findRootPackage } from '../package-json/utils.js'
+import { applyDenoDirectives } from './_deno-directives.js'
 import { packageJsonToDeno } from './deno-json.js'
 
 function mergeArrays<T>(a: T[] | undefined, b: T[] | undefined, defaultValue: T[] = []): T[] {
@@ -159,6 +160,10 @@ export async function generateDenoWorkspace(params: {
       if (changedTs) {
         fileContent = printer.printFile(file)
         changed = true
+      }
+
+      if (rootConfig?.enableDenoDirectives) {
+        fileContent = applyDenoDirectives(fileContent)
       }
 
       if (rootConfig?.transformCode || packageConfigJsr?.transformCode) {
