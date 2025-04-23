@@ -97,8 +97,45 @@ export interface JsrConfig {
    * // @ts-ignore
    * const foo = 123
    * ```
+   * 
+   * > **note**: the `<deno-infer-type>` directive is enabled separately with `enableTypeInference`
    *
    * @default false
    */
   enableDenoDirectives?: boolean
+
+  /**
+   * whether to enable the `<deno-infer-type>` directive.
+   * 
+   * this directive will infer a type for the given variable at transform time.
+   * this is useful to avoid having to manually type complex nested types,
+   * which is required for exported types in jsr.
+   * 
+   * this directive is run **before** the transformAst hook.
+   * 
+   * > ⚠️ **warning**: this directive i considered **experimental** because it might fail to infer types
+   * > correctly in some edge cases. feel free to open an issue or PR if you encounter any issues.
+   * 
+   * > **note**: enabling this directive might significantly increase build times,
+   * > it is recommended you enable it on a per-package basis.
+   * 
+   * > **note**: enabling this directives requires you to install peer dependency `ts-morph`
+   * 
+   * example:
+   * ```ts
+   * import { z } from 'zod'
+   *
+   * // <deno-infer-type>
+   * export const foo = z.object({ bar: z.string() })
+   * ```
+   * transforms to:
+   * ```ts
+   * import { z } from 'zod'
+   *
+   * export const foo: z.ZodObject<{ name: z.ZodString }, "passthrough"> = z.object({ bar: z.string() })
+   * ```
+   *
+   * @default false
+   */
+  enableTypeInference?: boolean
 }

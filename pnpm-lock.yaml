@@ -51,6 +51,9 @@ importers:
       rollup-plugin-node-externals:
         specifier: ^8.0.0
         version: 8.0.0(rollup@4.24.0)
+      ts-morph:
+        specifier: 25.0.1
+        version: 25.0.1
       tsx:
         specifier: 4.16.5
         version: 4.16.5
@@ -146,6 +149,9 @@ importers:
       tinyglobby:
         specifier: ^0.2.6
         version: 0.2.9
+      ts-morph:
+        specifier: '>=25.0.1'
+        version: 25.0.1
       typedoc:
         specifier: '>=0.24.0'
         version: 0.27.3(typescript@5.6.3)
@@ -1172,6 +1178,9 @@ packages:
   '@teidesu/deno-types@2.0.6':
     resolution: {integrity: sha512-nDNr4/n+Jk5OulcKYKfc7kvLnGNQrtKrAKtFJKaaYbLoBOnXgp+Q4jOOjfEEUgLvS6v6LBs5MJ0UBcZCpbXirA==}
 
+  '@ts-morph/common@0.26.1':
+    resolution: {integrity: sha512-Sn28TGl/4cFpcM+jwsH1wLncYq3FtN/BIpem+HOygfBWPT5pAeS5dB4VFVzV8FbnOKHpDLZmvAl4AjPEev5idA==}
+
   '@types/argparse@1.0.38':
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
 
@@ -1558,6 +1567,9 @@ packages:
   clean-regexp@1.0.0:
     resolution: {integrity: sha512-GfisEZEJvzKrmGWkvfhgzcz/BllN1USeqD2V6tg14OAOgaCD2Z/PUEuxnAZ/nPvmaHRG7a8y77p1T/IRQ4D1Hw==}
     engines: {node: '>=4'}
+
+  code-block-writer@13.0.3:
+    resolution: {integrity: sha512-Oofo0pq3IKnsFtuHqSF7TqBfr71aeyZDVJ0HpmqB7FBM2qEigL0iPONSCZSO9pE9dZTAxANe5XHG9Uy0YMv8cg==}
 
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -2289,9 +2301,6 @@ packages:
   magic-string@0.30.11:
     resolution: {integrity: sha512-+Wri9p0QHMy+545hKww7YAu5NyzF8iomPL/RQazugQ9+Ez4Ic3mERMd8ZTX5rfK944j+560ZJi8iAwgak1Ac7A==}
 
-  magic-string@0.30.14:
-    resolution: {integrity: sha512-5c99P1WKTed11ZC0HMJOj6CDIue6F8ySu+bJL+85q1zBEIY8IklrJ1eiKC2NDRh3Ct3FcvmJPyQHb9erXMTJNw==}
-
   magic-string@0.30.17:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
 
@@ -2922,6 +2931,9 @@ packages:
     engines: {node: '>=18.12'}
     peerDependencies:
       typescript: 5.6.3
+
+  ts-morph@25.0.1:
+    resolution: {integrity: sha512-QJEiTdnz1YjrB3JFhd626gX4rKHDLSjSVMvGGG4v7ONc3RBwa0Eei98G9AT9uNFDMtV54JyuXsFeC+OH0n6bXQ==}
 
   tsconfig-paths-webpack-plugin@4.1.0:
     resolution: {integrity: sha512-xWFISjviPydmtmgeUAuXp4N1fky+VCtfhOkDUFIv5ea7p4wuTomI4QTrXvFBX2S4jZsmyTSrStQl+E+4w+RzxA==}
@@ -3972,6 +3984,12 @@ snapshots:
 
   '@teidesu/deno-types@2.0.6': {}
 
+  '@ts-morph/common@0.26.1':
+    dependencies:
+      fast-glob: 3.3.2
+      minimatch: 9.0.5
+      path-browserify: 1.0.1
+
   '@types/argparse@1.0.38': {}
 
   '@types/bun@1.1.14':
@@ -4248,7 +4266,7 @@ snapshots:
       '@vue/compiler-ssr': 3.4.21
       '@vue/shared': 3.4.21
       estree-walker: 2.0.2
-      magic-string: 0.30.14
+      magic-string: 0.30.17
       postcss: 8.4.49
       source-map-js: 1.2.1
 
@@ -4420,6 +4438,8 @@ snapshots:
   clean-regexp@1.0.0:
     dependencies:
       escape-string-regexp: 1.0.5
+
+  code-block-writer@13.0.3: {}
 
   color-convert@2.0.1:
     dependencies:
@@ -5222,10 +5242,6 @@ snapshots:
   lunr@2.3.9: {}
 
   magic-string@0.30.11:
-    dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.0
-
-  magic-string@0.30.14:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
 
@@ -6036,6 +6052,11 @@ snapshots:
   ts-api-utils@2.1.0(typescript@5.6.3):
     dependencies:
       typescript: 5.6.3
+
+  ts-morph@25.0.1:
+    dependencies:
+      '@ts-morph/common': 0.26.1
+      code-block-writer: 13.0.3
 
   tsconfig-paths-webpack-plugin@4.1.0:
     dependencies:

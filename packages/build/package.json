@@ -18,11 +18,15 @@
     "build-vite-plugin": "esbuild ./src/vite/index.ts --bundle --external:tinyglobby --platform=node --format=esm --outfile=dist_vite-internal.js --log-level=error"
   },
   "peerDependencies": {
+    "ts-morph": ">=25.0.1",
     "typedoc": ">=0.24.0",
     "typescript": "^5.2.2",
     "vite": "^5.4.0 || ^6.0.0"
   },
   "peerDependenciesMeta": {
+    "ts-morph": {
+      "optional": true
+    },
     "typedoc": {
       "optional": true
     }

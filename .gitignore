@@ -11,3 +11,4 @@ coverage
 .rollup.cache
 *.tsbuildinfo
 /private
+_priv*

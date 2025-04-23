@@ -19,6 +19,7 @@
     ],
     "strict": true,
     "noImplicitAny": true,
+    "noImplicitOverride": true,
     "noImplicitThis": true,
     "declaration": true,
     "inlineSources": true,

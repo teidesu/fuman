@@ -18,6 +18,7 @@ import { collectPackageJsons, filterPackageJsonsForPublish } from '../package-js
 import { processPackageJson } from '../package-json/process-package-json.js'
 import { collectVersions, findRootPackage } from '../package-json/utils.js'
 import { applyDenoDirectives } from './_deno-directives.js'
+import { applyInferTypesDirectives } from './_infer-types.js'
 import { packageJsonToDeno } from './deno-json.js'
 
 function mergeArrays<T>(a: T[] | undefined, b: T[] | undefined, defaultValue: T[] = []): T[] {
@@ -109,6 +110,10 @@ export async function generateDenoWorkspace(params: {
     const printer = ts.createPrinter()
     const tsFiles = await glob('**/*.ts', { cwd: packageOutRoot })
 
+    if (rootConfig?.enableTypeInference || packageConfigJsr?.enableTypeInference) {
+      await applyInferTypesDirectives(packageOutRoot, tsFiles)
+    }
+
     // process source files
     // once @typescript/api-extractor works properly with multiple entrypoints, we could probably
     // use it to optionally rollup everything into a single .ts file
@@ -162,7 +167,7 @@ export async function generateDenoWorkspace(params: {
         changed = true
       }
 
-      if (rootConfig?.enableDenoDirectives) {
+      if (rootConfig?.enableDenoDirectives || packageConfigJsr?.enableDenoDirectives) {
         fileContent = applyDenoDirectives(fileContent)
       }
 

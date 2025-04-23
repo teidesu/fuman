@@ -66,7 +66,7 @@ export interface PackageJson {
   [key: string]: any
 }
 
-export const PackageJsonSchema: z.AnyZodObject = z.object({
+export const PackageJsonSchema = z.object({
   name: z.string(),
   type: z.union([
     z.literal('module'),
