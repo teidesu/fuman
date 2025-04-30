@@ -66,7 +66,7 @@ export const releaseCli = bc.command({
       .desc('whether to skip publishing and only print what is going to happen'),
   },
   handler: async (args) => {
-    const root = process.cwd()
+    const root = process.env.FUMAN_ROOT ?? process.cwd()
     const config = await loadConfig({
       workspaceRoot: root,
       require: false,
@@ -117,7 +117,11 @@ export const releaseCli = bc.command({
     let tagName: string
 
     if (taggingSchema === 'semver') {
-      const versions = sort(workspace.map(pkg => asNonNull(pkg.json.version)))
+      const versions = sort(
+        workspace
+          .filter(pkg => !pkg.json.fuman?.ownVersioning && !pkg.json.fuman?.standalone)
+          .map(pkg => asNonNull(pkg.json.version)),
+      )
       tagName = `v${versions[versions.length - 1]}`
 
       // verify the tag does not exist yet
