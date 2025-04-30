@@ -149,7 +149,9 @@ export function processPackageJson(params: {
       if (entrypointName === '') entrypointName = 'index'
 
       entrypoints[entrypointName] = value
-      // todo: we should probably not announce `require` imports if we don't build for cjs
+      // NB: at this point, we generate **both** import and require fields,
+      // and then remove the `require` field if we're only building for esm
+      // (with `removeCommonjsExports`)
       newExports[key] = {
         import: {
           types: `./${entrypointName}.d.ts`,
@@ -186,5 +188,26 @@ export function processPackageJson(params: {
     packageJsonOrig,
     packageJson,
     entrypoints,
+  }
+}
+
+/**
+ * remove comonjs export definitions from package.json
+ *
+ * **note**: this function modifies the input object
+ */
+export function removeCommonjsExports(exports: Record<string, unknown>) {
+  const keys = Object.keys(exports)
+  if (keys.includes('import')) {
+    // implied root: "exports": { "import": "./index.js" }
+    delete exports.require
+    return
+  }
+
+  for (const key of keys) {
+    const value = exports[key]
+    if (value == null || typeof value !== 'object') continue
+
+    delete (value as Record<string, unknown>).require
   }
 }

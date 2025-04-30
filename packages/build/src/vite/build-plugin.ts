@@ -15,7 +15,7 @@ import { loadBuildConfig } from '../misc/_config.js'
 import { directoryExists, fileExists, tryCopy } from '../misc/fs.js'
 import { normalizeFilePath } from '../misc/path.js'
 import { collectPackageJsons } from '../package-json/collect-package-jsons.js'
-import { processPackageJson } from '../package-json/process-package-json.js'
+import { processPackageJson, removeCommonjsExports } from '../package-json/process-package-json.js'
 import { collectVersions } from '../package-json/utils.js'
 
 export async function fumanBuild(params: {
@@ -219,9 +219,9 @@ export async function fumanBuild(params: {
               output: {
                 minifyInternalExports: false,
                 chunkFileNames:
-                                    buildCjs
-                                      ? `chunks/[format]/${chunkFileName}.js`
-                                      : `chunks/${chunkFileName}.js`,
+                  buildCjs
+                    ? `chunks/[format]/${chunkFileName}.js`
+                    : `chunks/${chunkFileName}.js`,
               },
             },
             lib: {
@@ -233,6 +233,10 @@ export async function fumanBuild(params: {
       },
       async closeBundle() {
         if (isNoop) return
+
+        if (!buildCjs) {
+          removeCommonjsExports(packageJson.exports as Record<string, unknown>)
+        }
 
         await params.finalizePackageJson?.(hookContext)
         await packageConfig?.finalizePackageJson?.(hookContext)
