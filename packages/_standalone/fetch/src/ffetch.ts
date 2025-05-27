@@ -30,6 +30,31 @@ export interface FfetchOptions {
   readBodyOnError?: boolean
 
   /**
+   * optional function to map the error
+   *
+   * useful when your API has an app-level error format, and you want to throw a custom error
+   *
+   * @param err  original {@link HttpError} that would have been thrown
+   * @returns  the error to be thrown instead
+   * @example
+   * ```ts
+   * const api = createFfetch({
+   *   ...,
+   *   mapError: (err) => {
+   *     if (err.response.headers.get('Content-Type') !== 'application/json') return err
+   *     try {
+   *       // note: .bodyText is only available if `readBodyOnError` is true
+   *       const json = JSON.parse(err.bodyText)
+   *       throw new ApiError(json.errorCode, json.message)
+   *     } catch {
+   *       return err
+   *     }
+   *   }
+   * })
+   */
+  mapError?: (err: HttpError) => Error
+
+  /**
    * base url to be prepended to the url
    *
    * this base url is **always** treated as a "base path", i.e. the path passed to `ffetch()`
@@ -215,6 +240,10 @@ class FfetchResultImpl implements FfetchResult {
         } catch {}
       }
 
+      if (this._options.mapError != null) {
+        throw this._options.mapError(err)
+      }
+
       throw err
     }
 
@@ -385,6 +414,8 @@ export function createFfetch<
 
     init.headers = headers
     options.validateResponse ??= baseOptions.validateResponse
+    options.readBodyOnError ??= baseOptions.readBodyOnError
+    options.mapError ??= baseOptions.mapError
 
     return new FfetchResultInner(fetcher, url, init, headers, options, stack)
   }

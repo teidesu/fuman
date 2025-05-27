@@ -399,4 +399,22 @@ describe('ffetch', () => {
     expect((err as HttpError).body).toBeNull()
     expect((err as HttpError).bodyText).toBeNull()
   })
+
+  it('should map errors', async () => {
+    fetch_.mockImplementation(async () => new Response('Not OK', { status: 403 }))
+
+    class MyError extends Error {}
+
+    const ffetch = createFfetch({
+      fetch: fetch_,
+      mapError: (err) => {
+        if (err.response.status === 403) return new MyError('403')
+        return err
+      },
+    })
+
+    await expect(ffetch('https://example.com').text()).rejects.toThrow(MyError)
+    fetch_.mockImplementation(async () => new Response('Not OK', { status: 404 }))
+    await expect(ffetch('https://example.com').text()).rejects.toThrow(HttpError)
+  })
 })
