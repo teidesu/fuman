@@ -162,6 +162,7 @@ export async function bumpVersion(params: {
   }
 
   // make sure that packages that depend on the changed package are also updated if needed
+  const bumpWithDependants = params.params?.bumpWithDependants
   for (const pkg of changedPackages) {
     if (pkg.json.fuman?.ownVersioning) continue
 
@@ -180,7 +181,16 @@ export async function bumpVersion(params: {
         if (expandedVersion === 'workspace:^') expandedVersion = `^${workspaceVersions[pkgName]}`
         if (expandedVersion === 'workspace:*') expandedVersion = workspaceVersions[pkgName]
 
-        if (!satisfies(nextVersion, expandedVersion)) {
+        let shouldBump: boolean
+        if (bumpWithDependants === true) {
+          shouldBump = true
+        } else if (bumpWithDependants === 'only-minor') {
+          shouldBump = !satisfies(nextVersion, expandedVersion) && type === 'minor'
+        } else {
+          shouldBump = !satisfies(nextVersion, expandedVersion)
+        }
+
+        if (shouldBump) {
           if (otherPkg.json.fuman?.ownVersioning) {
             throw new Error(`package ${otherPkg.json.name}@${otherPkg.json.version} is marked as "own versioning", and will not be compatible with ${pkgName}@${expandedVersion} after bumping. please bump it manually`)
           }

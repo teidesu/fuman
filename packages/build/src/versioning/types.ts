@@ -46,6 +46,25 @@ export interface VersioningOptions {
   exclude?: string[] | null
 
   /**
+   * whether to also bump dependant packages when bumping a package,
+   * even if this is a semver-compatible bump.
+   *
+   * example:
+   * - A depends on package B, and B depends on package C
+   * - A gets patch bump (e.g. `v1.2.3` -> `v1.2.4`)
+   * - when `false` or `'only-minor'`, B and C єlwill not be bumped
+   * - when `true`, B and C will be bumped to the same version as A (i.e. `v1.2.4`)
+   *
+   * `only-minor` will make fuman ignore patch bumps and only bump dependants
+   * when minor version is bumped.
+   *
+   * note that dependants are always bumped on a major bump.
+   *
+   * @default false
+   */
+  bumpWithDependants?: boolean | 'only-minor'
+
+  /**
    * custom predicate for inclusion of files
    * (will be called in addition to the globs,
    * defaults to checking if the file is in tsconfig.json)
