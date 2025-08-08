@@ -1,11 +1,13 @@
 import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 const CONFIG_NAME = 'build.config.js'
 
 export async function loadBuildConfig<T>(packageRoot: string): Promise<T | undefined> {
   try {
+    const filePath = pathToFileURL(join(packageRoot, CONFIG_NAME)).href
     // eslint-disable-next-line ts/no-unsafe-assignment, ts/no-unsafe-member-access
-    const mod = (await import(join(packageRoot, CONFIG_NAME))).default
+    const mod = (await import(filePath)).default
     if (typeof mod === 'function') {
       // eslint-disable-next-line ts/no-unsafe-call
       return mod() as T
