@@ -9,12 +9,14 @@ export const ffetchDefaultAddons: [
   FfetchAddon<ffetchAddons.FormAddon, object>,
   FfetchAddon<ffetchAddons.MultipartAddon, object>,
   FfetchAddon<ffetchAddons.RetryAddon, object>,
+  FfetchAddon<object, ffetchAddons.ParserAddon>,
 ] = [
   /* #__PURE__ */ ffetchAddons.timeout(),
   /* #__PURE__ */ ffetchAddons.query(),
   /* #__PURE__ */ ffetchAddons.form(),
   /* #__PURE__ */ ffetchAddons.multipart(),
   /* #__PURE__ */ ffetchAddons.retry(),
+  /* #__PURE__ */ ffetchAddons.parser(),
 ]
 
 /**
@@ -44,7 +46,7 @@ export const ffetchBase: Ffetch<
   ffetchAddons.FormAddon &
   ffetchAddons.MultipartAddon &
   ffetchAddons.RetryAddon,
-    object
+  ffetchAddons.ParserAddon
 > = /* #__PURE__ */ createFfetch({
   addons: ffetchDefaultAddons,
 })

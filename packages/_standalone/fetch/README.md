@@ -1,5 +1,7 @@
 # `@fuman/fetch`
 
+![bundlejs](https://deno.bundlejs.com/badge?q=@fuman/fetch&treeshake=[{+ffetchBase+}])
+
 no-bullshit minimal wrapper around `window.fetch` that aims to improve dx
 by adding commonly used features, while having low runtime overhead,
 small bundle size and staying close to the web standards.
@@ -10,4 +12,4 @@ small bundle size and staying close to the web standards.
 - base url, base headers, etc.
 - retries, timeouts, validation built in
 - basic middlewares
-- **type-safe** compatibility with popular parsing libraries (yup, zod, valibot, etc.)
+- **type-safe** compatibility with popular parsing libraries thanks to [standard-schema](https://github.com/standard-schema/standard-schema)

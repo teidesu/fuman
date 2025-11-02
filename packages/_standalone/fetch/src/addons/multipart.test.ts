@@ -36,7 +36,7 @@ describe('ffetch/addons/form', () => {
     const boundary = asNonNull(req.headers.get('Content-Type')?.split('boundary=')[1])
     const form = utf8.decoder.decode(await read.async.untilEnd(webReadableToFuman(asNonNull(req.body))))
 
-    expect(form).toEqual([
+    expect(form.trimEnd()).toEqual([
       `--${boundary}`,
       'Content-Disposition: form-data; name="foo"',
       '',
