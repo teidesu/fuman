@@ -1,7 +1,7 @@
 {
   "name": "@fuman/bun",
   "type": "module",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "bun-specific utilities",
   "license": "MIT",
   "sideEffects": false,
