@@ -1,16 +1,17 @@
 import type { ReleaseType } from 'semver'
-import type { WorkspacePackage } from '../package-json/collect-package-jsons.js'
+import type { CommitInfo } from '../git/utils.js'
 
+import type { WorkspacePackage } from '../package-json/collect-package-jsons.js'
 import type { PackageJson } from '../package-json/types.js'
 import type { VersioningOptions } from './types.js'
 import * as fsp from 'node:fs/promises'
 import { join } from 'node:path'
 import process from 'node:process'
+
 import { asNonNull } from '@fuman/utils'
-
 import detectIndent from 'detect-indent'
-import { gt, inc, parse, satisfies } from 'semver'
 
+import { gt, inc, parse, satisfies } from 'semver'
 import { getCommitsBetween, getLatestTag, parseConventionalCommit } from '../git/utils.js'
 import { collectVersions, findRootPackage } from '../package-json/utils.js'
 import { findProjectChangedPackages } from './collect-files.js'
@@ -48,6 +49,43 @@ export interface BumpVersionResult {
    * (note: will be false if release type is explicitly provided)
    */
   hasFeatures: boolean
+}
+
+function determineBumpType(params: {
+  oldVersion: string
+  commits: CommitInfo[]
+}): 'major' | 'minor' | 'patch' {
+  const { oldVersion, commits } = params
+
+  let hasBreakingChanges = false
+  let hasFeatures = false
+
+  for (const commit of commits) {
+    const parsed = parseConventionalCommit(commit.message)
+    if (!parsed) continue
+
+    if (parsed.breaking) hasBreakingChanges = true
+    if (parsed.type === 'feat') hasFeatures = true
+  }
+
+  const parsedVersion = parse(oldVersion)
+  if (!parsedVersion) {
+    throw new Error(`Invalid version: ${oldVersion}`)
+  }
+
+  if (hasBreakingChanges) {
+    if (parsedVersion.major === 0 && parsedVersion.minor === 0) {
+      return 'patch'
+    } else if (parsedVersion.major === 0) {
+      return 'minor'
+    } else {
+      return 'major'
+    }
+  } else if (hasFeatures) {
+    return parsedVersion.major === 0 ? 'patch' : 'minor'
+  } else {
+    return 'patch'
+  }
 }
 
 export async function bumpVersion(params: {
@@ -114,35 +152,17 @@ export async function bumpVersion(params: {
 
   if (type == null) {
     // determine release type
-    for (const commit of await getCommitsBetween({
+    const commits = await getCommitsBetween({
       since,
       cwd,
-    })) {
-      const parsed = parseConventionalCommit(commit.message)
-      if (!parsed) continue
-
-      if (parsed.breaking) hasBreakingChanges = true
-      if (parsed.type === 'feat') hasFeatures = true
-    }
-
-    const parsedVersion = parse(maxVersion)
-    if (!parsedVersion) {
-      throw new Error(`Invalid version: ${maxVersion}`)
-    }
-
-    if (hasBreakingChanges) {
-      if (parsedVersion.major === 0 && parsedVersion.minor === 0) {
-        type = 'patch'
-      } else if (parsedVersion.major === 0) {
-        type = 'minor'
-      } else {
-        type = 'major'
-      }
-    } else if (hasFeatures) {
-      type = parsedVersion.major === 0 ? 'patch' : 'minor'
-    } else {
-      type = 'patch'
-    }
+    })
+    type = determineBumpType({
+      oldVersion: maxVersion,
+      commits,
+    })
+    // todo probably remove
+    hasFeatures = commits.some(commit => parseConventionalCommit(commit.message)?.type === 'feat')
+    hasBreakingChanges = commits.some(commit => parseConventionalCommit(commit.message)?.breaking)
   }
 
   const nextVersion = inc(maxVersion, type)
@@ -239,10 +259,11 @@ export async function bumpVersion(params: {
         const commits = await getCommitsBetween({
           until: prevTag,
           cwd,
-          files: [join(pkg.path, 'package.json')],
+          files: [join(pkg.path, '**')],
         })
         if (commits.length > 0) {
-          newVersion = asNonNull(inc(newVersion, type))
+          const bumpType = determineBumpType({ oldVersion: newVersion, commits })
+          newVersion = asNonNull(inc(newVersion, bumpType))
         }
       }
     }
