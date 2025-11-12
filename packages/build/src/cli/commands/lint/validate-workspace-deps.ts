@@ -32,10 +32,9 @@ export interface InternalDepsError {
   /**
    * sub-type of the error
    * - not_workspace_proto: internal dependencies must be linked with workspace: protocol
-   * - standalone_dep: non-standalone packages cannot depend on standalone packages
    * - not_workspace_dep: `workspace:` protocol is used to link to a package not found in the workspace
    */
-  subtype: 'not_workspace_proto' | 'standalone_dep' | 'not_workspace_dep'
+  subtype: 'not_workspace_proto' | 'not_workspace_dep'
 }
 
 export type WorkspaceDepsError = ExternalDepsError | InternalDepsError
@@ -91,15 +90,6 @@ export async function validateWorkspaceDeps(params: {
               subtype: 'not_workspace_proto',
             })
             continue
-          }
-
-          if (!pj.fuman?.standalone && otherPkgStandalone && version.startsWith('workspace:')) {
-            errors.push({
-              type: 'internal',
-              package: pj.name,
-              dependency: name,
-              subtype: 'standalone_dep',
-            })
           }
 
           continue

@@ -58,7 +58,6 @@ export interface PackageJson {
      * standalone packages have a few differences from normal ones:
      *   - (bump-version) each standalone package has independent versioning
      *   - (lint) normal packages can't depend on standalone packages
-     *   - (lint) unlike normal packages, standalone packages are allowed to depend on older versions of workspace packages
      */
     standalone?: boolean
   }
