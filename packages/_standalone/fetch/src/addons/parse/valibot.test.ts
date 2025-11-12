@@ -1,12 +1,13 @@
+import type { FetchLike } from '../../_types.js'
 import * as v from 'valibot'
-import { describe, expect, it, vi } from 'vitest'
 
+import { describe, expect, it, vi } from 'vitest'
 import { createFfetch } from '../../ffetch.js'
 import { parser } from './addon.js'
 
 describe('zod', () => {
   it('should work with ffetch (pass)', async () => {
-    const fetch_ = vi.fn<typeof fetch>()
+    const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => new Response('{"a": 42}'))
 
     const ffetch = createFfetch({
@@ -22,7 +23,7 @@ describe('zod', () => {
   })
 
   it('should work with ffetch (failure)', async () => {
-    const fetch_ = vi.fn<typeof fetch>()
+    const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => new Response('{"b": 42}'))
 
     const ffetch = createFfetch({
@@ -38,7 +39,7 @@ describe('zod', () => {
   })
 
   it('should work with ffetch safelyParsedJson (pass)', async () => {
-    const fetch_ = vi.fn<typeof fetch>()
+    const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => new Response('{"a": 42}'))
 
     const ffetch = createFfetch({
@@ -57,7 +58,7 @@ describe('zod', () => {
   })
 
   it('should work with ffetch safelyParsedJson (failure)', async () => {
-    const fetch_ = vi.fn<typeof fetch>()
+    const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => new Response('{"b": 42}'))
 
     const ffetch = createFfetch({

@@ -41,11 +41,11 @@ export const ffetchDefaultAddons: [
  * ```
  */
 export const ffetchBase: Ffetch<
-  ffetchAddons.TimeoutAddon &
-  ffetchAddons.QueryAddon &
-  ffetchAddons.FormAddon &
-  ffetchAddons.MultipartAddon &
-  ffetchAddons.RetryAddon,
+  ffetchAddons.TimeoutAddon
+  & ffetchAddons.QueryAddon
+  & ffetchAddons.FormAddon
+  & ffetchAddons.MultipartAddon
+  & ffetchAddons.RetryAddon,
   ffetchAddons.ParserAddon
 > = /* #__PURE__ */ createFfetch({
   addons: ffetchDefaultAddons,

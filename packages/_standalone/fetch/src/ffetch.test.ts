@@ -1,10 +1,10 @@
-import type { FfetchMiddleware } from './_types.js'
+import type { FetchLike, FfetchMiddleware } from './_types.js'
 import type { FfetchAddon } from './addons/types.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createFfetch, HttpError } from './ffetch.js'
 
-const fetch_ = vi.fn<typeof fetch>(async () => new Response('OK'))
+const fetch_ = vi.fn<FetchLike>(async () => new Response('OK'))
 const ffetch = createFfetch({ fetch: fetch_ })
 
 describe('ffetch', () => {

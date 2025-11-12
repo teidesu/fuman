@@ -20,7 +20,7 @@ export class LruSet<T> {
 
   constructor(
     capacity: number,
-        SetImpl: new() => Set<T> = Set,
+    SetImpl: new() => Set<T> = Set,
   ) {
     this.#capacity = capacity
     this.#set = new SetImpl()

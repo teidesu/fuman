@@ -1,12 +1,13 @@
-import { describe, expect, it, vi } from 'vitest'
+import type { FetchLike } from '../_types.js'
 
+import { describe, expect, it, vi } from 'vitest'
 import { createFfetch } from '../ffetch.js'
 import { rateLimitHandler } from './rate-limit.js'
 
 describe('rateLimitHandler', () => {
   it('should handle rate limit errors', async () => {
     let times = 0
-    const fetch_ = vi.fn<typeof fetch>()
+    const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => {
         switch (times++) {
           case 0:
@@ -38,7 +39,7 @@ describe('rateLimitHandler', () => {
 
   it('should use isRejected', async () => {
     let times = 0
-    const fetch_ = vi.fn<typeof fetch>()
+    const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => {
         switch (times++) {
           case 0:
@@ -72,7 +73,7 @@ describe('rateLimitHandler', () => {
   it('should use getReset', async () => {
     vi.setSystemTime(0)
     let times = 0
-    const fetch_ = vi.fn<typeof fetch>()
+    const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => {
         switch (times++) {
           case 0:
@@ -107,7 +108,7 @@ describe('rateLimitHandler', () => {
 
   it('should wait for the default time if getReset returns null', async () => {
     let times = 0
-    const fetch_ = vi.fn<typeof fetch>()
+    const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => {
         switch (times++) {
           case 0:
@@ -149,7 +150,7 @@ describe('rateLimitHandler', () => {
     vi.setSystemTime(0)
 
     let times = 0
-    const fetch_ = vi.fn<typeof fetch>()
+    const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => {
         switch (times++) {
           case 0:
@@ -190,7 +191,7 @@ describe('rateLimitHandler', () => {
     vi.setSystemTime(0)
 
     let times = 0
-    const fetch_ = vi.fn<typeof fetch>()
+    const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => {
         switch (times++) {
           case 0:

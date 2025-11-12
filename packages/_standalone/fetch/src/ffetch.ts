@@ -63,7 +63,7 @@ export interface FfetchOptions {
   baseUrl?: string
 
   /** body to be passed to fetch() */
-  body?: BodyInit
+  body?: BodyInit | Uint8Array
 
   /**
    * shorthand for sending json body.
@@ -83,7 +83,7 @@ export interface FfetchOptions {
 
 export interface FfetchBaseOptions<Addons extends FfetchAddon<any, any>[] = FfetchAddon<any, any>[]> extends FfetchOptions {
   /** implementation of fetch() */
-  fetch?: typeof fetch
+  fetch?: FetchLike
 
   /** addons for the request */
   addons?: Addons
@@ -144,7 +144,7 @@ export interface Ffetch<RequestMixin, ResponseMixin> {
       response: object
     } = CombineAddons<Addons>,
   >(
-    baseOptions: FfetchBaseOptions<Addons> & RequestMixin & Combined['request']
+    baseOptions: FfetchBaseOptions<Addons> & RequestMixin & Combined['request'],
   ) => Ffetch<RequestMixin & Combined['request'], ResponseMixin & Combined['response']>
 }
 
@@ -327,7 +327,7 @@ export function createFfetch<
 ): Ffetch<Combined['request'], Combined['response']> {
   const captureStackTrace = baseOptions.captureStackTrace ?? true
   const baseFetch = baseOptions.fetch ?? globalThis.fetch?.bind(globalThis)
-  const wrappedFetch: FetchLike = baseOptions.middlewares !== undefined && baseOptions.middlewares.length > 0 ? composeMiddlewares(baseOptions.middlewares, baseFetch) : baseFetch
+  const wrappedFetch = baseOptions.middlewares !== undefined && baseOptions.middlewares.length > 0 ? composeMiddlewares(baseOptions.middlewares, baseFetch) : baseFetch
   const addons = baseOptions.addons ?? []
 
   let FfetchResultInner
@@ -403,7 +403,9 @@ export function createFfetch<
       init.method = options.method ?? 'POST'
       headers['Content-Type'] ??= 'application/json'
     } else {
-      init.body = options.body
+      // dumb fix for dumb ts5.9 breaking change
+      // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-9.html#libdts-changes
+      init.body = options.body as Exclude<typeof options.body, Uint8Array>
       init.method = options.method ?? baseOptions.method ?? 'GET'
 
       if (init.body instanceof ReadableStream) {

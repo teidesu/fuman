@@ -1,5 +1,4 @@
-import { ffetchAddons, ffetchBase } from '@fuman/fetch'
-import { ffetchZodAdapter } from '@fuman/fetch/zod'
+import { ffetchBase } from '@fuman/fetch'
 import { asyncPool } from '@fuman/utils'
 import { z } from 'zod'
 
@@ -20,9 +19,6 @@ export async function createGithubRelease(params: {
 }): Promise<number> {
   const ffetch = ffetchBase.extend({
     baseUrl: params.apiUrl ?? 'https://api.github.com',
-    addons: [
-      ffetchAddons.parser(ffetchZodAdapter()),
-    ],
     headers: {
       'Accept': 'application/vnd.github+json',
       'User-Agent': '@fuman/build',

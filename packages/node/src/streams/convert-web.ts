@@ -75,6 +75,7 @@ export function webReadableToNode(stream: ReadableStream<Uint8Array>): Readable 
   let ended = false
 
   const readable = new Readable({
+    // eslint-disable-next-line ts/no-misused-promises
     async read() {
       try {
         const { done, value } = await reader.read()

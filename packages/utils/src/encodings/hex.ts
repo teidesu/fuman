@@ -49,17 +49,16 @@ declare const Buffer: typeof import('node:buffer').Buffer
 declare const Uint8Array: Uint8ArrayConstructor & {
   fromHex?: (hex: string) => Uint8Array
 }
-declare interface Uint8ArrayExt extends Uint8Array {
-  toHex?: () => string
-}
+
+const HAS_TO_HEX = typeof Uint8Array.prototype.toHex === 'function'
+const HAS_FROM_HEX = typeof Uint8Array.fromHex === 'function'
 
 export function encode(buf: Uint8Array): string {
   if (typeof Buffer !== 'undefined') {
     return Buffer.from(buf).toString('hex')
   }
-  if ((buf as Uint8ArrayExt).toHex) {
-    // eslint-disable-next-line ts/no-non-null-assertion
-    return (buf as Uint8ArrayExt).toHex!()
+  if (HAS_TO_HEX) {
+    return buf.toHex()
   }
 
   let out = ''
@@ -76,7 +75,8 @@ export function decode(string: string): Uint8Array {
     const buf = Buffer.from(string, 'hex')
     return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength)
   }
-  if (Uint8Array.fromHex) {
+  if (HAS_FROM_HEX) {
+    // eslint-disable-next-line ts/no-unsafe-return
     return Uint8Array.fromHex(string)
   }
 

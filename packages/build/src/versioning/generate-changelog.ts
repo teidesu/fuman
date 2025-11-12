@@ -20,7 +20,7 @@ function defaultCommitFormatter(commit: CommitInfo, parsed: ConventionalCommit):
 
   if (breaking && description) {
     line
-                += `\n${
+      += `\n${
         commit.description
           .trim()
           .split('\n')

@@ -159,11 +159,11 @@ export const releaseCli = bc.command({
 
     const changelog = prevTag != null
       ? await generateChangelog({
-        workspace: changedPackages,
-        cwd: root,
-        since: prevTag,
-        params: config?.versioning,
-      })
+          workspace: changedPackages,
+          cwd: root,
+          since: prevTag,
+          params: config?.versioning,
+        })
       : 'Initial release'
 
     if (args.dryRun) {

@@ -35,11 +35,9 @@ jobs:
         run: git checkout ${{ github.event.inputs.branch }}
       - uses: actions/setup-node@v3
         with:
-          node-version: '20.15'
+          node-version: '22.12'
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
-        with:
-          version: '9.5.0'
       - run: pnpm install --frozen-lockfile
       - name: Initialize git
         env:
@@ -52,9 +50,7 @@ jobs:
           git config --global gpg.format ssh
           git config --global user.signingkey /tmp/bot-key
           git config --global commit.gpgsign true
-      - uses: denoland/setup-deno@v1
-        with:
-          deno-version: '2.0'
+      - uses: denoland/setup-deno@v2
       - name: Run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

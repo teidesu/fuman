@@ -1,12 +1,13 @@
+import type { FetchLike } from '../_types.js'
 import { read, webReadableToFuman } from '@fuman/io'
 import { asNonNull, utf8 } from '@fuman/utils'
+
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createFfetch } from '../ffetch.js'
-
 import { multipart } from './multipart.js'
 
-const fetch_ = vi.fn<typeof fetch>(async () => new Response('OK'))
+const fetch_ = vi.fn<FetchLike>(async () => new Response('OK'))
 const ffetch = createFfetch({ fetch: fetch_, addons: [multipart()] })
 
 describe('ffetch/addons/form', () => {

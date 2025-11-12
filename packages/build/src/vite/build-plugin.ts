@@ -203,9 +203,9 @@ export async function fumanBuild(params: {
         const libOptions = config?.build?.lib
         const libOptionsCustom = packageConfig?.viteConfig?.build?.lib
         const outputFormats
-                    = (libOptions === false ? undefined : libOptions?.formats)
-                      ?? (libOptionsCustom === false ? undefined : libOptionsCustom?.formats)
-                      ?? ['es', 'cjs']
+          = (libOptions === false ? undefined : libOptions?.formats)
+            ?? (libOptionsCustom === false ? undefined : libOptionsCustom?.formats)
+            ?? ['es', 'cjs']
 
         buildCjs = outputFormats.includes('cjs')
 

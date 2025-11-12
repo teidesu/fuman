@@ -3,19 +3,19 @@ import { Bytes, write } from '@fuman/io'
 import { BPLIST_MAGIC, CORE_DATA_EPOCH, MAX_OBJECT_COUNT } from './_constants.js'
 import { PlistValue } from './types.js'
 
-type PlistEntry =
-  | { id: number, type: 'string', value: string, format: 'ascii' | 'utf16' | 'utf8' }
-  | { id: number, type: 'int', value: number | bigint, size: number }
-  | { id: number, type: 'uid', value: number, size: number }
-  | { id: number, type: 'bool', value: boolean }
-  | { id: number, type: 'real', value: number, size: number }
-  | { id: number, type: 'date', value: Date }
-  | { id: number, type: 'data', value: Uint8Array }
-  | { id: number, type: 'array', items: PlistEntry[] }
-  | { id: number, type: 'set', items: PlistEntry[] }
-  | { id: number, type: 'dict', entries: { key: PlistEntry, value: PlistEntry }[] }
-  | { id: number, type: 'null' }
-  | number // a reference to a previously written entry
+type PlistEntry
+  = | { id: number, type: 'string', value: string, format: 'ascii' | 'utf16' | 'utf8' }
+    | { id: number, type: 'int', value: number | bigint, size: number }
+    | { id: number, type: 'uid', value: number, size: number }
+    | { id: number, type: 'bool', value: boolean }
+    | { id: number, type: 'real', value: number, size: number }
+    | { id: number, type: 'date', value: Date }
+    | { id: number, type: 'data', value: Uint8Array }
+    | { id: number, type: 'array', items: PlistEntry[] }
+    | { id: number, type: 'set', items: PlistEntry[] }
+    | { id: number, type: 'dict', entries: { key: PlistEntry, value: PlistEntry }[] }
+    | { id: number, type: 'null' }
+    | number // a reference to a previously written entry
 
 function determineUintSize(value: number | bigint): number {
   if (value < 0) {

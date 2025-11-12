@@ -1,13 +1,14 @@
+import type { FetchLike } from '../_types.js'
+
 import { CookieJar } from 'tough-cookie'
 
 import { describe, expect, it, vi } from 'vitest'
-
 import { createFfetch } from '../ffetch.js'
 import { toughCookieAddon } from './tough-cookie.js'
 
 describe('toughCookieAddon', () => {
   it('should use cookies from the jar', async () => {
-    const fetch_ = vi.fn<typeof fetch>()
+    const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => new Response('OK'))
 
     const jar = new CookieJar()
@@ -30,7 +31,7 @@ describe('toughCookieAddon', () => {
   })
 
   it('should store cookies to the jar', async () => {
-    const fetch_ = vi.fn<typeof fetch>()
+    const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => {
         const res = new Response('OK', {
           headers: {

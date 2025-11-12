@@ -26,6 +26,7 @@ console.log(readXmlPlist(data))
 >
 > ```ts
 > import { DOMParser } from '@xmldom/xmldom'
+>
 > console.log(readXmlPlist(data, { DOMParser }))
 > ```
 

@@ -4,8 +4,7 @@ import * as fsp from 'node:fs/promises'
 import { join } from 'node:path'
 
 import process from 'node:process'
-import { ffetchAddons, ffetchBase } from '@fuman/fetch'
-import { ffetchZodAdapter } from '@fuman/fetch/zod'
+import { ffetchBase } from '@fuman/fetch'
 import { webReadableToFuman, write } from '@fuman/io'
 import { nodeWritableToFuman } from '@fuman/node'
 import { asyncPool } from '@fuman/utils'
@@ -51,9 +50,6 @@ export async function downloadJsrPackage(
   const registry = params?.registry ?? DEFAULT_REGISTRY
   const ffetch = ffetchBase.extend({
     baseUrl: registry,
-    addons: [
-      ffetchAddons.parser(ffetchZodAdapter()),
-    ],
   })
 
   const targetDir = `${specifier.packageName.replace(/\//g, '+')}@${specifier.version}`
@@ -73,7 +69,7 @@ export async function downloadJsrPackage(
   // download meta.json
   const meta = await ffetch(`${specifier.packageName}/meta.json`)
     .parsedJson(z.object({
-      versions: z.record(z.unknown()),
+      versions: z.record(z.string(), z.unknown()),
     }))
 
   const availableVersions = Object.keys(meta.versions)
@@ -88,7 +84,7 @@ export async function downloadJsrPackage(
   await fsp.mkdir(cacheDir, { recursive: true })
   const versionMeta = await ffetch(`${specifier.packageName}/${version}_meta.json`)
     .parsedJson(z.object({
-      manifest: z.record(z.unknown()),
+      manifest: z.record(z.string(), z.unknown()),
     }))
 
   const fetchFile = async (file: string) => {

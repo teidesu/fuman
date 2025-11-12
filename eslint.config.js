@@ -29,15 +29,15 @@ export default antfu({
     'test/consistent-test-it': 'off',
     'test/prefer-lowercase-title': 'off',
     'antfu/if-newline': 'off',
-    'import/no-relative-packages': 'error',
     'style/max-statements-per-line': ['error', { max: 2 }],
     'ts/no-non-null-assertion': 'error',
     'ts/no-redeclare': 'off',
     'unused-imports/no-unused-imports': 'error',
-    'import/extensions': ['error', 'always', {
-      ignorePackages: true,
-      checkTypeImports: true,
-    }],
+    // https://github.com/9romise/eslint-plugin-import-lite/issues/15
+    // 'import/extensions': ['error', 'always', {
+    //   ignorePackages: true,
+    //   checkTypeImports: true,
+    // }],
     'no-labels': 'off',
     'no-restricted-syntax': ['error', 'WithStatement'],
     'ts/promise-function-async': 'off',
@@ -60,6 +60,5 @@ export default antfu({
     'ts/no-unsafe-return': 'off',
     'ts/no-unsafe-member-access': 'off',
     'ts/unbound-method': 'off',
-    'import/extensions': 'off',
   },
 })

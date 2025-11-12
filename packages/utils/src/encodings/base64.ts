@@ -21,19 +21,16 @@ const encodeLookup = Object.fromEntries(
 declare const Buffer: typeof import('node:buffer').Buffer
 
 // https://github.com/tc39/proposal-arraybuffer-base64
-declare const Uint8Array: Uint8ArrayConstructor & {
-  fromBase64?: (base64: string, params?: { alphabet?: 'base64' | 'base64url' }) => Uint8Array
-}
-declare interface Uint8ArrayExt extends Uint8Array {
-  toBase64?: (params?: { alphabet?: 'base64' | 'base64url' }) => string
-}
+const HAS_FROM_BASE64 = typeof Uint8Array.fromBase64 === 'function'
+const HAS_TO_BASE64 = typeof Uint8Array.prototype.toBase64 === 'function'
 
 export function decode(base64: string, url: boolean = false): Uint8Array {
   if (typeof Buffer !== 'undefined') {
     const buf = Buffer.from(base64, url ? 'base64url' : 'base64')
     return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength)
   }
-  if (Uint8Array.fromBase64) {
+  if (HAS_FROM_BASE64) {
+    // eslint-disable-next-line ts/no-unsafe-return
     return Uint8Array.fromBase64(base64, { alphabet: url ? 'base64url' : 'base64' })
   }
 
@@ -59,13 +56,14 @@ export function decode(base64: string, url: boolean = false): Uint8Array {
   return new Uint8Array(encoded.buffer, encoded.byteOffset, m)
 }
 
+const TO_BASE64_OPTIONS = { alphabet: 'base64', omitPadding: false } as const
+const TO_BASE64_URL_OPTIONS = { alphabet: 'base64url', omitPadding: true } as const
 export function encode(bytes: Uint8Array, url: boolean = false): string {
   if (typeof Buffer !== 'undefined') {
     return Buffer.from(bytes).toString(url ? 'base64url' : 'base64')
   }
-  if ((bytes as Uint8ArrayExt).toBase64) {
-    // eslint-disable-next-line ts/no-non-null-assertion
-    return (bytes as Uint8ArrayExt).toBase64!({ alphabet: url ? 'base64url' : 'base64' })
+  if (HAS_TO_BASE64) {
+    return bytes.toBase64(url ? TO_BASE64_URL_OPTIONS : TO_BASE64_OPTIONS)
   }
 
   const m = bytes.length

@@ -65,7 +65,7 @@ export interface PackageJson {
   [key: string]: any
 }
 
-export const PackageJsonSchema: z.AnyZodObject = z.object({
+export const PackageJsonSchema: z.ZodObject = z.object({
   name: z.string(),
   type: z.union([
     z.literal('module'),
@@ -92,15 +92,15 @@ export const PackageJsonSchema: z.AnyZodObject = z.object({
   }),
   keywords: z.array(z.string()),
   workspaces: z.array(z.string()),
-  scripts: z.record(z.string()),
-  dependencies: z.record(z.string()),
-  devDependencies: z.record(z.string()),
-  peerDependencies: z.record(z.string()),
-  optionalDependencies: z.record(z.string()),
+  scripts: z.record(z.string(), z.string()),
+  dependencies: z.record(z.string(), z.string()),
+  devDependencies: z.record(z.string(), z.string()),
+  peerDependencies: z.record(z.string(), z.string()),
+  optionalDependencies: z.record(z.string(), z.string()),
   bundledDependencies: z.array(z.string()),
-  engines: z.record(z.string()),
+  engines: z.record(z.string(), z.string()),
   pnpm: z.object({
-    overrides: z.record(z.string()),
+    overrides: z.record(z.string(), z.string()),
   }).partial(),
   fuman: z.object({
     jsr: z.union([
@@ -112,7 +112,7 @@ export const PackageJsonSchema: z.AnyZodObject = z.object({
       z.literal('only'),
     ]),
     keepScripts: z.array(z.string()),
-    distOnlyFields: z.record(z.unknown()),
+    distOnlyFields: z.record(z.string(), z.unknown()),
     ownVersioning: z.boolean(),
     standalone: z.boolean(),
     private: z.boolean(),

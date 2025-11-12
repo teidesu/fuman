@@ -11,10 +11,10 @@ export function processPackageJson(params: {
   rootFieldsToCopy?: string[]
   fixedVersion?: string
 }): {
-    packageJson: PackageJson
-    packageJsonOrig: PackageJson
-    entrypoints: Record<string, string>
-  } {
+  packageJson: PackageJson
+  packageJsonOrig: PackageJson
+  entrypoints: Record<string, string>
+} {
   const {
     packageJson: packageJsonOrig,
     onlyEntrypoints = false,

@@ -1,10 +1,11 @@
+import type { FetchLike } from '../_types.js'
+
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createFfetch, HttpError } from '../ffetch.js'
-
 import { RetriesExceededError, retry } from './retry.js'
 
-const fetch_ = vi.fn<typeof fetch>(async () => new Response('OK'))
+const fetch_ = vi.fn<FetchLike>(async () => new Response('OK'))
 const ffetch = createFfetch({
   fetch: fetch_,
   addons: [retry()],

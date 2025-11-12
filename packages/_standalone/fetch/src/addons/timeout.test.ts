@@ -1,11 +1,11 @@
+import type { FetchLike } from '../_types.js'
+
 import { describe, expect, it, vi } from 'vitest'
 
 import { createFfetch } from '../ffetch.js'
-
 import { timeout, TimeoutError } from './timeout.js'
 
-const fetch_ = vi.fn<typeof fetch>((req_) => {
-  const req = req_ as Request
+const fetch_ = vi.fn<FetchLike>((req) => {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       resolve(new Response('OK'))

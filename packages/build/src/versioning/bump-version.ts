@@ -140,11 +140,11 @@ export async function bumpVersion(params: {
   const changedPackages = all
     ? workspaceWithoutRoot
     : await findProjectChangedPackages({
-      workspace: workspaceWithoutRoot,
-      root: cwd,
-      since,
-      params: params.params,
-    })
+        workspace: workspaceWithoutRoot,
+        root: cwd,
+        since,
+        params: params.params,
+      })
 
   let type: ReleaseType | undefined = params.type
   let hasFeatures = false
