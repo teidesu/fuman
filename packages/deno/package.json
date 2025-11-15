@@ -1,7 +1,7 @@
 {
   "name": "@fuman/deno",
   "type": "module",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "deno-specific utilities",
   "license": "MIT",
   "sideEffects": false,
