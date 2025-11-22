@@ -4,6 +4,8 @@ export function urlencode(query: Record<string, unknown>): URLSearchParams {
   const search = new URLSearchParams()
 
   for (const [key, value] of Object.entries(query)) {
+    if (value == null) continue
+
     if (Array.isArray(value)) {
       for (let i = 0; i < value.length; i++) {
         search.append(key, String(value[i]))
