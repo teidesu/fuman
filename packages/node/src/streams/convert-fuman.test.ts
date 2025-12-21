@@ -1,8 +1,9 @@
 import { Readable, Writable } from 'node:stream'
 
-import { Bytes } from '@fuman/io'
-import { describe, expect, it } from 'vitest'
+import { Bytes, read } from '@fuman/io'
+import { u8 } from '@fuman/utils'
 
+import { describe, expect, it } from 'vitest'
 import { fumanReadableToNode, fumanWritableToNode, nodeReadableToFuman, nodeWritableToFuman } from './convert-fuman.js'
 
 describe('nodeReadableToFuman', () => {
@@ -71,6 +72,17 @@ describe('fumanReadableToNode', () => {
         }
       })
     })
+  })
+
+  it('should correctly convert a readable stream from an async generator', async () => {
+    const readable = Readable.from(async function* () {
+      yield Buffer.alloc(25600)
+    }())
+    const converted = nodeReadableToFuman(readable)
+    const a1 = await read.async.exactly(converted, 128, 'truncate')
+    const a2 = await read.async.exactly(converted, 128, 'truncate')
+    expect(a1).toEqual(u8.alloc(128))
+    expect(a2).toEqual(u8.alloc(128))
   })
 })
 

@@ -1,5 +1,6 @@
 import type { IClosable, IReadable, IWritable } from '@fuman/io'
 import { Readable, Writable } from 'node:stream'
+import { Bytes } from '@fuman/io'
 
 import { Deferred, Deque } from '@fuman/utils'
 
@@ -25,9 +26,17 @@ export function nodeReadableToFuman(stream: Readable): IReadable & IClosable {
     waiters.popFront()?.resolve()
   })
 
+  const readBuffer = Bytes.alloc()
+
   return {
     async read(into: Uint8Array): Promise<number> {
       if (stream.readableEnded) return 0
+
+      if (readBuffer.available > 0) {
+        const size = Math.min(readBuffer.available, into.length)
+        into.set(readBuffer.readSync(size))
+        return size
+      }
 
       let buf: Buffer | null = null
 
@@ -45,6 +54,12 @@ export function nodeReadableToFuman(stream: Readable): IReadable & IClosable {
           waiters.pushBack(deferred)
           await deferred.promise
         }
+      }
+
+      if (into.length < buf.length) {
+        const toReadBuffer = buf.length - into.length
+        readBuffer.writeSync(toReadBuffer).set(buf.subarray(toReadBuffer))
+        buf = buf.subarray(0, into.length)
       }
 
       into.set(buf)
