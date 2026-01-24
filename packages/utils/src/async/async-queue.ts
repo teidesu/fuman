@@ -57,6 +57,10 @@ export class AsyncQueue<T> {
     this.#waiters.clear()
   }
 
+  get ended(): boolean {
+    return this.#ended
+  }
+
   peek(): T | undefined {
     return this.queue.peekFront()
   }
