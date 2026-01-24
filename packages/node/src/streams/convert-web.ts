@@ -1,8 +1,6 @@
 import type * as streamWeb from 'node:stream/web'
 import { Readable, Writable } from 'node:stream'
 
-import { isNodeVersionAfter } from '../version.js'
-
 /** convert a node Readable stream to a web ReadableStream */
 export function nodeReadableToWeb(stream: Readable): ReadableStream<Uint8Array> {
   if (import.meta.env?.MODE !== 'test' && typeof Readable.toWeb === 'function') {
@@ -63,11 +61,7 @@ export function nodeWritableToWeb(writable: Writable): WritableStream<Uint8Array
 
 /** convert a web ReadableStream to a node Readable */
 export function webReadableToNode(stream: ReadableStream<Uint8Array>): Readable {
-  if (
-    import.meta.env?.MODE !== 'test'
-      && typeof Readable.fromWeb === 'function'
-      && isNodeVersionAfter(18, 13, 0) // https://github.com/nodejs/node/issues/42694
-  ) {
+  if (import.meta.env?.MODE !== 'test' && typeof Readable.fromWeb === 'function') {
     return Readable.fromWeb(stream as unknown as streamWeb.ReadableStream<Uint8Array>) as unknown as Readable
   }
 
