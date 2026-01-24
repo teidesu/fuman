@@ -3,9 +3,13 @@
  */
 export class ConditionVariable {
   #notify?: () => void
+  #promise?: Promise<void>
 
   wait(): Promise<void> {
-    return new Promise<void>((resolve) => {
+    if (this.#promise) {
+      return this.#promise
+    }
+    return this.#promise = new Promise<void>((resolve) => {
       this.#notify = resolve
     })
   }
@@ -13,5 +17,6 @@ export class ConditionVariable {
   notify(): void {
     this.#notify?.()
     this.#notify = undefined
+    this.#promise = undefined
   }
 }

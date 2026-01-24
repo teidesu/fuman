@@ -25,4 +25,16 @@ describe('ConditionVariable', () => {
 
     expect(true).toBeTruthy()
   })
+
+  it('should correctly handle multiple wait() calls', async () => {
+    const cv = new ConditionVariable()
+
+    const p1 = cv.wait()
+    const p2 = cv.wait()
+
+    setTimeout(() => cv.notify(), 10)
+
+    await p1
+    await p2
+  })
 })
