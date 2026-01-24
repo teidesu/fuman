@@ -25,7 +25,7 @@ export class LruMap<K, V> {
 
   constructor(
     capacity: number,
-    MapImpl: new<K, V>() => Map<K, TwoWayLinkedList<K, V>> = Map,
+    MapImpl: new() => Map<K, TwoWayLinkedList<K, V>> = Map,
   ) {
     this.#capacity = capacity
     this.#map = new MapImpl()
