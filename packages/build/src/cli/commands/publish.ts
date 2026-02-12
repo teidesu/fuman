@@ -36,6 +36,7 @@ export async function publishPackages(params: {
   withBuild?: boolean
   skipVersionCheck?: boolean
   fixedVersion?: string
+  noProvenance?: boolean
 }): Promise<PublishPackagesResult> {
   const {
     workspaceRoot = process.cwd(),
@@ -51,6 +52,7 @@ export async function publishPackages(params: {
     withTarballs,
     withBuild,
     fixedVersion,
+    noProvenance = false,
   } = params
 
   const workspaceWithoutRoot = workspace.filter(pkg => !pkg.root)
@@ -81,8 +83,9 @@ export async function publishPackages(params: {
   }
 
   if (
-    isRunningInGithubActions()
-    && process.env.ACTIONS_ID_TOKEN_REQUEST_URL != null
+    !noProvenance
+    && isRunningInGithubActions()
+    && Boolean(process.env.ACTIONS_ID_TOKEN_REQUEST_URL)
     && registryUrl === DEFAULT_REGISTRY_URL
   ) {
     // we can use --provenance flag to generate a provenance statement
@@ -234,6 +237,8 @@ export const publishPackagesCli = bc.command({
       .desc('whether to build the package before publishing using `build` npm script (or defaulting to building using fuman-build if one is not found)'),
     fixedVersion: bc.string('fixed-version')
       .desc('version to publish the package to (overrides the version in every package.json, useful for pre-releases)'),
+    noProvenance: bc.boolean('no-provenance')
+      .desc('version to NOT use provenance even when it should be possible'),
   },
   handler: async (options) => {
     const { failed, tarballs } = await publishPackages({

@@ -61,6 +61,8 @@ export const releaseCli = bc.command({
       .desc('directory to publish to npm from, relative to package root (default: dist)'),
     npmRegistry: bc.string('npm-registry')
       .desc('URL of the npm registry to publish to'),
+    noProvenance: bc.boolean('no-provenance')
+      .desc('version to NOT use provenance even when it should be possible'),
 
     dryRun: bc.boolean('dry-run')
       .desc('whether to skip publishing and only print what is going to happen'),
@@ -189,6 +191,7 @@ export const releaseCli = bc.command({
         dryRun: args.dryRun,
         withBuild: true,
         withTarballs: args.withGithubRelease,
+        noProvenance: args.noProvenance,
       })
 
       if (publishResult.failed.length > 0) {
