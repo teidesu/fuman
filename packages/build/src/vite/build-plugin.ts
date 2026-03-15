@@ -6,7 +6,7 @@ import type { WorkspacePackage } from '../package-json/collect-package-jsons.js'
 
 import type { CustomBuildConfigObject } from './config.js'
 import * as fsp from 'node:fs/promises'
-import { join, relative } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 
 import process from 'node:process'
 import { asNonNull, assertStartsWith, deepMerge, parallelMap } from '@fuman/utils'
@@ -163,7 +163,7 @@ export async function fumanBuild(params: {
   params.preparePackageJson?.(hookContext)
   packageConfig?.preparePackageJson?.(hookContext)
 
-  const { packageJson, entrypoints } = processPackageJson({
+  const { packageJson, entrypoints, entrypointsToCopy } = processPackageJson({
     packageJson: ourPackageJson,
     rootPackageJson,
     workspaceVersions,
@@ -171,6 +171,7 @@ export async function fumanBuild(params: {
       ?.map(dep => typeof dep === 'string' ? new RegExp(dep) : dep),
     rootFieldsToCopy,
     fixedVersion,
+    shouldCopyEntrypoint: packageConfig?.shouldCopyEntrypoint,
   })
 
   hookContext.packageJson = packageJson
@@ -298,6 +299,13 @@ export async function fumanBuild(params: {
             const fullPath = join(buildDir, file)
             await fsp.cp(fullPath, fullPath.replace(/\.d\.ts$/, '.d.cts'))
           })
+        }
+
+        // handle entrypointsToCopy
+        for (const [name, value] of Object.entries(entrypointsToCopy)) {
+          const target = join(buildDir, name)
+          await fsp.mkdir(dirname(target), { recursive: true })
+          await tryCopy(join(packageRoot, value), target)
         }
 
         await params.finalize?.(hookContext)

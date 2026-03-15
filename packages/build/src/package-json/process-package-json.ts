@@ -1,6 +1,7 @@
 import type { PackageJson } from './types.js'
 
 const DEFAULT_FIELDS_TO_COPY_ROOT = ['license', 'author', 'contributors', 'homepage', 'repository', 'bugs']
+const DEFAULT_SHOULD_COPY_ENTRYPOINT = (name: string, target: string) => !target.match(/(?<!\.d)\.[mc]?[jt]sx?$/i)
 
 export function processPackageJson(params: {
   packageJson: PackageJson
@@ -9,11 +10,13 @@ export function processPackageJson(params: {
   bundledWorkspaceDeps?: RegExp[]
   rootPackageJson?: PackageJson
   rootFieldsToCopy?: string[]
+  shouldCopyEntrypoint?: (name: string, target: string) => boolean
   fixedVersion?: string
 }): {
   packageJson: PackageJson
   packageJsonOrig: PackageJson
   entrypoints: Record<string, string>
+  entrypointsToCopy: Record<string, string>
 } {
   const {
     packageJson: packageJsonOrig,
@@ -21,6 +24,7 @@ export function processPackageJson(params: {
     workspaceVersions,
     rootPackageJson,
     rootFieldsToCopy = DEFAULT_FIELDS_TO_COPY_ROOT,
+    shouldCopyEntrypoint = DEFAULT_SHOULD_COPY_ENTRYPOINT,
     bundledWorkspaceDeps,
     fixedVersion,
   } = params
@@ -124,6 +128,8 @@ export function processPackageJson(params: {
     delete packageJson.fuman
   }
 
+  const entrypointsToCopy: Record<string, string> = {}
+
   if (packageJson.exports != null) {
     let exports = packageJson.exports as Record<string, string>
     if (typeof exports === 'string') {
@@ -139,9 +145,10 @@ export function processPackageJson(params: {
         throw new TypeError(`package.json exports value must be a string: ${key}`)
       }
 
-      // .wasm files are copied as-is
-      if (value.endsWith('.wasm')) {
-        newExports[key] = value
+      // some files (notably json and wasm) are copied as-is to avoid js shims by vite
+      if (shouldCopyEntrypoint(key, value)) {
+        newExports[key] = key
+        entrypointsToCopy[key] = value
         continue
       }
 
@@ -188,6 +195,7 @@ export function processPackageJson(params: {
     packageJsonOrig,
     packageJson,
     entrypoints,
+    entrypointsToCopy,
   }
 }
 
