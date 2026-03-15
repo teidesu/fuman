@@ -4,7 +4,7 @@ import type { WorkspacePackage } from '../package-json/collect-package-jsons.js'
 import type { CustomBuildConfigObject } from '../vite/config.js'
 import type { JsrConfig } from './config.js'
 import * as fsp from 'node:fs/promises'
-import { join, relative } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 import process from 'node:process'
 import { asyncPool } from '@fuman/utils'
 import picomatch from 'picomatch'
@@ -12,7 +12,7 @@ import { glob } from 'tinyglobby'
 import ts from 'typescript'
 import { loadBuildConfig } from '../misc/_config.js'
 import { exec } from '../misc/exec.js'
-import { tryCopy } from '../misc/fs.js'
+import { fileExists, tryCopy } from '../misc/fs.js'
 import { normalizeFilePath } from '../misc/path.js'
 import { collectPackageJsons, filterPackageJsonsForPublish } from '../package-json/collect-package-jsons.js'
 import { processPackageJson } from '../package-json/process-package-json.js'
@@ -138,11 +138,17 @@ export async function generateDenoWorkspace(params: {
           continue
         }
 
-        if (mod.endsWith('.js')) {
-          changedTs = true
-          ;(imp as UnsafeMutable<ts.ImportDeclaration>).moduleSpecifier = ts.factory.createStringLiteral(
-            mod.replace(/\.js$/, '.ts'),
-          )
+        if (mod.endsWith('.js') || mod.endsWith('.jsx')) {
+          // verify that the edit is safe (the referenced file must not exist, and the .ts file must do)
+          const newMod = mod.replace(/\.js(x?)$/, '.ts$1')
+
+          const fullPathOld = join(dirname(fullFilePath), mod)
+          const fullPathNew = join(dirname(fullFilePath), newMod)
+
+          if (!(await fileExists(fullPathOld)) && await fileExists(fullPathNew)) {
+            changedTs = true
+            ;(imp as UnsafeMutable<ts.ImportDeclaration>).moduleSpecifier = ts.factory.createStringLiteral(newMod)
+          }
         } else {
           // this is not valid and *will* fail when publishing, as this requires --unstable-sloppy-imports
           // ideally this should be errored by eslint, but just as an another precaution
