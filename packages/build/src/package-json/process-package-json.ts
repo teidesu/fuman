@@ -45,11 +45,10 @@ export function processPackageJson(params: {
     if (packageJson.scripts && Array.isArray(packageJson.fuman?.keepScripts)) {
       for (const script of packageJson.fuman.keepScripts) {
         if (typeof script !== 'string') continue
-        if (script in packageJson.scripts) continue
+        if (!(script in packageJson.scripts)) continue
 
         newScripts[script] = packageJson.scripts[script]
       }
-      delete packageJson.keepScripts
     }
 
     packageJson.scripts = newScripts
@@ -116,7 +115,6 @@ export function processPackageJson(params: {
     }
 
     replaceCustomDependencies('dependencies')
-    replaceCustomDependencies('devDependencies')
     replaceCustomDependencies('peerDependencies')
     replaceCustomDependencies('optionalDependencies')
 

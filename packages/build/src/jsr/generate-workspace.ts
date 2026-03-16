@@ -92,13 +92,13 @@ export async function generateDenoWorkspace(params: {
 
     const srcDir = join(packageRoot, normalizeFilePath(packageConfigJsr?.sourceDir ?? rootConfig?.sourceDir ?? ''))
     const excludeFiles = mergeArrays(rootConfig?.exclude, packageConfigJsr?.exclude)
-    const exludeFilesPico = picomatch(excludeFiles)
+    const excludeFilesPico = picomatch(excludeFiles)
 
     // copy source files
     await fsp.cp(srcDir, packageOutRoot, {
       recursive: true,
       filter(source) {
-        if (exludeFilesPico(relative(srcDir, source))) {
+        if (excludeFilesPico(relative(srcDir, source))) {
           return false
         }
 
@@ -259,7 +259,7 @@ export async function generateDenoWorkspace(params: {
     typedoc: false,
   })
 
-  if (rootConfig?.dryRun !== false || withDryRun) {
+  if (rootConfig?.dryRun === true || withDryRun) {
     await exec(['deno', 'publish', '--dry-run', '-q', '--allow-dirty'], {
       cwd: outDir,
       stdio: 'inherit',

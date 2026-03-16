@@ -91,8 +91,6 @@ function determineBumpType(params: {
 export async function bumpVersion(params: {
   /** packages for which to generate the changelog */
   workspace: WorkspacePackage[]
-  /** previous tag */
-  prevTag?: string | null
   /** whether to bump version of all packages, not just changed ones */
   all?: boolean
   type?: ReleaseType
@@ -120,8 +118,6 @@ export async function bumpVersion(params: {
 
   let maxVersion: string | null = null
   for (const pkg of workspaceWithoutRoot) {
-    if (pkg.root) continue
-
     const version = asNonNull(pkg.json.version)
 
     if (pkg.json.fuman?.ownVersioning || pkg.json.fuman?.standalone) {
@@ -239,8 +235,6 @@ export async function bumpVersion(params: {
 
   const nextVersions: Record<string, string> = {}
 
-  let prevTag = params.prevTag
-
   for (const pkg of packagesToBump) {
     if (pkg.json.fuman?.ownVersioning) continue
 
@@ -251,13 +245,11 @@ export async function bumpVersion(params: {
       newVersion = asNonNull(pkg.json.version)
 
       // was this package released before?
-      if (prevTag === undefined) {
-        prevTag = await getLatestTag(pkg.path)
-      }
+      const standalonePrevTag = await getLatestTag(pkg.path)
 
-      if (prevTag != null) {
+      if (standalonePrevTag != null) {
         const commits = await getCommitsBetween({
-          until: prevTag,
+          since: standalonePrevTag,
           cwd,
           files: [join(pkg.path, '**')],
         })

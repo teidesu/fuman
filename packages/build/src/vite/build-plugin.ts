@@ -311,7 +311,7 @@ export async function fumanBuild(params: {
         await params.finalize?.(hookContext)
         await packageConfig?.finalize?.(hookContext)
       },
-      ...(packageConfig?.pluginsPost ?? []),
     },
+    ...(packageConfig?.pluginsPost ?? []),
   ]
 }

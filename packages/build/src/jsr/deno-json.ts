@@ -50,13 +50,14 @@ export function packageJsonToDeno({
         let packageVersion = version
 
         if (version.startsWith('npm:')) {
-          const idx = packageName.indexOf('@')
-          if (idx === -1) {
-            throw new Error(`Invalid npm dependency: ${name}`)
+          const npmValue = version.slice(4)
+          const idx = npmValue.lastIndexOf('@')
+          if (idx <= 0) {
+            throw new Error(`Invalid npm dependency: ${name}@${version}`)
           }
 
-          packageVersion = packageName.slice(idx + 1)
-          packageName = packageName.slice(4, idx)
+          packageName = npmValue.slice(0, idx)
+          packageVersion = npmValue.slice(idx + 1)
         } else if (version.match(/\|\||&&|:/)) {
           throw new Error(`Invalid npm dependency (not supported by JSR): ${name}@${version}`)
         }
