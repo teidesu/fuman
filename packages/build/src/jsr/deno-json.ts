@@ -45,6 +45,8 @@ export function packageJsonToDeno({
         const jsrName = version.slice(9).split('@')[0].replace('__', '/')
         const jsrVersion = version.slice(9).split('@')[1]
         importMap[name] = `jsr:@${jsrName}@${jsrVersion}`
+      } else if (version.startsWith('jsr:')) {
+        importMap[name] = version
       } else if (name) {
         let packageName = name
         let packageVersion = version
