@@ -33,7 +33,6 @@ export class FakeConnection<Address = string> implements IConnection<Address, Ad
 
   async write(bytes: Uint8Array): Promise<void> {
     await this.tx.write(bytes)
-    this.cv.notify()
   }
 
   writeIntoRx(bytes: Uint8Array): void {
