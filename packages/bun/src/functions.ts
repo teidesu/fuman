@@ -10,18 +10,8 @@ export const connectTcp: ConnectFunction<TcpEndpoint, TcpConnection> = async (en
 }
 
 export const connectTls: ConnectFunction<TlsConnectOptions, TcpConnection> = async (opts) => {
-  if (opts.sni != null) {
-    throw new Error('.sni is not available in Bun')
-  }
-  if (opts.caCerts) {
-    throw new Error('.caCerts is not available in Bun')
-  }
-  if (opts.alpnProtocols) {
-    throw new Error('.alpnProtocols is not available in Bun')
-  }
-
   const connection = new TcpConnection()
-  await connection.connect(opts, true)
+  await connection.connectTls(opts)
   return connection
 }
 

@@ -3,7 +3,7 @@ import type { TCPSocketConnectOptions } from 'bun'
 import { ConnectionClosedError } from '@fuman/net'
 import { afterAll, describe, expect, it, vi } from 'vitest'
 
-import { connectTcp } from '../src/functions.js'
+import { connectTcp, connectTls } from '../src/functions.js'
 
 const ENDPOINT: TcpEndpoint = { address: '127.0.0.1', port: 1234 }
 
@@ -29,7 +29,20 @@ describe('connectTcp', () => {
       hostname: ENDPOINT.address,
       port: ENDPOINT.port,
       socket: expect.any(Object),
-      tls: false,
+    })
+
+    expect(conn.remoteAddress).toEqual({ address: '127.0.0.1', port: 1234 })
+    expect(conn.localAddress).toEqual({ address: '127.0.0.1', port: 666 })
+  })
+
+  it('should initiate a tls connection to the given endpoint', async () => {
+    const conn = await connectTls(ENDPOINT)
+
+    expect(Bun.connect).toHaveBeenCalledWith({
+      hostname: ENDPOINT.address,
+      port: ENDPOINT.port,
+      socket: expect.any(Object),
+      tls: {},
     })
 
     expect(conn.remoteAddress).toEqual({ address: '127.0.0.1', port: 1234 })
@@ -193,13 +206,5 @@ describe('connectTcp', () => {
     conn.close()
 
     await expect(promise).rejects.toThrow(ConnectionClosedError)
-  })
-
-  it('should throw on unsupported methods', async () => {
-    const conn = await connectTcp(ENDPOINT)
-
-    expect(() => conn.setKeepAlive(false)).toThrow('Not available in Bun')
-    expect(() => conn.setNoDelay(false)).toThrow('Not available in Bun')
-    expect(() => conn.getAlpnProtocol()).toThrow('Not available in Bun')
   })
 })

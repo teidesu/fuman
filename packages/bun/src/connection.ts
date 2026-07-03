@@ -1,4 +1,4 @@
-import type { ITcpConnection, ITlsConnection, TcpEndpoint } from '@fuman/net'
+import type { ITcpConnection, ITlsConnection, TcpEndpoint, TlsConnectOptions } from '@fuman/net'
 import type { UnsafeMutable } from '@fuman/utils'
 import type { Socket } from 'bun'
 import { Bytes } from '@fuman/io'
@@ -24,7 +24,7 @@ export class TcpConnection implements ITcpConnection, ITlsConnection {
   #endpoint?: TcpEndpoint
 
   /** Connect to the given endpoint (must be called as the first thing before using the connection) */
-  async connect(endpoint: TcpEndpoint, tls = false): Promise<void> {
+  async connect(endpoint: TcpEndpoint): Promise<void> {
     ;(this as UnsafeMutable<TcpConnection>).socket = await Bun.connect({
       hostname: endpoint.address,
       port: endpoint.port,
@@ -34,9 +34,28 @@ export class TcpConnection implements ITcpConnection, ITlsConnection {
         close: this._handleClose.bind(this),
         drain: this._handleDrain.bind(this),
       },
-      tls,
     })
     this.#endpoint = endpoint
+  }
+
+  /** Connect to the given endpoint (must be called as the first thing before using the connection) */
+  async connectTls(opts: TlsConnectOptions): Promise<void> {
+    ;(this as UnsafeMutable<TcpConnection>).socket = await Bun.connect({
+      hostname: opts.address,
+      port: opts.port,
+      tls: {
+        ca: opts.caCerts,
+        ALPNProtocols: opts.alpnProtocols?.join(','),
+        serverName: opts.sni,
+      },
+      socket: {
+        data: this._handleData.bind(this),
+        error: this._handleError.bind(this),
+        close: this._handleClose.bind(this),
+        drain: this._handleDrain.bind(this),
+      },
+    })
+    this.#endpoint = opts
   }
 
   /** Create a new TcpConnection from an existing socket */
@@ -136,21 +155,21 @@ export class TcpConnection implements ITcpConnection, ITlsConnection {
 
     return {
       address: this.socket.remoteAddress,
-      get port(): never {
-        throw new Error('Not available in Bun')
-      },
+      port: this.socket.remotePort,
     }
   }
 
-  setKeepAlive(_val: boolean): void {
-    throw new Error('Not available in Bun')
+  setKeepAlive(val: boolean): void {
+    this.socket.setKeepAlive(val)
   }
 
-  setNoDelay(_val: boolean): void {
-    throw new Error('Not available in Bun')
+  setNoDelay(val: boolean): void {
+    this.socket.setNoDelay(val)
   }
 
   getAlpnProtocol(): string | null {
-    throw new Error('Not available in Bun')
+    const val = this.socket.alpnProtocol
+    if (val === false) return null
+    return val
   }
 }
