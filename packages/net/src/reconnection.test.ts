@@ -424,13 +424,17 @@ describe('PersistentConnection', () => {
 
   it('should stop when .close() is called while connecting', async () => {
     const log: string[] = []
+    let connectSignal: AbortSignal | undefined
+    const connection = new FakeConnection('127.0.0.1:1234')
+    const close = vi.spyOn(connection, 'close')
 
     const reconn = new PersistentConnection({
-      connect: async (addr: string) => {
+      connect: async (addr: string, abortSignal) => {
+        connectSignal = abortSignal
         log.push(`connect start ${addr}`)
         await sleep(10)
         log.push(`connect end ${addr}`)
-        return new FakeConnection(addr)
+        return connection
       },
       onOpen: async (conn) => {
         log.push('onOpen')
@@ -440,18 +444,47 @@ describe('PersistentConnection', () => {
     })
 
     reconn.connect('127.0.0.1:1234')
+    expect(connectSignal?.aborted).toBe(false)
     const closePromise = reconn.close()
+    expect(connectSignal?.aborted).toBe(true)
     log.push('close start')
     await vi.advanceTimersByTimeAsync(10)
     await closePromise
     log.push('close end')
 
+    expect(close).toHaveBeenCalledOnce()
+    expect(reconn.isConnected).toBe(false)
+    expect(reconn.isConnecting).toBe(false)
+    expect(reconn.isWaiting).toBe(false)
     expect(log).toEqual([
       'connect start 127.0.0.1:1234',
       'close start',
       'connect end 127.0.0.1:1234',
       'close end',
     ])
+  })
+
+  it('should stop promptly when a pending connect handles cancellation', async () => {
+    let connectSignal: AbortSignal | undefined
+    const reconn = new PersistentConnection({
+      connect: async (_addr: string, abortSignal) => {
+        connectSignal = abortSignal
+        return new Promise<FakeConnection>((_resolve, reject) => {
+          abortSignal.addEventListener('abort', () => reject(abortSignal.reason))
+        })
+      },
+      onOpen: echoClient,
+    })
+
+    reconn.connect('127.0.0.1:1234')
+    expect(connectSignal?.aborted).toBe(false)
+
+    await reconn.close()
+
+    expect(connectSignal?.aborted).toBe(true)
+    expect(reconn.isConnected).toBe(false)
+    expect(reconn.isConnecting).toBe(false)
+    expect(reconn.isWaiting).toBe(false)
   })
 
   it('should handle multiple .close() calls', async () => {
