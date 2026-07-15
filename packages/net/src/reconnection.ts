@@ -202,6 +202,7 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
 
     this.#lastAddress = undefined
     this.#resetState()
+    this.#closed?.resolve()
   }
 
   connect(address: ConnectAddress): void {

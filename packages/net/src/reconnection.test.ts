@@ -520,6 +520,33 @@ describe('PersistentConnection', () => {
     ])
   })
 
+  it('should settle .close() when called while the error handler is pending', async () => {
+    const errorHandlerStarted = new Deferred<void>()
+    const finishErrorHandler = new Deferred<void>()
+    const reconn = new PersistentConnection({
+      connect: async () => {
+        throw new Error('connect failed')
+      },
+      onOpen: echoClient,
+      onError: async () => {
+        errorHandlerStarted.resolve()
+        await finishErrorHandler.promise
+        return 'close' as const
+      },
+    })
+
+    reconn.connect('127.0.0.1:1234')
+    await errorHandlerStarted.promise
+
+    const closePromise = reconn.close()
+    finishErrorHandler.resolve()
+    await closePromise
+
+    expect(reconn.isConnected).toBe(false)
+    expect(reconn.isConnecting).toBe(false)
+    expect(reconn.isWaiting).toBe(false)
+  })
+
   it('should stop when strategy returns false', async () => {
     const log: string[] = []
 
