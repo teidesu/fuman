@@ -103,7 +103,7 @@ export class WebSocketConnection extends WebSocketConnectionBase implements ICon
     if (this._error) throw this._error
     if (!bytes.length) return
 
-    this.socket.send(bytes)
+    this.socket.send(bytes as Uint8Array<ArrayBuffer>)
   }
 }
 
@@ -141,7 +141,7 @@ export class WebSocketConnectionFramed extends WebSocketConnectionBase implement
   async writeFrame(data: Uint8Array | string): Promise<void> {
     if (this._error) throw this._error
 
-    this.socket.send(data)
+    this.socket.send(data as Uint8Array<ArrayBuffer>)
   }
 }
 
@@ -155,7 +155,7 @@ export interface WebSocketEndpoint {
   readonly protocols?: string | string[]
 }
 
-export const connectWs: ConnectFunction<WebSocketEndpoint, WebSocketConnection> = (endpoint) => {
+function openWebSocket(endpoint: WebSocketEndpoint, signal?: AbortSignal): Promise<WebSocket> {
   const {
     url,
     implementation: WebSocketImpl = WebSocket,
@@ -163,40 +163,40 @@ export const connectWs: ConnectFunction<WebSocketEndpoint, WebSocketConnection> 
   } = endpoint
 
   return new Promise((resolve, reject) => {
+    signal?.throwIfAborted()
+
     const socket = new WebSocketImpl(url, protocols)
     socket.binaryType = 'arraybuffer'
 
-    const onError = (event: Event) => {
-      socket.removeEventListener('error', onError)
+    function onError(event: Event) {
+      cleanup()
       reject(eventToError(event))
     }
-    socket.addEventListener('error', onError)
-    socket.addEventListener('open', () => {
+    function onOpen() {
+      cleanup()
+      resolve(socket)
+    }
+    function onAbort() {
+      cleanup()
+      socket.close()
+      reject(signal?.reason)
+    }
+    function cleanup() {
       socket.removeEventListener('error', onError)
-      resolve(new WebSocketConnection(socket))
-    })
+      socket.removeEventListener('open', onOpen)
+      signal?.removeEventListener('abort', onAbort)
+    }
+
+    signal?.addEventListener('abort', onAbort)
+    socket.addEventListener('error', onError)
+    socket.addEventListener('open', onOpen)
   })
 }
 
-export async function connectWsFramed(endpoint: WebSocketEndpoint): Promise<WebSocketConnectionFramed> {
-  const {
-    url,
-    implementation: WebSocketImpl = WebSocket,
-    protocols,
-  } = endpoint
+export const connectWs: ConnectFunction<WebSocketEndpoint, WebSocketConnection> = async (endpoint, signal) => {
+  return new WebSocketConnection(await openWebSocket(endpoint, signal))
+}
 
-  return new Promise((resolve, reject) => {
-    const socket = new WebSocketImpl(url, protocols)
-    socket.binaryType = 'arraybuffer'
-
-    const onError = (event: Event) => {
-      socket.removeEventListener('error', onError)
-      reject(eventToError(event))
-    }
-    socket.addEventListener('error', onError)
-    socket.addEventListener('open', () => {
-      socket.removeEventListener('error', onError)
-      resolve(new WebSocketConnectionFramed(socket))
-    })
-  })
+export async function connectWsFramed(endpoint: WebSocketEndpoint, signal?: AbortSignal): Promise<WebSocketConnectionFramed> {
+  return new WebSocketConnectionFramed(await openWebSocket(endpoint, signal))
 }

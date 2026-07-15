@@ -15,20 +15,39 @@ import { createSecureContext, connect as nodeTlsConnect, createServer as tlsCrea
 import { TcpConnection, TlsConnection } from './connection.js'
 import { TcpListener, TlsListener } from './listener.js'
 
-function awaitConnect(socket: Socket) {
+function awaitConnect(socket: Socket, signal?: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
-    socket.on('error', reject)
-    socket.once('connect', () => {
-      socket.off('error', reject)
+    function onError(error: Error) {
+      cleanup()
+      reject(error)
+    }
+    function onConnect() {
+      cleanup()
       resolve()
-    })
+    }
+    function onAbort() {
+      cleanup()
+      socket.destroy()
+      reject(signal?.reason)
+    }
+    function cleanup() {
+      socket.off('error', onError)
+      socket.off('connect', onConnect)
+      signal?.removeEventListener('abort', onAbort)
+    }
+
+    signal?.addEventListener('abort', onAbort)
+    socket.on('error', onError)
+    socket.once('connect', onConnect)
   })
 }
 
-export const connectTcp: ConnectFunction<TcpEndpoint, TcpConnection> = async ({ address, port }) => {
+export const connectTcp: ConnectFunction<TcpEndpoint, TcpConnection> = async ({ address, port }, signal) => {
+  signal?.throwIfAborted()
+
   const socket = new Socket()
   socket.connect(port, address)
-  await awaitConnect(socket)
+  await awaitConnect(socket, signal)
 
   return new TcpConnection(socket)
 }
@@ -37,7 +56,9 @@ export interface NodeTlsConnectOptions extends TlsConnectOptions {
   extraOptions?: ConnectionOptions
 }
 
-export const connectTls: ConnectFunction<NodeTlsConnectOptions, TlsConnection> = async (options) => {
+export const connectTls: ConnectFunction<NodeTlsConnectOptions, TlsConnection> = async (options, signal) => {
+  signal?.throwIfAborted()
+
   const { address, port, sni, caCerts, alpnProtocols, extraOptions } = options
 
   const socket = nodeTlsConnect({
@@ -49,7 +70,7 @@ export const connectTls: ConnectFunction<NodeTlsConnectOptions, TlsConnection> =
     ...extraOptions,
   })
 
-  await awaitConnect(socket)
+  await awaitConnect(socket, signal)
 
   return new TlsConnection(socket)
 }

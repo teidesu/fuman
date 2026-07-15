@@ -3,7 +3,7 @@ import type { UnsafeMutable } from '@fuman/utils'
 import type { Socket } from 'bun'
 import { Bytes } from '@fuman/io'
 import { ConnectionClosedError } from '@fuman/net'
-import { ConditionVariable, Deferred, Deque } from '@fuman/utils'
+import { ConditionVariable, Deferred, Deque, raceWithAbort } from '@fuman/utils'
 
 // NB: classes have better performance than tuples
 class SendBufferItem {
@@ -24,37 +24,45 @@ export class TcpConnection implements ITcpConnection, ITlsConnection {
   #endpoint?: TcpEndpoint
 
   /** Connect to the given endpoint (must be called as the first thing before using the connection) */
-  async connect(endpoint: TcpEndpoint): Promise<void> {
-    ;(this as UnsafeMutable<TcpConnection>).socket = await Bun.connect({
-      hostname: endpoint.address,
-      port: endpoint.port,
-      socket: {
-        data: this._handleData.bind(this),
-        error: this._handleError.bind(this),
-        close: this._handleClose.bind(this),
-        drain: this._handleDrain.bind(this),
-      },
-    })
+  async connect(endpoint: TcpEndpoint, signal?: AbortSignal): Promise<void> {
+    ;(this as UnsafeMutable<TcpConnection>).socket = await raceWithAbort(
+      Bun.connect({
+        hostname: endpoint.address,
+        port: endpoint.port,
+        socket: {
+          data: this._handleData.bind(this),
+          error: this._handleError.bind(this),
+          close: this._handleClose.bind(this),
+          drain: this._handleDrain.bind(this),
+        },
+      }),
+      signal,
+      socket => socket.end(),
+    )
     this.#endpoint = endpoint
   }
 
   /** Connect to the given endpoint (must be called as the first thing before using the connection) */
-  async connectTls(opts: TlsConnectOptions): Promise<void> {
-    ;(this as UnsafeMutable<TcpConnection>).socket = await Bun.connect({
-      hostname: opts.address,
-      port: opts.port,
-      tls: {
-        ca: opts.caCerts,
-        ALPNProtocols: opts.alpnProtocols?.join(','),
-        serverName: opts.sni,
-      },
-      socket: {
-        data: this._handleData.bind(this),
-        error: this._handleError.bind(this),
-        close: this._handleClose.bind(this),
-        drain: this._handleDrain.bind(this),
-      },
-    })
+  async connectTls(opts: TlsConnectOptions, signal?: AbortSignal): Promise<void> {
+    ;(this as UnsafeMutable<TcpConnection>).socket = await raceWithAbort(
+      Bun.connect({
+        hostname: opts.address,
+        port: opts.port,
+        tls: {
+          ca: opts.caCerts,
+          ALPNProtocols: opts.alpnProtocols?.join(','),
+          serverName: opts.sni,
+        },
+        socket: {
+          data: this._handleData.bind(this),
+          error: this._handleError.bind(this),
+          close: this._handleClose.bind(this),
+          drain: this._handleDrain.bind(this),
+        },
+      }),
+      signal,
+      socket => socket.end(),
+    )
     this.#endpoint = opts
   }
 

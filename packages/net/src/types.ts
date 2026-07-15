@@ -70,7 +70,7 @@ export type ListenFunction<
 export type ConnectFunction<
   Options,
   Connection extends IConnection<unknown>,
-> = (options: Options) => Promise<Connection>
+> = (options: Options, abortSignal?: AbortSignal) => Promise<Connection>
 
 export type TlsUpgradeFunction<
   Options,
