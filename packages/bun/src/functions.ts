@@ -3,15 +3,15 @@ import type { ConnectFunction, IListener, ListenFunction, TcpEndpoint, TlsConnec
 import { TcpConnection } from './connection.js'
 import { TcpListener } from './listener.js'
 
-export const connectTcp: ConnectFunction<TcpEndpoint, TcpConnection> = async (endpoint) => {
+export const connectTcp: ConnectFunction<TcpEndpoint, TcpConnection> = async (endpoint, signal) => {
   const connection = new TcpConnection()
-  await connection.connect(endpoint)
+  await connection.connect(endpoint, signal)
   return connection
 }
 
-export const connectTls: ConnectFunction<TlsConnectOptions, TcpConnection> = async (opts) => {
+export const connectTls: ConnectFunction<TlsConnectOptions, TcpConnection> = async (opts, signal) => {
   const connection = new TcpConnection()
-  await connection.connectTls(opts)
+  await connection.connectTls(opts, signal)
   return connection
 }
 
