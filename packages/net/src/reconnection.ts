@@ -50,11 +50,12 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
     consequentFails: 0,
   }
 
-  #connect: (address: ConnectAddress) => Promise<Connection>
+  #connect: (address: ConnectAddress, abortSignal: AbortSignal) => Promise<Connection>
 
   #lastAddress?: ConnectAddress
   #connection?: Connection
   #connecting = false
+  #connectAbort?: AbortController
   #strategy: ReconnectionStrategy
   #onError
   // boolean represents whether the timer is clean
@@ -64,7 +65,8 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
   #closed?: Deferred<void>
 
   constructor(readonly params: {
-    connect: (address: ConnectAddress) => Promise<Connection>
+    /** Open a connection. The signal is aborted if the connection is closed before this resolves. */
+    connect: (address: ConnectAddress, abortSignal: AbortSignal) => Promise<Connection>
     strategy?: ReconnectionStrategy
 
     /**
@@ -124,14 +126,19 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
     while (true) {
       try {
         this.#connecting = true
+        const connectAbort = new AbortController()
+        this.#connectAbort = connectAbort
         // eslint-disable-next-line ts/no-non-null-assertion
-        this.#connection = await this.#connect(this.#lastAddress!)
+        const connection = await this.#connect(this.#lastAddress!, connectAbort.signal)
+        this.#connectAbort = undefined
         if (this.#closed) {
-          // .close() was called while we were connecting. do not proceed and exit the loop
+          // The connector may ignore cancellation and return after .close().
+          connection.close()
           this.#closed.resolve()
           break
         }
 
+        this.#connection = connection
         this.#resetState()
 
         await this.params.onOpen?.(this.#connection)
@@ -140,6 +147,7 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
         this.#connection = undefined
         break
       } catch (err) {
+        this.#connectAbort = undefined
         const oldConnection = this.#connection
 
         this.#connection = undefined
@@ -232,13 +240,15 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
       // there's a connection pending, we need to close it
       this.#connection.close()
     } else if (this.#connecting) {
-      // we are connecting. todo: we should cancel that probably
+      this.#connectAbort?.abort()
     }
 
     return this.#closed.promise
   }
 
-  async changeTransport(connect: (address: ConnectAddress) => Promise<Connection>): Promise<void> {
+  async changeTransport(
+    connect: (address: ConnectAddress, abortSignal: AbortSignal) => Promise<Connection>,
+  ): Promise<void> {
     this.#connect = connect
     const addr = this.#lastAddress
 
