@@ -806,6 +806,34 @@ describe('PersistentConnection', () => {
     ])
   })
 
+  it.each(['reconnect', 'close'] as const)('should close the connection when onOpen errors and onError returns %s', async (action) => {
+    const connection = new FakeConnection('127.0.0.1:1234')
+    const close = vi.spyOn(connection, 'close')
+    const errorHandled = new Deferred<void>()
+
+    const reconn = new PersistentConnection({
+      connect: async () => connection,
+      strategy: () => 1000,
+      onOpen: async () => {
+        // e.g. a protocol-level error, while the underlying connection is still open
+        throw new Error('lol')
+      },
+      onError: () => {
+        errorHandled.resolve()
+        return action
+      },
+    })
+
+    reconn.connect('127.0.0.1:1234')
+    await errorHandled.promise
+
+    expect(close).toHaveBeenCalledOnce()
+
+    const closePromise = reconn.close()
+    await vi.runAllTimersAsync()
+    await closePromise
+  })
+
   it('should be reusable with another address', async () => {
     const log: string[] = []
     let opened = new Deferred<void>()
