@@ -82,7 +82,8 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
 
     /**
      * Function that will be called whenever an error happens while connecting
-     * (in which case `connection` will be null) or inside `onOpen`.
+     * (in which case `connection` will be null) or inside `onOpen`
+     * (in which case `connection` will already be closed).
      *
      * @default  `(err) => err instanceof ConnectionClosedError ? 'reconnect' : 'close'`
      */
@@ -151,6 +152,11 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
         const oldConnection = this.#connection
 
         this.#connection = undefined
+        // onOpen may throw while the connection is still open (e.g. on a protocol-level error),
+        // and nothing else holds a reference to it past this point
+        try {
+          oldConnection?.close()
+        } catch {}
         await this.params.onClose?.()
 
         if (this.#closed) {
