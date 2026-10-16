@@ -124,7 +124,7 @@ export async function fumanBuild(params: {
     throw new Error('Could not find root package.json')
   }
 
-  const ourPackageJson = allPackageJsons.find(it => it.path.replace(/\/$/g, '') === packageRoot.replace(/\/$/g, ''))?.json
+  const ourPackageJson = allPackageJsons.find(it => it.path.replace(/[\\/]+$/g, '') === packageRoot.replace(/[\\/]+$/g, ''))?.json
   if (!ourPackageJson) {
     throw new Error(`Could not find package.json for ${packageRoot}`)
   }
