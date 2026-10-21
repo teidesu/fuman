@@ -1,37 +1,33 @@
-/* eslint-disable no-cond-assign */
-
 import { Deque } from '../structures/deque.js'
-
-type LockInfo = [Promise<void>, () => void]
 
 /**
  * Simple class implementing a semaphore like
  * behaviour.
  */
 export class AsyncLock {
-  private _queue = new Deque<LockInfo>()
+  private _locked = false
+  private _waiters = new Deque<() => void>()
 
   async acquire(): Promise<void> {
-    let info
-
-    while ((info = this._queue.peekFront())) {
-      await info[0]
+    if (!this._locked) {
+      this._locked = true
+      return
     }
 
-    let unlock: () => void
-    const prom = new Promise<void>((resolve) => {
-      unlock = resolve
+    return new Promise<void>((resolve) => {
+      this._waiters.pushBack(resolve)
     })
-
-    // eslint-disable-next-line ts/no-non-null-assertion
-    this._queue.pushBack([prom, unlock!])
   }
 
   release(): void {
-    if (!this._queue.length) throw new Error('Nothing to release')
+    if (!this._locked) throw new Error('Nothing to release')
 
-    // eslint-disable-next-line ts/no-non-null-assertion
-    this._queue.popFront()![1]()
+    const next = this._waiters.popFront()
+    if (next) {
+      next()
+    } else {
+      this._locked = false
+    }
   }
 
   with(func: () => Promise<void>): Promise<void> {
