@@ -23,26 +23,62 @@ describe('AsyncLock', () => {
     const lock = new AsyncLock()
     const log: string[] = []
 
-    await lock.acquire()
-    const a = lock.acquire().then(() => {
+    const first = await lock.acquire()
+    const a = lock.acquire().then((guard) => {
       log.push('a')
-      lock.release()
+      guard.release()
     })
     await Promise.resolve()
 
-    lock.release()
-    const b = lock.acquire().then(() => {
+    first.release()
+    const b = lock.acquire().then((guard) => {
       log.push('b')
-      lock.release()
+      guard.release()
     })
 
     await Promise.all([a, b])
     expect(log).toEqual(['a', 'b'])
   })
 
-  it('should throw when releasing an unlocked lock', () => {
+  it('should ignore repeated releases of the same guard', async () => {
     const lock = new AsyncLock()
-    expect(() => lock.release()).toThrow('Nothing to release')
+    const log: string[] = []
+
+    const first = await lock.acquire()
+    const second = lock.acquire().then((guard) => {
+      log.push('second acquired')
+      return guard
+    })
+    const third = lock.acquire().then((guard) => {
+      log.push('third acquired')
+      guard.release()
+    })
+
+    first.release()
+    first.release()
+    await sleep(0)
+    expect(log).toEqual(['second acquired'])
+
+    ;(await second).release()
+    await third
+    expect(log).toEqual(['second acquired', 'third acquired'])
+  })
+
+  it('should release the lock on dispose', async () => {
+    const lock = new AsyncLock()
+
+    {
+      using _guard = await lock.acquire()
+    }
+
+    const guard = await lock.acquire()
+    guard.release()
+  })
+
+  it('should return the value from with()', async () => {
+    const lock = new AsyncLock()
+
+    await expect(lock.with(async () => 42)).resolves.toBe(42)
   })
 
   it('should correctly propagate errors', async () => {
@@ -53,5 +89,15 @@ describe('AsyncLock', () => {
         throw new Error('test')
       })
     }).rejects.toThrow('test')
+  })
+
+  it('should propagate nullish errors and release the lock', async () => {
+    const lock = new AsyncLock()
+
+    // eslint-disable-next-line prefer-promise-reject-errors
+    await expect(lock.with(() => Promise.reject(undefined))).rejects.toBeUndefined()
+
+    const guard = await lock.acquire()
+    guard.release()
   })
 })

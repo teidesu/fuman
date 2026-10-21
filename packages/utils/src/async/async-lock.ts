@@ -1,49 +1,62 @@
 import { Deque } from '../structures/deque.js'
 
 /**
+ * Ownership token of an {@link AsyncLock}, returned by {@link AsyncLock.acquire}
+ */
+export class AsyncLockGuard implements Disposable {
+  private _released = false
+
+  constructor(private readonly _releaseLock: () => void) {}
+
+  /**
+   * Release the lock. Subsequent calls are no-op
+   */
+  release(): void {
+    if (this._released) return
+
+    this._released = true
+    this._releaseLock()
+  }
+
+  [Symbol.dispose](): void {
+    this.release()
+  }
+}
+
+/**
  * Simple class implementing a semaphore like
  * behaviour.
  */
 export class AsyncLock {
   private _locked = false
-  private _waiters = new Deque<() => void>()
+  private _waiters = new Deque<(guard: AsyncLockGuard) => void>()
 
-  async acquire(): Promise<void> {
-    if (!this._locked) {
-      this._locked = true
-      return
-    }
-
-    return new Promise<void>((resolve) => {
-      this._waiters.pushBack(resolve)
-    })
-  }
-
-  release(): void {
-    if (!this._locked) throw new Error('Nothing to release')
-
+  private _release = (): void => {
     const next = this._waiters.popFront()
     if (next) {
-      next()
+      next(new AsyncLockGuard(this._release))
     } else {
       this._locked = false
     }
   }
 
-  with(func: () => Promise<void>): Promise<void> {
-    return (async () => {
-      let err: unknown = null
+  async acquire(): Promise<AsyncLockGuard> {
+    if (!this._locked) {
+      this._locked = true
+      return new AsyncLockGuard(this._release)
+    }
 
-      await this.acquire()
-      try {
-        await func()
-      } catch (e) {
-        err = e
-      } finally {
-        this.release()
-      }
+    return new Promise((resolve) => {
+      this._waiters.pushBack(resolve)
+    })
+  }
 
-      if (err != null) throw err
-    })()
+  async with<T>(func: () => Promise<T>): Promise<T> {
+    const guard = await this.acquire()
+    try {
+      return await func()
+    } finally {
+      guard.release()
+    }
   }
 }
