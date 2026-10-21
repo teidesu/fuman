@@ -1,7 +1,7 @@
 {
   "name": "@fuman/net",
   "type": "module",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "experimental network abstractions",
   "license": "MIT",
   "sideEffects": false,
