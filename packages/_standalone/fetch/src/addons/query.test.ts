@@ -51,6 +51,20 @@ describe('ffetch/addons/query', () => {
     expect(await res.text()).toBe('OK')
   })
 
+  it('should skip objects, functions, and nullish array entries', async () => {
+    await ffetch('https://example.com', {
+      query: {
+        a: { nested: true },
+        b: () => {},
+        c: ['x', null, 'y'],
+        d: 'ok',
+      },
+    })
+    const req = fetch_.mock.calls[0][0] as Request
+    expect(req.url).toBe('https://example.com/?c=x&c=y&d=ok')
+  })
+
+
   it('should merge query params with the ones in the URL', async () => {
     const res = await ffetch('https://example.com?foo=bar', {
       query: {

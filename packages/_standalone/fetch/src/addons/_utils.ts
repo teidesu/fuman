@@ -8,9 +8,9 @@ export function urlencode(query: Record<string, unknown>): URLSearchParams {
 
     if (Array.isArray(value)) {
       for (let i = 0; i < value.length; i++) {
-        search.append(key, String(value[i]))
+        if (value[i] != null) search.append(key, String(value[i]))
       }
-    } else {
+    } else if (typeof value !== 'object' && typeof value !== 'function') {
       search.set(key, String(value))
     }
   }
