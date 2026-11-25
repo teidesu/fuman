@@ -50,7 +50,7 @@ export interface RateLimitAddon {
     /**
      * maximum number of retries
      *
-     * @default `3`
+     * @default `5`
      */
     maxRetries?: number
 
