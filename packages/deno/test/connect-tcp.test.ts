@@ -89,6 +89,31 @@ describe('connectTcp', () => {
     await expect(conn.read(new Uint8Array(10))).rejects.toThrow(ConnectionClosedError)
   })
 
+  it('read() should throw ConnectionClosedError when Deno.Conn.read returns null', async () => {
+    const conn = await connectTcp(ENDPOINT)
+    vi.mocked(conn.conn).read.mockResolvedValueOnce(null)
+
+    await expect(conn.read(new Uint8Array(10))).rejects.toThrow(ConnectionClosedError)
+  })
+
+  it('read() should not treat a 0-byte Deno read as EOF', async () => {
+    const conn = await connectTcp(ENDPOINT)
+    const socket = vi.mocked(conn.conn)
+
+    socket.read
+      .mockResolvedValueOnce(0)
+      .mockImplementationOnce(async (into: Uint8Array) => {
+        into.set(new Uint8Array([1, 2, 3, 4, 5, 6]))
+        return 6
+      })
+
+    const buf = new Uint8Array(10)
+    const nread = await conn.read(buf)
+
+    expect(nread).toEqual(6)
+    expect(buf).toEqual(new Uint8Array([1, 2, 3, 4, 5, 6, 0, 0, 0, 0]))
+  })
+
   it('read() should throw unknown errors', async () => {
     const conn = await connectTcp(ENDPOINT)
 

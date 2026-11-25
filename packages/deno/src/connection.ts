@@ -16,8 +16,8 @@ class BaseConnection<Conn extends Deno.Conn> implements IReadable, IWritable, IC
     if (this.#closed) throw new ConnectionClosedError()
     try {
       const read = await this.conn.read(into)
-      // 0 or null don't mean the connection has ended, so we need to retry
-      if (read === 0 || read === null) {
+      if (read === null) throw new ConnectionClosedError()
+      if (read === 0) {
         // eslint-disable-next-line ts/return-await
         return this.read(into)
       }
