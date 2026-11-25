@@ -1,5 +1,5 @@
 import type { WorkspacePackage } from '../../package-json/collect-package-jsons.js'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 
 import process from 'node:process'
 
@@ -157,6 +157,7 @@ export const runContinuousReleaseCli = bc.command({
   transform: (args) => {
     return {
       ...args,
+      workspaceRoot: args.root != null ? resolve(process.cwd(), args.root) : process.cwd(),
       extraArgs: args.extraArgs?.split(' '),
     }
   },
