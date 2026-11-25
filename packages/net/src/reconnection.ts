@@ -214,8 +214,11 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
   }
 
   connect(address: ConnectAddress): void {
-    if (this.#lastAddress !== undefined && this.#lastAddress !== address) {
-      throw new Error('Connection is already open to another address')
+    if (this.#lastAddress !== undefined) {
+      if (this.#lastAddress !== address) {
+        throw new Error('Connection is already open to another address')
+      }
+      return
     }
 
     this.#closed = undefined
