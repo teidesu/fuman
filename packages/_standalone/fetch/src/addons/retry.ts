@@ -22,9 +22,7 @@ export interface RetryOptions {
   retryDelay?: number | ((retryCount: number) => number)
 
   /**
-   * function that will be called before starting the retry loop.
-   * if it returns false, the retry loop will be skipped and
-   * the error will be thrown immediately
+   * if it returns true, the retry loop is skipped and the request is sent once
    *
    * @default () => false
    */

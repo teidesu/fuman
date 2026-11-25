@@ -158,4 +158,16 @@ describe('ffetch/addons/retry', () => {
 
     expect(urls.some(u => u.includes('/replaced'))).toBe(true)
   })
+
+  it('should send the request once when skip returns true', async () => {
+    fetch_.mockImplementation(async () => new Response(null, { status: 500 }))
+
+    await expect(
+      ffetch('https://example.com', {
+        retry: { skip: () => true, maxRetries: 3, retryDelay: 0 },
+      }),
+    ).rejects.toThrow(HttpError)
+
+    expect(fetch_).toHaveBeenCalledTimes(1)
+  })
 })
