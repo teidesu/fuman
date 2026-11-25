@@ -28,4 +28,18 @@ describe('ffetch/addons/form', () => {
     expect(req.headers.get('Content-Type')).toBe('application/x-www-form-urlencoded')
     expect(await req.text()).toBe('hello=world&array=1&array=2&array=3')
   })
+
+  it('should skip objects, functions, and nullish array entries', async () => {
+    await ffetch('https://example.com', {
+      form: {
+        a: { nested: true },
+        b: () => {},
+        tags: ['x', null, 'y'],
+        d: 'ok',
+      },
+    })
+
+    const req = fetch_.mock.calls[0][0] as Request
+    expect(await req.text()).toBe('tags=x&tags=y&d=ok')
+  })
 })

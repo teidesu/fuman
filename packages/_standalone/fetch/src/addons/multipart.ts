@@ -23,18 +23,30 @@ export interface MultipartAddonOptions {
   serialize?: (data: Record<string, unknown>) => FormData
 }
 
+function appendValue(formData: FormData, key: string, value: unknown): void {
+  if (value == null) return
+  if (value instanceof File) {
+    formData.append(key, value, value.name)
+    return
+  }
+  if (value instanceof Blob) {
+    formData.append(key, value)
+    return
+  }
+  if (typeof value === 'object' || typeof value === 'function') return
+  formData.append(key, String(value))
+}
+
 function defaultSerialize(data: Record<string, unknown>) {
   const formData = new FormData()
 
   for (const [key, value] of Object.entries(data)) {
     if (Array.isArray(value)) {
       for (let i = 0; i < value.length; i++) {
-        formData.append(key, String(value[i]))
+        appendValue(formData, key, value[i])
       }
-    } else if (value instanceof File) {
-      formData.append(key, value, value.name)
     } else {
-      formData.append(key, String(value))
+      appendValue(formData, key, value)
     }
   }
 

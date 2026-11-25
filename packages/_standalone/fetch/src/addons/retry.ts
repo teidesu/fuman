@@ -22,9 +22,7 @@ export interface RetryOptions {
   retryDelay?: number | ((retryCount: number) => number)
 
   /**
-   * function that will be called before starting the retry loop.
-   * if it returns false, the retry loop will be skipped and
-   * the error will be thrown immediately
+   * if it returns true, the retry loop is skipped and the request is sent once
    *
    * @default () => false
    */
@@ -93,16 +91,19 @@ function retryMiddleware(options: RetryOptions): FfetchMiddleware {
     let lastResponse: Response | undefined
 
     while (true) {
-      onRetry?.(retries, request)
+      let attempt = request.clone()
+      const maybeReplaced = onRetry?.(retries, attempt)
+      if (maybeReplaced) attempt = maybeReplaced
 
       try {
-        const res = await next(request)
+        const res = await next(attempt)
+        lastResponse = res
 
-        if (onResponse(res, request)) {
+        if (onResponse(res, attempt)) {
           return res
         }
       } catch (err) {
-        if (onError && !onError(err, request)) {
+        if (onError && !onError(err, attempt)) {
           throw err
         }
       }

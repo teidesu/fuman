@@ -50,7 +50,7 @@ export interface RateLimitAddon {
     /**
      * maximum number of retries
      *
-     * @default `3`
+     * @default `5`
      */
     maxRetries?: number
 
@@ -99,7 +99,7 @@ function rateLimitMiddleware(options: NonNullable<RateLimitAddon['rateLimit']>):
       if (attempts > maxRetries) throw new Error('Rate limit exceeded, maximum retries exceeded')
       attempts += 1
 
-      const res = await next(req)
+      const res = await next(req.clone())
 
       const rejected = await isRejected(res)
       if (!rejected) return res

@@ -109,4 +109,65 @@ describe('ffetch/addons/retry', () => {
 
     setTimeout_.mockRestore()
   })
+
+  it('should retry a POST body by cloning the request', async () => {
+    const bodies: string[] = []
+    fetch_.mockImplementation(async (req) => {
+      bodies.push(await req.text())
+      return bodies.length < 2 ? new Response(null, { status: 500 }) : new Response('OK')
+    })
+
+    const res = await ffetch('https://example.com', {
+      method: 'POST',
+      body: 'payload',
+      retry: { maxRetries: 2, retryDelay: 0 },
+    })
+
+    expect(bodies).toEqual(['payload', 'payload'])
+    expect(res.status).toBe(200)
+  })
+
+  it('should return the last response when returnLastResponse is true', async () => {
+    fetch_.mockImplementation(async () => new Response('still failing', { status: 503 }))
+
+    const res = await ffetch('https://example.com', {
+      validateResponse: false,
+      retry: { maxRetries: 1, retryDelay: 0, returnLastResponse: true },
+    })
+
+    expect(res.status).toBe(503)
+    expect(await res.text()).toBe('still failing')
+  })
+
+  it('should use a Request returned from onRetry', async () => {
+    const urls: string[] = []
+    fetch_.mockImplementation(async (req) => {
+      urls.push(req.url)
+      return new Response(null, { status: 500 })
+    })
+
+    await expect(
+      ffetch('https://example.com/orig', {
+        retry: {
+          maxRetries: 1,
+          retryDelay: 0,
+          onRetry: () => new Request('https://example.com/replaced'),
+        },
+      }),
+    ).rejects.toThrow(RetriesExceededError)
+
+    expect(urls.some(u => u.includes('/replaced'))).toBe(true)
+  })
+
+  it('should send the request once when skip returns true', async () => {
+    fetch_.mockImplementation(async () => new Response(null, { status: 500 }))
+
+    await expect(
+      ffetch('https://example.com', {
+        retry: { skip: () => true, maxRetries: 3, retryDelay: 0 },
+      }),
+    ).rejects.toThrow(HttpError)
+
+    expect(fetch_).toHaveBeenCalledTimes(1)
+  })
 })

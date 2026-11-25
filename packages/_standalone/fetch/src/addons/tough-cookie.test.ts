@@ -30,6 +30,23 @@ describe('toughCookieAddon', () => {
     expect(req.headers.get('Cookie')).toBe('hello=world; foo=bar')
   })
 
+  it('should not append an empty Cookie header', async () => {
+    const fetch_ = vi.fn<FetchLike>()
+      .mockImplementation(async () => new Response('OK'))
+
+    const jar = new CookieJar()
+    const ffetch = createFfetch({
+      fetch: fetch_,
+      addons: [toughCookieAddon()],
+      cookies: jar,
+    })
+
+    await ffetch('https://example.com')
+
+    const req = fetch_.mock.calls[0][0] as Request
+    expect(req.headers.has('Cookie')).toBe(false)
+  })
+
   it('should store cookies to the jar', async () => {
     const fetch_ = vi.fn<FetchLike>()
       .mockImplementation(async () => {

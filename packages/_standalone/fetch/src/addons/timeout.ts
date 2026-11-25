@@ -23,20 +23,23 @@ export interface TimeoutAddon {
 function timeoutMiddleware(timeout: number): FfetchMiddleware {
   return async (request, next) => {
     const controller = new AbortController()
+    const outer = request.signal
+    let onAbort: (() => void) | undefined
 
     const timer = timers.setTimeout(() => {
       controller.abort(new TimeoutError(timeout))
     }, timeout)
 
-    if (request.signal != null) {
-      const signal = request.signal
-      if (signal.aborted) {
-        throw signal.reason
-      }
-      signal.addEventListener('abort', () => {
-        controller.abort(signal.reason)
+    if (outer != null) {
+      if (outer.aborted) {
         timers.clearTimeout(timer)
-      })
+        throw outer.reason
+      }
+      onAbort = () => {
+        controller.abort(outer.reason)
+        timers.clearTimeout(timer)
+      }
+      outer.addEventListener('abort', onAbort, { once: true })
     }
 
     request = new Request(request, {
@@ -47,6 +50,9 @@ function timeoutMiddleware(timeout: number): FfetchMiddleware {
       return await next(request)
     } finally {
       timers.clearTimeout(timer)
+      if (outer != null && onAbort != null) {
+        outer.removeEventListener('abort', onAbort)
+      }
     }
   }
 }

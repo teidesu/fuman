@@ -35,7 +35,7 @@ describe('zod', () => {
       y.object({ a: y.number().required() }),
     )
 
-    await expect(promise).rejects.toThrowErrorMatchingInlineSnapshot('[Error: Schema validation failed: a is a required field at .a]')
+    await expect(promise).rejects.toThrowErrorMatchingInlineSnapshot('[SchemaValidationError: Schema validation failed: a is a required field at .a]')
   })
 
   it('should work with ffetch safelyParsedJson (pass)', async () => {

@@ -37,6 +37,33 @@ describe('rateLimitHandler', () => {
     expect(res).toBe('OK')
   })
 
+  it('should retry a POST body by cloning the request', async () => {
+    const bodies: string[] = []
+    let times = 0
+    const fetch_ = vi.fn<FetchLike>(async (req) => {
+      bodies.push(await req.text())
+      if (times++ === 0) {
+        return new Response(null, {
+          status: 429,
+          headers: { 'X-RateLimit-Reset': '0' },
+        })
+      }
+      return new Response('OK')
+    })
+
+    const ffetch = createFfetch({
+      fetch: fetch_,
+      addons: [rateLimitHandler()],
+      rateLimit: {
+        defaultWaitTime: 0,
+        jitter: 0,
+      },
+    })
+
+    expect(await ffetch('https://example.com', { method: 'POST', body: 'payload' }).text()).toBe('OK')
+    expect(bodies).toEqual(['payload', 'payload'])
+  })
+
   it('should use isRejected', async () => {
     let times = 0
     const fetch_ = vi.fn<FetchLike>()
