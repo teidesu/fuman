@@ -87,4 +87,22 @@ describe('ffetch/addons/timeout', () => {
     expect(clear).toHaveBeenCalled()
     clear.mockRestore()
   })
+
+  it('should remove the abort listener after the request completes', async () => {
+    const controller = new AbortController()
+    const client = createFfetch({
+      fetch: async () => new Response('OK'),
+      addons: [timeout()],
+    })
+
+    await client('https://example.com', {
+      timeout: 5_000,
+      extra: { signal: controller.signal },
+    })
+
+    const clear = vi.spyOn(globalThis, 'clearTimeout')
+    controller.abort()
+    expect(clear).not.toHaveBeenCalled()
+    clear.mockRestore()
+  })
 })
