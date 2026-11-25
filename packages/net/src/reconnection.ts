@@ -165,6 +165,9 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
           break
         }
 
+        this.#state.lastError = err as Error
+        this.#state.consequentFails += 1
+
         const action = await this.#onError(err as Error, oldConnection ?? null, this.#state)
 
         if (action === 'close') {
@@ -200,7 +203,6 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
         }
 
         this.#state.previousWait = wait
-        this.#state.consequentFails = 1
 
         continue
       }

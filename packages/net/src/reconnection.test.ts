@@ -899,4 +899,37 @@ describe('PersistentConnection', () => {
       'onClose',
     ])
   })
+
+  it('should record lastError and increment consequentFails across reconnects', async () => {
+    let n = 0
+    const samples: Array<{ fails: number, lastError: string | null }> = []
+    const reconn = new PersistentConnection({
+      connect: async () => {
+        n++
+        throw new Error(`fail-${n}`)
+      },
+      onOpen: echoClient,
+      strategy: () => 5,
+      onError: () => 'reconnect',
+      onWait: () => {
+        samples.push({
+          fails: reconn.state.consequentFails,
+          lastError: reconn.state.lastError?.message ?? null,
+        })
+      },
+    })
+
+    reconn.connect('a')
+    await vi.advanceTimersByTimeAsync(0)
+    await vi.advanceTimersByTimeAsync(5)
+    await vi.advanceTimersByTimeAsync(5)
+
+    expect(samples.length).toBeGreaterThanOrEqual(2)
+    expect(samples[0]).toEqual({ fails: 1, lastError: 'fail-1' })
+    expect(samples[1]).toEqual({ fails: 2, lastError: 'fail-2' })
+    expect(reconn.state.lastError).toBeInstanceOf(Error)
+    expect(reconn.state.consequentFails).toBeGreaterThan(1)
+
+    await reconn.close()
+  })
 })
