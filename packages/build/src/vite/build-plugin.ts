@@ -164,7 +164,7 @@ export async function fumanBuild(params: {
   packageConfig?.preparePackageJson?.(hookContext)
 
   const { packageJson, entrypoints, entrypointsToCopy } = processPackageJson({
-    packageJson: ourPackageJson,
+    packageJson: hookContext.packageJson,
     rootPackageJson,
     workspaceVersions,
     bundledWorkspaceDeps: (bundledWorkspaceDeps === undefined || Array.isArray(bundledWorkspaceDeps) ? bundledWorkspaceDeps : [bundledWorkspaceDeps])
@@ -173,6 +173,10 @@ export async function fumanBuild(params: {
     fixedVersion,
     shouldCopyEntrypoint: packageConfig?.shouldCopyEntrypoint,
   })
+
+  if (fixedVersion != null) {
+    packageJson.version = fixedVersion
+  }
 
   hookContext.packageJson = packageJson
 
