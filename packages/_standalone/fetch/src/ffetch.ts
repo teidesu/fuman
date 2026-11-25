@@ -103,6 +103,7 @@ export interface FfetchResult extends Promise<Response> {
   json: <T = unknown>() => Promise<T>
   text: () => Promise<string>
   arrayBuffer: () => Promise<ArrayBuffer>
+  bytes: () => Promise<Uint8Array>
   blob: () => Promise<Blob>
 }
 

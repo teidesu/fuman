@@ -246,6 +246,17 @@ describe('ffetch', () => {
     expect(res).toEqual(new Uint8Array([104, 101, 108, 108, 111]).buffer)
   })
 
+  it('.bytes() should return Uint8Array', async () => {
+    fetch_.mockImplementationOnce(() => Promise.resolve(new Response('hello')))
+    const res = await ffetch('https://example.com').bytes()
+
+    const req = fetch_.mock.calls[0][0] as Request
+    expect(req.url).toBe('https://example.com/')
+    expect(req.headers.get('Accept')).toBe('application/octet-stream')
+
+    expect(res).toEqual(new Uint8Array([104, 101, 108, 108, 111]))
+  })
+
   it('.blob() should return Blob', async () => {
     fetch_.mockImplementationOnce(() => Promise.resolve(new Response('hello')))
     const res = await ffetch('https://example.com').blob()
