@@ -31,6 +31,19 @@ describe('DelimiterCodec', () => {
     expect(await reader.read()).toBeNull()
   })
 
+  it('should copy a 1-byte EOF frame so later reads cannot mutate it', () => {
+    const codec = new DelimiterCodec(new Uint8Array([0xFF]))
+    const buf = Bytes.from(new Uint8Array([0x42]))
+    const frame = codec.decode(buf, true)
+
+    expect(frame).toEqual(new Uint8Array([0x42]))
+
+    buf.writeSync(1)[0] = 0x99
+    buf.readSync(1)
+
+    expect(frame).toEqual(new Uint8Array([0x42]))
+  })
+
   it('should ignore empty trailing frame', async () => {
     const codec = new DelimiterCodec(new Uint8Array([10]), { strategy: 'keep' })
     const buf = new Uint8Array([1, 2, 3, 10, 4, 5, 6, 10])
