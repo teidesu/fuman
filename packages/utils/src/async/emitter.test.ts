@@ -194,6 +194,27 @@ describe('Emitter', () => {
     expect(log).toEqual([])
   })
 
+  it('should snapshot listeners before emit', () => {
+    const emitter = new Emitter<number>()
+    const seen: string[] = []
+    const b = () => {
+      seen.push('b')
+    }
+    const a = () => {
+      emitter.remove(b)
+      seen.push('a')
+    }
+    const c = () => {
+      seen.push('c')
+    }
+    emitter.add(a)
+    emitter.add(b)
+    emitter.add(c)
+
+    expect(() => emitter.emit(1)).not.toThrow()
+    expect(seen).toEqual(['a', 'b', 'c'])
+  })
+
   it('should return the number of listeners', () => {
     const emitter = new Emitter<number>()
 

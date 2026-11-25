@@ -4,19 +4,20 @@ export class Emitter<T> {
 
   #emitFew = (value: T) => {
     // avoid the overhead of looping for few listeners (up to 5)
-    const len = this.#listeners.length
-    this.#listeners[0](value)
+    const listeners = this.#listeners.slice()
+    const len = listeners.length
+    listeners[0](value)
 
-    len > 1 && this.#listeners[1](value)
-    len > 2 && this.#listeners[2](value)
-    len > 3 && this.#listeners[3](value)
-    len > 4 && this.#listeners[4](value)
+    len > 1 && listeners[1](value)
+    len > 2 && listeners[2](value)
+    len > 3 && listeners[3](value)
+    len > 4 && listeners[4](value)
   }
 
   #emitAll = (value: T) => {
-    const len = this.#listeners.length
-    for (let i = 0; i < len; i++) {
-      this.#listeners[i](value)
+    const listeners = this.#listeners.slice()
+    for (let i = 0; i < listeners.length; i++) {
+      listeners[i](value)
     }
   }
 
