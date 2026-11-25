@@ -58,7 +58,7 @@ export function nodeReadableToFuman(stream: Readable): IReadable & IClosable {
 
       if (into.length < buf.length) {
         const toReadBuffer = buf.length - into.length
-        readBuffer.writeSync(toReadBuffer).set(buf.subarray(toReadBuffer))
+        readBuffer.writeSync(toReadBuffer).set(buf.subarray(into.length))
         buf = buf.subarray(0, into.length)
       }
 

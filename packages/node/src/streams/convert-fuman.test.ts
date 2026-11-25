@@ -24,6 +24,23 @@ describe('nodeReadableToFuman', () => {
     expect(nread).to.equal(6)
     expect(buf).to.deep.equal(new Uint8Array([1, 2, 3, 4, 5, 6, 0, 0, 0, 0]))
   })
+
+  it('should keep the unread tail when a chunk is larger than the destination', async () => {
+    const stream = Readable.from((async function* () {
+      yield Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    })())
+    const converted = nodeReadableToFuman(stream)
+
+    const a1 = new Uint8Array(3)
+    const n1 = await converted.read(a1)
+    const a2 = new Uint8Array(3)
+    const n2 = await converted.read(a2)
+
+    expect(n1).toEqual(3)
+    expect(a1).toEqual(new Uint8Array([1, 2, 3]))
+    expect(n2).toEqual(3)
+    expect(a2).toEqual(new Uint8Array([4, 5, 6]))
+  })
 })
 
 describe('nodeWritableToFuman', () => {
