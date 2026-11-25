@@ -161,24 +161,33 @@ export class BitReader implements ISyncReadable {
 
   /** skip a number of bits from the stream */
   skipBits(size: number): void {
-    if (size % 8 === 0) {
-      // we can just skip the bytes
-      const buf = exactly(this.#readable, size / 8)
-      this.#currentByte = buf[buf.length - 1]
-
+    if (size <= 0) {
       return
     }
 
-    let bytesToRead = Math.ceil(size / 8)
     if (this.#currentBitIdx !== 0) {
-      bytesToRead -= 1 // we already have one byte
+      const bitsLeft = 8 - this.#currentBitIdx
+      if (size < bitsLeft) {
+        this.#currentBitIdx += size
+        return
+      }
+
+      size -= bitsLeft
+      this.#currentBitIdx = 0
+      if (size === 0) {
+        return
+      }
     }
 
-    if (bytesToRead > 0) {
-      const buf = exactly(this.#readable, bytesToRead)
-      this.#currentByte = buf[bytesToRead - 1]
+    const fullBytes = Math.floor(size / 8)
+    if (fullBytes > 0) {
+      exactly(this.#readable, fullBytes)
+      size -= fullBytes * 8
     }
 
-    this.#currentBitIdx = (this.#currentBitIdx + size) % 8
+    if (size > 0) {
+      this.#currentByte = exactly(this.#readable, 1)[0]
+      this.#currentBitIdx = size
+    }
   }
 }
