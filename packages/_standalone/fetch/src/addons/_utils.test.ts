@@ -1,6 +1,7 @@
+import type { FfetchOptions } from '../ffetch.js'
 import { describe, expect, it } from 'vitest'
 
-import { urlencode } from './_utils.js'
+import { setHeader, urlencode } from './_utils.js'
 
 describe('urlencode', () => {
   it('should skip null, undefined, objects and functions', () => {
@@ -27,5 +28,15 @@ describe('urlencode', () => {
       ['tags', 'b'],
       ['tags', '123'],
     ])
+  })
+})
+
+describe('setHeader', () => {
+  it('should delete every matching key from an array of tuples', () => {
+    const options: FfetchOptions = {
+      headers: [['X-A', '1'], ['X-A', '2'], ['X-B', '3']],
+    }
+    setHeader(options, 'X-A', null)
+    expect(options.headers).toEqual([['X-B', '3']])
   })
 })

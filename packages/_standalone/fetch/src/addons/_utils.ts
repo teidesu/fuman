@@ -28,14 +28,7 @@ export function setHeader(options: FfetchOptions, key: string, value: string | n
   let { headers } = options
   if (Array.isArray(headers)) {
     if (value === null) {
-      // remove the header
-      for (let i = 0; i < headers.length; i++) {
-        if (headers[i][0] === key) {
-          headers.splice(i, 1)
-          i -= 1
-          break
-        }
-      }
+      options.headers = headers.filter(([k]) => k !== key)
       return
     }
 
