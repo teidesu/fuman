@@ -71,4 +71,20 @@ describe('ffetch/addons/timeout', () => {
 
     await expect(promise).rejects.toThrow(err)
   })
+
+  it('should clear the timer when the signal is already aborted', async () => {
+    const controller = new AbortController()
+    controller.abort(new Error('done'))
+    const clear = vi.spyOn(globalThis, 'clearTimeout')
+
+    await expect(
+      ffetch('https://example.com', {
+        timeout: 10_000,
+        extra: { signal: controller.signal },
+      }),
+    ).rejects.toThrow('done')
+
+    expect(clear).toHaveBeenCalled()
+    clear.mockRestore()
+  })
 })

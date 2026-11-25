@@ -31,6 +31,7 @@ function timeoutMiddleware(timeout: number): FfetchMiddleware {
     if (request.signal != null) {
       const signal = request.signal
       if (signal.aborted) {
+        timers.clearTimeout(timer)
         throw signal.reason
       }
       signal.addEventListener('abort', () => {
