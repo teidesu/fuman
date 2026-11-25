@@ -219,12 +219,9 @@ export function int64be(readable: ISyncReadable | Uint8Array): bigint {
 /** read a variable-size uint (little endian) from the source (fuman readable stream or a buffer) */
 export function uintle(readable: ISyncReadable | Uint8Array, size: number): bigint {
   const buffer = _maybeRead(readable, size)
-  let val = BigInt(buffer[0])
-  let mul = 1
-  let i = 0
-  // eslint-disable-next-line no-cond-assign
-  while (++i < size && (mul *= 0x100)) {
-    val |= BigInt(buffer[i] * mul)
+  let val = 0n
+  for (let i = 0; i < size; i++) {
+    val |= BigInt(buffer[i]) << BigInt(i * 8)
   }
 
   return val
@@ -233,12 +230,9 @@ export function uintle(readable: ISyncReadable | Uint8Array, size: number): bigi
 /** read a variable-size uint (big endian) from the source (fuman readable stream or a buffer) */
 export function uintbe(readable: ISyncReadable | Uint8Array, size: number): bigint {
   const buffer = _maybeRead(readable, size)
-
-  let val = BigInt(buffer[--size])
-  let mul = 1
-  // eslint-disable-next-line no-cond-assign
-  while (size > 0 && (mul *= 0x100)) {
-    val |= BigInt(buffer[--size] * mul)
+  let val = 0n
+  for (let i = 0; i < size; i++) {
+    val = (val << 8n) | BigInt(buffer[i])
   }
 
   return val
@@ -246,36 +240,30 @@ export function uintbe(readable: ISyncReadable | Uint8Array, size: number): bigi
 
 /** read a variable-size int (big endian) from the source (fuman readable stream or a buffer) */
 export function intbe(readable: ISyncReadable | Uint8Array, size: number): bigint {
-  const buffer = _maybeRead(readable, size)
-
-  let i = size - 1
-  let mul = 1
-  let val = BigInt(buffer[i])
-  // eslint-disable-next-line no-cond-assign
-  while (i > 0 && (mul *= 0x100)) {
-    val |= BigInt(buffer[--i] * mul)
+  let val = uintbe(readable, size)
+  if (size === 0) {
+    return val
   }
-  mul *= 0x80
 
-  if (val >= mul) val -= 2n ** BigInt(8 * size)
+  const signBit = 1n << BigInt(8 * size - 1)
+  if (val & signBit) {
+    val -= signBit * 2n
+  }
 
   return val
 }
 
 /** read a variable-size int (little endian) from the source (fuman readable stream or a buffer) */
 export function intle(readable: ISyncReadable | Uint8Array, size: number): bigint {
-  const buffer = _maybeRead(readable, size)
-
-  let val = BigInt(buffer[0])
-  let mul = 1
-  let i = 0
-  // eslint-disable-next-line no-cond-assign
-  while (++i < size && (mul *= 0x100)) {
-    val |= BigInt(buffer[i] * mul)
+  let val = uintle(readable, size)
+  if (size === 0) {
+    return val
   }
-  mul *= 0x80
 
-  if (val >= mul) val -= 2n ** BigInt(8 * size)
+  const signBit = 1n << BigInt(8 * size - 1)
+  if (val & signBit) {
+    val -= signBit * 2n
+  }
 
   return val
 }
