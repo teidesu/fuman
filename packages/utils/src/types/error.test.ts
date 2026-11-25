@@ -17,4 +17,20 @@ describe('unknownToError', () => {
     expect(unknownToError({ message: 'test' })).toBeInstanceOf(Error)
     expect(unknownToError({ message: 'test' })).toHaveProperty('message', '{"message":"test"}')
   })
+
+  it('should keep a circular object as cause', () => {
+    const circular: { self: unknown } = { self: null }
+    circular.self = circular
+    const err = unknownToError(circular)
+
+    expect(err).toBeInstanceOf(Error)
+    expect(err.cause).toBe(circular)
+  })
+
+  it('should keep a bigint as cause', () => {
+    const err = unknownToError(1n)
+
+    expect(err).toBeInstanceOf(Error)
+    expect(err.cause).toBe(1n)
+  })
 })

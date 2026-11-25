@@ -23,6 +23,7 @@ export function composeMiddlewares<Context, Result = void>(
     return function (context: Context, next: Middleware<Context, Result>): Promise<Result> {
       // open-ended middleware. a bit less performant, but more flexible for some use cases
       function dispatch(i: number, ctx: Context): Promise<Result> {
+        if (i > middlewares.length) throw new Error('next() called after end')
         const fn = middlewares[i] ?? next
 
         return fn(ctx, dispatch.bind(null, i + 1))

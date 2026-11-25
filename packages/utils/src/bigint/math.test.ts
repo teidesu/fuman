@@ -9,6 +9,8 @@ describe('bitLength', () => {
     expect(bitLength(2n)).eq(2)
     expect(bitLength(255n)).eq(8)
     expect(bitLength(256n)).eq(9)
+    expect(bitLength(-1n)).eq(1)
+    expect(bitLength(-128n)).eq(8)
   })
 })
 
@@ -26,6 +28,11 @@ describe('euclideanGcd', () => {
   it('should correctly handle equal values', () => {
     expect(euclideanGcd(1n, 1n)).toEqual(1n)
   })
+
+  it('should return a non-negative remainder', () => {
+    expect(euclideanGcd(-48n, 18n)).toEqual(6n)
+    expect(euclideanGcd(-42n, 0n)).toEqual(42n)
+  })
 })
 
 describe('modPowBinary', () => {
@@ -39,6 +46,18 @@ describe('modPowBinary', () => {
   it('should correctly handle very large numbers', () => {
     // calculating this directly would either take forever or error with "Maximum BigInt size exceeded
     expect(modPowBinary(2n, 100000000000n, 100n)).toEqual(76n)
+  })
+
+  it('should reduce a negative base into the modulus', () => {
+    expect(modPowBinary(-3n, 3n, 7n)).toEqual(1n)
+  })
+
+  it('should return 0 when the modulus is 1', () => {
+    expect(modPowBinary(5n, 0n, 1n)).toEqual(0n)
+  })
+
+  it('should reject a negative exponent', () => {
+    expect(() => modPowBinary(2n, -1n, 7n)).toThrow(RangeError)
   })
 })
 

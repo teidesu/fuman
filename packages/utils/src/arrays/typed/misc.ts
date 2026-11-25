@@ -14,8 +14,13 @@ export function view<Res extends TypedArray>(
   },
   buf: ArrayBufferView,
 ): Res {
+  let byteLength = buf.byteLength
+  let bytesPerElement = ctor.BYTES_PER_ELEMENT
+  if (byteLength % bytesPerElement !== 0) {
+    throw new RangeError(`byteLength (${byteLength}) is not a multiple of ${bytesPerElement} for ${ctor.name}`)
+  }
   // eslint-disable-next-line new-cap
-  return new ctor(buf.buffer, buf.byteOffset, buf.byteLength / ctor.BYTES_PER_ELEMENT)
+  return new ctor(buf.buffer, buf.byteOffset, byteLength / bytesPerElement)
 }
 
 let _cachedByteOrder: boolean | null = null

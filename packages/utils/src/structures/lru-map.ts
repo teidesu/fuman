@@ -71,15 +71,16 @@ export class LruMap<K, V> {
 
   #remove(item: TwoWayLinkedList<K, V>): void {
     if (item.p) {
-      this.#last = item.p
-      this.#last.n = undefined
+      item.p.n = item.n
     } else {
-      // exhausted
-      this.#last = undefined
-      this.#first = undefined
+      this.#first = item.n
+    }
+    if (item.n) {
+      item.n.p = item.p
+    } else {
+      this.#last = item.p
     }
 
-    // remove strong refs to and from the item
     item.p = item.n = undefined
     this.#map.delete(item.k)
     this.#size -= 1

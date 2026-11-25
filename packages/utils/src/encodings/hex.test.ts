@@ -20,6 +20,13 @@ describe('hex', () => {
     it('should decode from hex', () => {
       expect(decode('010203')).toEqual(new Uint8Array([1, 2, 3]))
     })
+
+    it('should throw on invalid hex even when Buffer is present', () => {
+      vi.unstubAllGlobals()
+      expect(() => decode('zz')).toThrow()
+      expect(() => decode('abc')).toThrow()
+      vi.stubGlobal('Buffer', undefined)
+    })
   })
 
   it('should handle huge buffers', () => {

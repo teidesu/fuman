@@ -44,6 +44,12 @@ describe('base64', () => {
     it('should handle url-safe alphabet', () => {
       expect(decode('AQIDBAUGBwgJCgsMDQ4PEBESExT_', true)).toEqual(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 255]))
     })
+
+    it('should throw on invalid alphabet even when Buffer is present', () => {
+      vi.unstubAllGlobals()
+      expect(() => decode('!!!!')).toThrow()
+      vi.stubGlobal('Buffer', undefined)
+    })
   })
 
   describe('encodedLength', () => {

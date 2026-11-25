@@ -159,6 +159,37 @@ describe('asyncPool', () => {
       'end pool with error: Error: AggregateError: 2 errors',
     ])
   })
+
+  it('should await a Promise from onError', async () => {
+    const order: string[] = []
+    const pool = asyncPool(
+      [1],
+      async () => {
+        throw new Error('boom')
+      },
+      {
+        onError: async (): Promise<'ignore'> => {
+          await sleep(30)
+          order.push('strategy')
+          return 'ignore'
+        },
+      },
+    )
+
+    const finished = await Promise.race([
+      pool.then(() => {
+        order.push('pool')
+        return 'pool' as const
+      }),
+      new Promise<'timeout'>((resolve) => {
+        setTimeout(() => resolve('timeout'), 10)
+      }),
+    ])
+    await pool
+
+    expect(finished).toBe('timeout')
+    expect(order[0]).toBe('strategy')
+  })
 })
 
 describe('parallelMap', () => {

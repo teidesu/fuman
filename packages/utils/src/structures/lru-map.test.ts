@@ -51,6 +51,22 @@ describe('LruMap', () => {
     expect(lru.has('third')).toBeTruthy()
   })
 
+  it('should keep recency when deleting the most recently used key', () => {
+    const lru = new LruMap<string, number>(3)
+
+    lru.set('a', 1)
+    lru.set('b', 2)
+    lru.set('c', 3)
+    lru.delete('c')
+    lru.set('d', 4)
+    lru.set('e', 5)
+
+    expect(lru.has('a')).toBe(false)
+    expect(lru.has('b')).toBe(true)
+    expect(lru.has('d')).toBe(true)
+    expect(lru.has('e')).toBe(true)
+  })
+
   it('should handle deleting all items', () => {
     const lru = new LruMap<string, number>(2)
 

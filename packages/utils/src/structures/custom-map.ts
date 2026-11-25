@@ -42,22 +42,21 @@ export class CustomMap<ExternalKey, InternalKey, V> implements Map<ExternalKey, 
 
   getOrInsert(key: ExternalKey, defaultValue: V): V {
     const internalKey = this.#mapperTo(key)
-    let value = this.#map.get(internalKey)
-    if (value == null) {
-      value = defaultValue
-      this.#map.set(internalKey, value)
+    if (!this.#map.has(internalKey)) {
+      this.#map.set(internalKey, defaultValue)
+      return defaultValue
     }
-    return value
+    return this.#map.get(internalKey) as V
   }
 
   getOrInsertComputed(key: ExternalKey, callback: (key: ExternalKey) => V): V {
     const internalKey = this.#mapperTo(key)
-    let value = this.#map.get(internalKey)
-    if (value == null) {
-      value = callback(key)
+    if (!this.#map.has(internalKey)) {
+      const value = callback(key)
       this.#map.set(internalKey, value)
+      return value
     }
-    return value
+    return this.#map.get(internalKey) as V
   }
 
   has(key: ExternalKey): boolean {

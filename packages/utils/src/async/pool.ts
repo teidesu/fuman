@@ -79,7 +79,7 @@ export async function asyncPool<Item>(
       try {
         await executor(item, thisIdx)
       } catch (err) {
-        const action = onError?.(item, thisIdx, err) ?? 'throw'
+        const action = await (onError?.(item, thisIdx, err) ?? 'throw')
         if (action === 'ignore') {
           continue
         }

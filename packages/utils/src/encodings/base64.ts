@@ -21,15 +21,11 @@ const encodeLookup = Object.fromEntries(
 declare const Buffer: typeof import('node:buffer').Buffer
 
 // https://github.com/tc39/proposal-arraybuffer-base64
-const HAS_FROM_BASE64 = typeof Uint8Array.fromBase64 === 'function'
 const HAS_TO_BASE64 = typeof Uint8Array.prototype.toBase64 === 'function'
 
 export function decode(base64: string, url: boolean = false): Uint8Array {
-  if (typeof Buffer !== 'undefined') {
-    const buf = Buffer.from(base64, url ? 'base64url' : 'base64')
-    return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength)
-  }
-  if (HAS_FROM_BASE64) {
+  // Buffer.from(str, "base64"|"base64url") is silent on invalid alphabet
+  if (typeof Uint8Array.fromBase64 === 'function') {
     // eslint-disable-next-line ts/no-unsafe-return
     return Uint8Array.fromBase64(base64, { alphabet: url ? 'base64url' : 'base64' })
   }
@@ -44,11 +40,14 @@ export function decode(base64: string, url: boolean = false): Uint8Array {
   encoder.encodeInto(`${base64}===`, encoded)
 
   for (let i = 0, j = 0; i < n; i += 4, j += 3) {
-    const x
-      = (lookup[encoded[i]] << 18)
-        + (lookup[encoded[i + 1]] << 12)
-        + (lookup[encoded[i + 2]] << 6)
-        + lookup[encoded[i + 3]]
+    const a = lookup[encoded[i]]
+    const b = lookup[encoded[i + 1]]
+    const c = lookup[encoded[i + 2]]
+    const d = lookup[encoded[i + 3]]
+    if (a === undefined || b === undefined || c === undefined || d === undefined) {
+      throw new Error('Invalid base64 string')
+    }
+    const x = (a << 18) + (b << 12) + (c << 6) + d
     encoded[j] = x >> 16
     encoded[j + 1] = (x >> 8) & 0xFF
     encoded[j + 2] = x & 0xFF

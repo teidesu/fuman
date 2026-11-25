@@ -3,6 +3,7 @@
  */
 export function bitLength(n: bigint): number {
   if (n === 0n) return 0
+  if (n < 0n) n = -n
 
   // not the fastest way, but at least not .toString(2) and not too complex
   // taken from: https://stackoverflow.com/a/76616288/22656950
@@ -64,13 +65,16 @@ export function euclideanGcd(a: bigint, b: bigint): bigint {
     a = t
   }
 
-  return a
+  return a < 0n ? -a : a
 }
 
 export function modPowBinary(base: bigint, exp: bigint, mod: bigint): bigint {
   // https://en.wikipedia.org/wiki/Modular_exponentiation#Right-to-left_binary_method
 
+  if (exp < 0n) throw new RangeError('Negative exponent is not supported')
+  if (mod === 1n) return 0n
   base %= mod
+  if (base < 0n) base += mod
 
   let result = 1n
 

@@ -10,7 +10,7 @@ import { bitLength } from './math.js'
  * @param le  Whether to use little-endian encoding
  */
 export function toBytes(value: bigint, length = 0, le = false): Uint8Array {
-  const bits = bitLength(value)
+  const bits = bitLength(value < 0n ? ~value : value) + (value < 0n ? 1 : 0)
   const bytes = Math.ceil(bits / 8)
 
   if (length !== 0 && bytes > length) {

@@ -152,4 +152,23 @@ describe('AsyncResource', () => {
     expect(onError).toHaveBeenCalledOnce()
     expect(onError).toHaveBeenCalledWith(new Error('lol'), currentCtx())
   })
+
+  it('should swallow AbortError from destroy() without onError', async () => {
+    const onError = vi.fn()
+    const resource = new AsyncResource({
+      fetcher: (ctx) =>
+        new Promise((_resolve, reject) => {
+          ctx.abort.addEventListener('abort', () => {
+            reject(new DOMException('The operation was aborted.', 'AbortError'))
+          })
+        }),
+      onError,
+    })
+
+    const pending = resource.update()
+    resource.destroy()
+    await pending
+
+    expect(onError).not.toHaveBeenCalled()
+  })
 })

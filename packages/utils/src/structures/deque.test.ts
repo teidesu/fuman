@@ -402,6 +402,18 @@ describe('Deque.prototype.peekBack', () => {
     expect(a.toArray()).toEqual([1, 2, 3, 4])
     expect(a.peekBack()).toEqual(4)
   })
+
+  it('should peek the back after the ring wraps', () => {
+    const a = new Deque<number>()
+    a.pushBack(1)
+    a.pushBack(2)
+    a.pushBack(3)
+    a.popFront()
+    a.pushBack(4)
+
+    expect(a.toArray()).toEqual([2, 3, 4])
+    expect(a.peekBack()).toEqual(4)
+  })
 })
 
 describe('Deque.prototype.clear', () => {

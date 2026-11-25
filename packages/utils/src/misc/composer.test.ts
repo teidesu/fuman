@@ -224,4 +224,23 @@ describe('composeMiddlewares', () => {
 
     expect(trace).toEqual([1, 1, 'final 2', 3, 'final 4', 3, 1, 'final 2', 3, 'final 4'])
   })
+
+  it('should throw if next() is called after the chain ends', async () => {
+    const composed = composeMiddlewares([] as Middleware<Record<string, never>>[])
+    let calls = 0
+    const terminal = async (
+      _ctx: Record<string, never>,
+      next: (ctx: Record<string, never>) => Promise<void>,
+    ) => {
+      calls++
+      if (calls > 5) throw new Error('recursed')
+      await next({})
+    }
+
+    await expect(
+      composed({}, terminal as (ctx: Record<string, never>) => Promise<void>),
+    ).rejects.toThrow('next() called after end')
+
+    expect(calls).toBe(1)
+  })
 })

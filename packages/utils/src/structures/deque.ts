@@ -90,7 +90,7 @@ export class Deque<T> {
    */
   peekBack(): T | undefined {
     if (this._head === this._tail) return undefined
-    return this._list[this._tail - 1]
+    return this._list[(this._tail - 1 + this._list.length) & this._capacityMask]
   }
 
   /**

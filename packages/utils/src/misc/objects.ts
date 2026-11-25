@@ -127,6 +127,11 @@ export function deepMerge<T extends object = object, S extends object = T>(into:
       }
 
       if (typeof value === 'object' && value !== null) {
+        if (value instanceof Date || value instanceof Map || value instanceof Set || value instanceof RegExp) {
+          if (onProperties === 'ignore' && existing !== undefined) continue
+          into[key] = value
+          continue
+        }
         if (onObjects === 'merge') {
           if (typeof existing === 'object' && existing !== null) {
             into[key] = deepMerge(existing, value)
