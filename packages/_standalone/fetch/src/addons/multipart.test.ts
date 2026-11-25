@@ -62,4 +62,60 @@ describe('ffetch/addons/form', () => {
       `--${boundary}--`,
     ].join('\r\n'))
   })
+
+  it('should skip nullish values, objects, and functions', async () => {
+    await ffetch('https://example.com', {
+      multipart: {
+        a: null,
+        b: undefined,
+        c: 0,
+        d: false,
+        e: { nested: true },
+        f: () => {},
+        g: 'ok',
+      },
+    })
+
+    const req = fetch_.mock.calls[0][0] as Request
+    const body = await req.formData()
+    expect([...body.entries()]).toEqual([
+      ['c', '0'],
+      ['d', 'false'],
+      ['g', 'ok'],
+    ])
+  })
+
+  it('should append File and Blob as-is, including inside arrays', async () => {
+    if (typeof File === 'undefined') return
+
+    const file = new File(['hello'], 'hello.txt', { type: 'text/plain' })
+    const blob = new Blob(['bin'], { type: 'application/octet-stream' })
+
+    await ffetch('https://example.com', {
+      multipart: {
+        file,
+        blob,
+        files: [file, null, blob],
+        tags: ['x', undefined, 'y'],
+        obj: { n: 1 },
+      },
+    })
+
+    const req = fetch_.mock.calls[0][0] as Request
+    const entries = [...(await req.formData()).entries()].map(([key, value]) => {
+      if (typeof value === 'string') {
+        return { key, kind: 'string', name: undefined as string | undefined, text: value }
+      }
+      return { key, kind: 'file', name: (value as File).name, text: undefined as string | undefined }
+    })
+
+    expect(entries).toEqual([
+      { key: 'file', kind: 'file', name: 'hello.txt', text: undefined },
+      { key: 'blob', kind: 'file', name: 'blob', text: undefined },
+      { key: 'files', kind: 'file', name: 'hello.txt', text: undefined },
+      { key: 'files', kind: 'file', name: 'blob', text: undefined },
+      { key: 'tags', kind: 'string', name: undefined, text: 'x' },
+      { key: 'tags', kind: 'string', name: undefined, text: 'y' },
+    ])
+  })
 })
