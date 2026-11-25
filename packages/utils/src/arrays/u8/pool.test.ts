@@ -47,4 +47,12 @@ describe('BufferPool', () => {
 
     expect(first.buffer).not.toBe(second.buffer)
   })
+
+  it('should reject non-integer sizes', () => {
+    const pool = new BufferPool(16)
+
+    expect(() => pool.alloc(1.5)).toThrow(RangeError)
+    expect(() => pool.alloc(-1)).toThrow(RangeError)
+    expect(() => pool.alloc(Number.NaN)).toThrow(RangeError)
+  })
 })
