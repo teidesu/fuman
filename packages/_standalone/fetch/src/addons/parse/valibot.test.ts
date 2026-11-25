@@ -35,7 +35,7 @@ describe('zod', () => {
       v.object({ a: v.number() }),
     )
 
-    await expect(promise).rejects.toThrowErrorMatchingInlineSnapshot('[Error: Schema validation failed: Invalid key: Expected "a" but received undefined at .a]')
+    await expect(promise).rejects.toThrowErrorMatchingInlineSnapshot('[SchemaValidationError: Schema validation failed: Invalid key: Expected "a" but received undefined at .a]')
   })
 
   it('should work with ffetch safelyParsedJson (pass)', async () => {

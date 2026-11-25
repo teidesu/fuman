@@ -8,7 +8,7 @@ export class SchemaValidationError extends Error {
     let message = 'Schema validation failed'
     for (const issue of issues) {
       message += `: ${issue.message}`
-      if (issue.path) {
+      if (issue.path?.length) {
         const pathStr: string[] = []
         for (const path of issue.path) {
           if (typeof path === 'object') {
@@ -22,6 +22,7 @@ export class SchemaValidationError extends Error {
       }
     }
     super(message)
+    this.name = 'SchemaValidationError'
   }
 }
 
