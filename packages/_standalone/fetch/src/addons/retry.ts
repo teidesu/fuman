@@ -93,16 +93,17 @@ function retryMiddleware(options: RetryOptions): FfetchMiddleware {
     let lastResponse: Response | undefined
 
     while (true) {
-      onRetry?.(retries, request)
+      const attempt = request.clone()
+      onRetry?.(retries, attempt)
 
       try {
-        const res = await next(request)
+        const res = await next(attempt)
 
-        if (onResponse(res, request)) {
+        if (onResponse(res, attempt)) {
           return res
         }
       } catch (err) {
-        if (onError && !onError(err, request)) {
+        if (onError && !onError(err, attempt)) {
           throw err
         }
       }

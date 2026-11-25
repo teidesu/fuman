@@ -109,4 +109,21 @@ describe('ffetch/addons/retry', () => {
 
     setTimeout_.mockRestore()
   })
+
+  it('should retry a POST body by cloning the request', async () => {
+    const bodies: string[] = []
+    fetch_.mockImplementation(async (req) => {
+      bodies.push(await req.text())
+      return bodies.length < 2 ? new Response(null, { status: 500 }) : new Response('OK')
+    })
+
+    const res = await ffetch('https://example.com', {
+      method: 'POST',
+      body: 'payload',
+      retry: { maxRetries: 2, retryDelay: 0 },
+    })
+
+    expect(bodies).toEqual(['payload', 'payload'])
+    expect(res.status).toBe(200)
+  })
 })
