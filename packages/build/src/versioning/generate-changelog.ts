@@ -72,6 +72,7 @@ export async function generateChangelog(params: {
 
   const changedFiles = await findProjectChangedFiles({
     params: params.params ?? {},
+    workspace: params.workspace,
     root: cwd,
     since,
   })
