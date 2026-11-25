@@ -13,6 +13,43 @@ import { findProjectChangedPackages } from '../../versioning/collect-files.js'
 import { bc, loadConfig } from './_utils.js'
 import { buildPackage } from './build.js'
 
+export function selectChangedNpmPackages(params: {
+  publishable: WorkspacePackage[]
+  changed: WorkspacePackage[]
+}): WorkspacePackage[] {
+  const { publishable, changed } = params
+  const selected = [...changed]
+  const selectedNames = new Set<string>()
+  for (const pkg of selected) {
+    selectedNames.add(asNonNull(pkg.json.name))
+  }
+
+  let hadChanges = true
+  while (hadChanges) {
+    hadChanges = false
+
+    for (const pkg of publishable) {
+      const pkgName = asNonNull(pkg.json.name)
+
+      for (const field of ['dependencies', 'peerDependencies'] as const) {
+        const deps = pkg.json[field]
+        if (deps == null) continue
+
+        for (const name of Object.keys(deps)) {
+          if (selectedNames.has(name) && !selectedNames.has(pkgName)) {
+            hadChanges = true
+            selected.push(pkg)
+            selectedNames.add(pkgName)
+            break
+          }
+        }
+      }
+    }
+  }
+
+  return filterPackageJsonsForPublish(selected, 'npm')
+}
+
 export async function runContinuousRelease(params: {
   workspaceRoot?: string
   workspace?: WorkspacePackage[]
@@ -56,36 +93,15 @@ export async function runContinuousRelease(params: {
       return
     }
 
-    // we want to also publish any packages that depend on the changed ones
-    const changedPackagesNames = new Set<string>()
-    for (const pkg of changedPackages) {
-      changedPackagesNames.add(asNonNull(pkg.json.name))
+    packages = selectChangedNpmPackages({
+      publishable: packages,
+      changed: changedPackages,
+    })
+
+    if (!packages.length) {
+      console.log(`🤔 no packages changed since ${since}, nothing to do`)
+      return
     }
-
-    let hadChanges = true
-    while (hadChanges) {
-      hadChanges = false
-
-      for (const pkg of packages) {
-        const pkgName = asNonNull(pkg.json.name)
-
-        for (const field of ['dependencies', 'peerDependencies']) {
-          const deps = pkg.json[field] as Record<string, string>
-          if (deps == null) continue
-
-          for (const name of Object.keys(deps)) {
-            if (changedPackagesNames.has(name) && !changedPackagesNames.has(pkgName)) {
-              hadChanges = true
-              changedPackages.push(pkg)
-              changedPackagesNames.add(pkgName)
-              break
-            }
-          }
-        }
-      }
-    }
-
-    packages = changedPackages
 
     console.log(`📝 only publishing changed packages since ${since}:`)
     for (const pkg of packages) {
