@@ -213,6 +213,12 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
     this.#closed?.resolve()
   }
 
+  /**
+   * Start a session to `address`.
+   * A second call with the same address is a no-op.
+   * Call {@link reconnect} to tear down the live connection and open another.
+   * A second call with a different address throws.
+   */
   connect(address: ConnectAddress): void {
     if (this.#lastAddress !== undefined) {
       if (this.#lastAddress !== address) {
