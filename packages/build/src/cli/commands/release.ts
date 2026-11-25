@@ -347,6 +347,7 @@ export const releaseCli = bc.command({
           tag: tagName,
           name: tagName,
           body: changelog,
+          apiUrl: args.githubApiUrl,
           artifacts: await parallelMap(tarballs, async file => ({
             name: basename(file),
             type: 'application/gzip',
