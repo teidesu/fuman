@@ -200,6 +200,9 @@ abstract class NodeWebSocketServerBase<Connection> {
   }
 
   close(): void {
+    this.#closed = true
+    this.#waiter?.reject(new ListenerClosedError())
+    this.#waiter = undefined
     this.server.close()
   }
 
