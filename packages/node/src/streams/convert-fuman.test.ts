@@ -1,4 +1,4 @@
-import { Readable, Writable } from 'node:stream'
+import { PassThrough, Readable, Writable } from 'node:stream'
 
 import { Bytes, read } from '@fuman/io'
 import { u8 } from '@fuman/utils'
@@ -40,6 +40,14 @@ describe('nodeReadableToFuman', () => {
     expect(a1).toEqual(new Uint8Array([1, 2, 3]))
     expect(n2).toEqual(3)
     expect(a2).toEqual(new Uint8Array([4, 5, 6]))
+  })
+
+  it('should settle a pending read when close is called', async () => {
+    const source = new PassThrough()
+    const converted = nodeReadableToFuman(source)
+    const pending = converted.read(new Uint8Array(8))
+    converted.close()
+    expect(await pending).toEqual(0)
   })
 })
 
