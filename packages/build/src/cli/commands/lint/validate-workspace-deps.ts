@@ -123,6 +123,8 @@ export async function validateWorkspaceDeps(params: {
             ok = satisfies(version, pkgDepVersions)
           } else if (validRange(version) != null) {
             ok = subset(pkgDepVersions, version)
+          } else {
+            ok = version === pkgDepVersions
           }
 
           if (!ok) {
