@@ -18,6 +18,77 @@ import { collectPackageJsons } from '../package-json/collect-package-jsons.js'
 import { processPackageJson, removeCommonjsExports } from '../package-json/process-package-json.js'
 import { collectVersions } from '../package-json/utils.js'
 
+async function copyAuxFiles(params: {
+  rootDir: string
+  packageRoot: string
+  buildDir: string
+  copyRootFiles: string[]
+  copyPackageFiles: string[]
+}): Promise<void> {
+  const { rootDir, packageRoot, buildDir, copyRootFiles, copyPackageFiles } = params
+  for (const file of copyRootFiles) {
+    await tryCopy(join(rootDir, file), join(buildDir, file))
+  }
+  for (const file of copyPackageFiles) {
+    await tryCopy(join(packageRoot, file), join(buildDir, file))
+  }
+}
+
+async function insertTypesEntries(params: {
+  entrypoints: Record<string, string>
+  buildDir: string
+  packageRoot: string
+  typesEntryRoot?: string
+}): Promise<void> {
+  const { entrypoints, buildDir, packageRoot, typesEntryRoot } = params
+
+  for (const [name, value] of Object.entries(entrypoints)) {
+    const dTsFile = join(buildDir, `${name}.d.ts`)
+    if (await fileExists(dTsFile)) continue
+
+    let entrypointFile = value
+    if (!value.endsWith('.ts')) continue
+
+    if (typesEntryRoot == null) {
+      assertStartsWith(entrypointFile, './')
+      // "The default is the smallest public path for all source files"
+      // since we don't have a list of source files, assume the smallest public path
+      // is *inside* the package, and try removing the folders one by one
+      while (true) {
+        if (await fileExists(join(buildDir, entrypointFile.replace(/\.ts$/, '.d.ts')))) break
+        const idx = entrypointFile.indexOf('/', 2)
+        if (idx === -1) {
+          throw new Error(`Could not find d.ts for entrypoint ${entrypointFile}, please pass typesEntryRoot explicitly`)
+        }
+        entrypointFile = `./${entrypointFile.slice(idx + 1)}`
+      }
+    } else {
+      const fullEntrypointFile = join(packageRoot, entrypointFile)
+      entrypointFile = relative(typesEntryRoot, fullEntrypointFile)
+      if (!entrypointFile.startsWith('.')) {
+        entrypointFile = `./${entrypointFile}`
+      }
+    }
+
+    entrypointFile = entrypointFile.replace(/\.ts$/, '.js')
+
+    await fsp.writeFile(dTsFile, `export * from ${JSON.stringify(entrypointFile)}`)
+  }
+}
+
+async function copyRawEntrypoints(params: {
+  entrypointsToCopy: Record<string, string>
+  packageRoot: string
+  buildDir: string
+}): Promise<void> {
+  const { entrypointsToCopy, packageRoot, buildDir } = params
+  for (const [name, value] of Object.entries(entrypointsToCopy)) {
+    const target = join(buildDir, name)
+    await fsp.mkdir(dirname(target), { recursive: true })
+    await tryCopy(join(packageRoot, value), target)
+  }
+}
+
 export async function fumanBuild(params: {
   root: URL | string
 
@@ -248,47 +319,21 @@ export async function fumanBuild(params: {
 
         await fsp.writeFile(join(buildDir, 'package.json'), JSON.stringify(packageJson, null, 4))
 
-        for (const file of copyRootFiles) {
-          await tryCopy(join(rootDir, file), join(buildDir, file))
-        }
-        for (const file of copyPackageFiles) {
-          await tryCopy(join(packageRoot, file), join(buildDir, file))
-        }
+        await copyAuxFiles({
+          rootDir,
+          packageRoot,
+          buildDir,
+          copyRootFiles,
+          copyPackageFiles,
+        })
 
         if (insertTypesEntry) {
-          // generate .d.ts for entrypoints
-          for (const [name, value] of Object.entries(entrypoints)) {
-            const dTsFile = join(buildDir, `${name}.d.ts`)
-            if (await fileExists(dTsFile)) continue
-
-            let entrypointFile = value
-            if (!value.endsWith('.ts')) continue
-
-            if (typesEntryRoot == null) {
-              assertStartsWith(entrypointFile, './')
-              // "The default is the smallest public path for all source files"
-              // since we don't have a list of source files, assume the smallest public path
-              // is *inside* the package, and try removing the folders one by one
-              while (true) {
-                if (await fileExists(join(buildDir, entrypointFile.replace(/\.ts$/, '.d.ts')))) break
-                const idx = entrypointFile.indexOf('/', 2)
-                if (idx === -1) {
-                  throw new Error(`Could not find d.ts for entrypoint ${entrypointFile}, please pass typesEntryRoot explicitly`)
-                }
-                entrypointFile = `./${entrypointFile.slice(idx + 1)}`
-              }
-            } else {
-              const fullEntrypointFile = join(packageRoot, entrypointFile)
-              entrypointFile = relative(typesEntryRoot, fullEntrypointFile)
-              if (!entrypointFile.startsWith('.')) {
-                entrypointFile = `./${entrypointFile}`
-              }
-            }
-
-            entrypointFile = entrypointFile.replace(/\.ts$/, '.js')
-
-            await fsp.writeFile(dTsFile, `export * from ${JSON.stringify(entrypointFile)}`)
-          }
+          await insertTypesEntries({
+            entrypoints,
+            buildDir,
+            packageRoot,
+            typesEntryRoot,
+          })
         }
 
         if (buildCjs) {
@@ -305,12 +350,11 @@ export async function fumanBuild(params: {
           })
         }
 
-        // handle entrypointsToCopy
-        for (const [name, value] of Object.entries(entrypointsToCopy)) {
-          const target = join(buildDir, name)
-          await fsp.mkdir(dirname(target), { recursive: true })
-          await tryCopy(join(packageRoot, value), target)
-        }
+        await copyRawEntrypoints({
+          entrypointsToCopy,
+          packageRoot,
+          buildDir,
+        })
 
         await params.finalize?.(hookContext)
         await packageConfig?.finalize?.(hookContext)
