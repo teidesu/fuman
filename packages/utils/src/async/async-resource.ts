@@ -138,6 +138,11 @@ export class AsyncResource<T> {
     try {
       result = await this.params.fetcher(this.#ctx)
     } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') {
+        this.#updating.resolve()
+        this.#updating = undefined
+        return
+      }
       if (this.params.onError) {
         this.params.onError(e, this.#ctx)
       } else {
