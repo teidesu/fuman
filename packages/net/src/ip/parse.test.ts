@@ -45,6 +45,19 @@ describe('parseWithPort', () => {
       1234,
     ])
   })
+
+  it('should throw on a missing closing bracket', () => {
+    expect(() => ip.parseWithPort('[2001:db8::1:443')).toThrow('Invalid address with port')
+  })
+
+  it('should throw when there is no colon', () => {
+    expect(() => ip.parseWithPort('1234')).toThrow('Invalid address with port')
+  })
+
+  it('should throw on unbracketed ipv6 without a clear port', () => {
+    expect(() => ip.parseWithPort('2001:db8::1')).toThrow('Invalid address with port')
+    expect(() => ip.parseWithPort('2001:db8::1:443')).toThrow('Invalid address with port')
+  })
 })
 
 describe('stringify', () => {

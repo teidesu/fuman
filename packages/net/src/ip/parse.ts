@@ -11,10 +11,28 @@ export function parse(ip: string): Ipv4Address | Ipv6Address {
 }
 
 export function parseWithPort(ip: string): [Ipv4Address | Ipv6Address, number] {
-  const lastColon = ip.lastIndexOf(':')
+  let addr: string
+  let portStr: string
 
-  const addr = ip.slice(0, lastColon)
-  const port = Number(ip.slice(lastColon + 1))
+  if (ip.startsWith('[')) {
+    const close = ip.indexOf(']')
+    if (close === -1 || ip[close + 1] !== ':') {
+      throw new Error(`Invalid address with port: ${ip}`)
+    }
+
+    addr = ip.slice(1, close)
+    portStr = ip.slice(close + 2)
+  } else {
+    const lastColon = ip.lastIndexOf(':')
+    if (lastColon === -1 || ip.indexOf(':') !== lastColon) {
+      throw new Error(`Invalid address with port: ${ip}`)
+    }
+
+    addr = ip.slice(0, lastColon)
+    portStr = ip.slice(lastColon + 1)
+  }
+
+  const port = Number(portStr)
 
   if (Number.isNaN(port) || port < 0 || port > 65535) {
     throw new Error(`Invalid port: ${ip} (in ${ip})`)
