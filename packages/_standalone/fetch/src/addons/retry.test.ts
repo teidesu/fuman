@@ -126,4 +126,16 @@ describe('ffetch/addons/retry', () => {
     expect(bodies).toEqual(['payload', 'payload'])
     expect(res.status).toBe(200)
   })
+
+  it('should return the last response when returnLastResponse is true', async () => {
+    fetch_.mockImplementation(async () => new Response('still failing', { status: 503 }))
+
+    const res = await ffetch('https://example.com', {
+      validateResponse: false,
+      retry: { maxRetries: 1, retryDelay: 0, returnLastResponse: true },
+    })
+
+    expect(res.status).toBe(503)
+    expect(await res.text()).toBe('still failing')
+  })
 })

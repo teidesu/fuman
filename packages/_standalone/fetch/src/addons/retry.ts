@@ -98,6 +98,7 @@ function retryMiddleware(options: RetryOptions): FfetchMiddleware {
 
       try {
         const res = await next(attempt)
+        lastResponse = res
 
         if (onResponse(res, attempt)) {
           return res
