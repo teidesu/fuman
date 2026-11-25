@@ -119,6 +119,12 @@ describe('includes', () => {
 
     expect(includes(haystack, needle)).toBe(false)
   })
+
+  it('should match NaN with SameValueZero', () => {
+    expect(includes(new Float32Array([NaN]), NaN)).toBe(true)
+    expect(includes(new Float64Array([1, NaN, 2]), NaN)).toBe(true)
+    expect(includes(new Float32Array([0]), -0)).toBe(true)
+  })
 })
 
 describe('includesArray', () => {

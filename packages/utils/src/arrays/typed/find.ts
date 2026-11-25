@@ -110,8 +110,13 @@ export function includes(haystack: Exclude<TypedArray, BigInt64Array | BigUint64
 export function includes(haystack: BigInt64Array | BigUint64Array, needle: bigint): boolean
 
 export function includes(haystack: TypedArray, needle: number | bigint): boolean {
-  // not exactly safe casts, but we know that they are of the correct type because of the generic constraint
-  return indexOf(haystack as Uint8Array, needle as number) !== -1
+  for (let i = 0; i < haystack.length; i++) {
+    let value = haystack[i]
+    if (value === needle || (Number.isNaN(value) && Number.isNaN(needle))) {
+      return true
+    }
+  }
+  return false
 }
 
 export function includesArray<T extends TypedArray>(haystack: T, needle: T): boolean {
