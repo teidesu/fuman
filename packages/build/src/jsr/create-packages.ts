@@ -30,7 +30,7 @@ export async function jsrCreatePackages(params: {
     }
 
     const [scope_, packageName] = pkg.json.name.split('/')
-    const scope = scope_.slice(1)
+    const scope = scope_.startsWith('@') ? scope_.slice(1) : scope_
 
     if (token == null) {
       console.log(`ℹ️ to create \x1B[;33m${pkg.json.name}\x1B[;0m follow this link: \x1B[;34m${new URL(`/create?scope=${scope}&package=${packageName}`, registry).href}\x1B[;0m`)
