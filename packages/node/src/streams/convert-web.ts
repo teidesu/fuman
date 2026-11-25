@@ -26,6 +26,9 @@ export function nodeReadableToWeb(stream: Readable): ReadableStream<Uint8Array> 
     pull() {
       stream.resume()
     },
+    cancel(reason) {
+      stream.destroy(reason instanceof Error ? reason : undefined)
+    },
   })
 }
 

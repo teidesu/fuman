@@ -1,4 +1,4 @@
-import { Readable, Writable } from 'node:stream'
+import { PassThrough, Readable, Writable } from 'node:stream'
 
 import { describe, expect, it } from 'vitest'
 
@@ -21,6 +21,16 @@ describe('nodeReadableToWeb', () => {
     expect(await reader.read()).toEqual({ value: Buffer.from([1, 2, 3]), done: false })
     expect(await reader.read()).toEqual({ value: Buffer.from([4, 5, 6]), done: false })
     expect(await reader.read()).toEqual({ value: undefined, done: true })
+  })
+
+  it('should destroy the node source when the web reader is cancelled', async () => {
+    const source = new PassThrough()
+    const web = nodeReadableToWeb(source)
+    const reader = web.getReader()
+    source.write(Buffer.from('ab'))
+    await reader.read()
+    await reader.cancel()
+    expect(source.destroyed).toBe(true)
   })
 })
 
