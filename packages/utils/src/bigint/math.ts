@@ -3,6 +3,7 @@
  */
 export function bitLength(n: bigint): number {
   if (n === 0n) return 0
+  if (n < 0n) n = -n
 
   // not the fastest way, but at least not .toString(2) and not too complex
   // taken from: https://stackoverflow.com/a/76616288/22656950

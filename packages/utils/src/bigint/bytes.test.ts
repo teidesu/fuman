@@ -36,6 +36,13 @@ describe('toBytes', () => {
     expect([...toBytes(num, 0, false)]).eql([...buf])
     expect([...toBytes(num, 0, true)]).eql([...buf.reverse()])
   })
+
+  it('should encode negatives as minimal two\'s complement', () => {
+    expect([...toBytes(-1n)]).eql([0xFF])
+    expect([...toBytes(-128n)]).eql([0x80])
+    expect([...toBytes(-129n)]).eql([0xFF, 0x7F])
+    expect([...toBytes(-1n, 4)]).eql([0xFF, 0xFF, 0xFF, 0xFF])
+  })
 })
 
 describe('fromBytes', () => {

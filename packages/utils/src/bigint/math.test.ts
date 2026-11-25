@@ -9,6 +9,8 @@ describe('bitLength', () => {
     expect(bitLength(2n)).eq(2)
     expect(bitLength(255n)).eq(8)
     expect(bitLength(256n)).eq(9)
+    expect(bitLength(-1n)).eq(1)
+    expect(bitLength(-128n)).eq(8)
   })
 })
 
