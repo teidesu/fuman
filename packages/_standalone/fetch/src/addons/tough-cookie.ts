@@ -19,7 +19,8 @@ function cookieJarMiddleware({
   setCookieOptions = { ignoreError: true },
 }: NonNullable<Exclude<FfetchToughCookieAddon['cookies'], CookieJar>>): FfetchMiddleware {
   return async (ctx, next) => {
-    ctx.headers.append('Cookie', await jar.getCookieString(ctx.url, getCookiesOptions))
+    const cookie = await jar.getCookieString(ctx.url, getCookiesOptions)
+    if (cookie) ctx.headers.append('Cookie', cookie)
 
     const res = await next(ctx)
 
