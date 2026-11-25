@@ -80,11 +80,6 @@ async function connectV5(
 
   // skip BNDADDR and BNDPORT
   switch (response[3]) {
-    case 0x00: {
-      // no BNDADDR, just BNDPORT
-      await read.async.exactly(reader, 2)
-      break
-    }
     case 0x01: {
       // BNDADDR is IPv4, 6 bytes total
       await read.async.exactly(reader, 6)

@@ -45,6 +45,35 @@ describe('parseWithPort', () => {
       1234,
     ])
   })
+
+  it('should throw on a missing closing bracket', () => {
+    expect(() => ip.parseWithPort('[2001:db8::1:443')).toThrow('Invalid address with port')
+  })
+
+  it('should throw when there is no colon', () => {
+    expect(() => ip.parseWithPort('1234')).toThrow('Invalid address with port')
+  })
+
+  it('should throw on unbracketed ipv6 without a port', () => {
+    expect(() => ip.parseWithPort('2001:db8::1')).toThrow('Invalid IPv6 address')
+  })
+
+  it('should parse unbracketed ipv6 using the last colon as the port', () => {
+    expect(ip.parseWithPort('2001:db8::1:443')).toEqual([
+      {
+        type: 'ipv6',
+        parts: new Uint16Array([0x2001, 0xDB8, 0, 0, 0, 0, 0, 1]),
+      },
+      443,
+    ])
+    expect(ip.parseWithPort('::1:443')).toEqual([
+      {
+        type: 'ipv6',
+        parts: new Uint16Array([0, 0, 0, 0, 0, 0, 0, 1]),
+      },
+      443,
+    ])
+  })
 })
 
 describe('stringify', () => {
@@ -60,5 +89,21 @@ describe('stringify', () => {
       type: 'ipv6',
       parts: new Uint16Array([0, 0, 0, 0, 0, 0, 0, 1]),
     })).toBe('::1')
+  })
+})
+
+describe('stringifyWithPort', () => {
+  it('should stringify ipv4 with port', () => {
+    expect(ip.stringifyWithPort({
+      type: 'ipv4',
+      parts: new Uint8Array([127, 0, 0, 1]),
+    }, 1234)).toBe('127.0.0.1:1234')
+  })
+
+  it('should stringify ipv6 with port in brackets', () => {
+    expect(ip.stringifyWithPort({
+      type: 'ipv6',
+      parts: new Uint16Array([0x2001, 0xDB8, 0, 0, 0, 0, 0, 1]),
+    }, 443)).toBe('[2001:db8::1]:443')
   })
 })

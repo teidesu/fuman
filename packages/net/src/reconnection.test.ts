@@ -213,6 +213,41 @@ describe('PersistentConnection', () => {
     expect(() => reconn.connect('127.0.0.2:1234')).toThrow(Error)
   })
 
+  it('should not start a second connection for the same address', async () => {
+    const created: FakeConnection[] = []
+    const closed: FakeConnection[] = []
+    class Tracked extends FakeConnection {
+      override close(): void {
+        closed.push(this)
+        super.close()
+      }
+    }
+
+    const opened = new ConditionVariable()
+    const reconn = new PersistentConnection({
+      connect: async (addr: string) => {
+        const c = new Tracked(addr)
+        created.push(c)
+        return c
+      },
+      onOpen: async (conn) => {
+        opened.notify()
+        await echoClient(conn)
+      },
+    })
+
+    reconn.connect('a')
+    await opened.wait()
+    reconn.connect('a')
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(created).toHaveLength(1)
+
+    await reconn.close()
+    expect(new Set(closed).size).toBe(1)
+    expect(closed).toContain(created[0])
+  })
+
   it('should cleanly change transport', async () => {
     const log: string[] = []
 
@@ -898,5 +933,38 @@ describe('PersistentConnection', () => {
       'onOpen',
       'onClose',
     ])
+  })
+
+  it('should record lastError and increment consequentFails across reconnects', async () => {
+    let n = 0
+    const samples: Array<{ fails: number, lastError: string | null }> = []
+    const reconn = new PersistentConnection({
+      connect: async () => {
+        n++
+        throw new Error(`fail-${n}`)
+      },
+      onOpen: echoClient,
+      strategy: () => 5,
+      onError: () => 'reconnect',
+      onWait: () => {
+        samples.push({
+          fails: reconn.state.consequentFails,
+          lastError: reconn.state.lastError?.message ?? null,
+        })
+      },
+    })
+
+    reconn.connect('a')
+    await vi.advanceTimersByTimeAsync(0)
+    await vi.advanceTimersByTimeAsync(5)
+    await vi.advanceTimersByTimeAsync(5)
+
+    expect(samples.length).toBeGreaterThanOrEqual(2)
+    expect(samples[0]).toEqual({ fails: 1, lastError: 'fail-1' })
+    expect(samples[1]).toEqual({ fails: 2, lastError: 'fail-2' })
+    expect(reconn.state.lastError).toBeInstanceOf(Error)
+    expect(reconn.state.consequentFails).toBeGreaterThan(1)
+
+    await reconn.close()
   })
 })

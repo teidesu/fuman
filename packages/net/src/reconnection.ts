@@ -165,6 +165,9 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
           break
         }
 
+        this.#state.lastError = err as Error
+        this.#state.consequentFails += 1
+
         const action = await this.#onError(err as Error, oldConnection ?? null, this.#state)
 
         if (action === 'close') {
@@ -200,7 +203,6 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
         }
 
         this.#state.previousWait = wait
-        this.#state.consequentFails = 1
 
         continue
       }
@@ -211,9 +213,18 @@ export class PersistentConnection<ConnectAddress, Connection extends IClosable> 
     this.#closed?.resolve()
   }
 
+  /**
+   * Start a session to `address`.
+   * A second call with the same address is a no-op.
+   * Call {@link reconnect} to tear down the live connection and open another.
+   * A second call with a different address throws.
+   */
   connect(address: ConnectAddress): void {
-    if (this.#lastAddress !== undefined && this.#lastAddress !== address) {
-      throw new Error('Connection is already open to another address')
+    if (this.#lastAddress !== undefined) {
+      if (this.#lastAddress !== address) {
+        throw new Error('Connection is already open to another address')
+      }
+      return
     }
 
     this.#closed = undefined

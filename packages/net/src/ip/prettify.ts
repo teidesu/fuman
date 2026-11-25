@@ -13,9 +13,11 @@ export function prettify(address: string, options?: PrettifyOptions): string {
     encloseIpv6 = false,
   } = options || {}
 
+  if (!address) return ''
+
   const isIpv6 = address.includes(':') // IPv4 address can never have ':', IPv6 always does.
 
-  if (isIpv6) {
+  if (isIpv6 && !address.startsWith('[')) {
     address = `[${address}]` // IPv6 addresses in URLs should be enclosed in []
   }
 

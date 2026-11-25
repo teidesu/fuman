@@ -71,8 +71,8 @@ describe('performSocksHandshake', () => {
       const rx = Bytes.from(new Uint8Array([
         // greeting (v5, no auth)
         ...[0x05, 0x00],
-        // connect response
-        ...[0x05, 0x00, 0x00, 0x00, 0x00, 0x00],
+        // connect response (ipv4 BNDADDR)
+        ...[0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0],
       ]))
 
       await performSocksHandshake(rx, tx, proxy, endpoint)
@@ -91,8 +91,8 @@ describe('performSocksHandshake', () => {
         ...[0x05, 0x02],
         // auth response
         ...[0x01, 0x00],
-        // connect response
-        ...[0x05, 0x00, 0x00, 0x00, 0x00, 0x00],
+        // connect response (ipv4 BNDADDR)
+        ...[0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0],
       ]))
 
       await performSocksHandshake(rx, tx, proxy, endpoint)
@@ -232,6 +232,25 @@ describe('performSocksHandshake', () => {
         ...[0x05, 0x00],
         // connect response (wrong BNDADDR type)
         ...[0x05, 0x00, 0x00, 0x42, 0x00, 0x00],
+      ]))
+
+      const promise = performSocksHandshake(rx, tx, proxy, endpoint)
+
+      await expect(promise).rejects.toThrow(SocksProxyConnectionError)
+      expect(tx.result()).toEqual(new Uint8Array([
+        ...buildSocks5Greeting(true),
+        ...buildSocks5Connect(endpoint),
+      ]))
+      expect(rx.available).toBe(2)
+    })
+
+    it('should reject ATYP 0x00', async () => {
+      const tx = Bytes.alloc()
+      const rx = Bytes.from(new Uint8Array([
+        // greeting (v5, no auth)
+        ...[0x05, 0x00],
+        // connect response (ATYP 0x00)
+        ...[0x05, 0x00, 0x00, 0x00, 0x00, 0x00],
       ]))
 
       const promise = performSocksHandshake(rx, tx, proxy, endpoint)

@@ -49,6 +49,11 @@ describe('ipv6', () => {
     it('throws on too few parts', () => {
       expect(() => ip.parseV6('2001:db8:85a3:8a2e')).toThrow()
     })
+
+    it('throws on an out-of-range ipv4-mapped octet', () => {
+      expect(() => ip.parseV6('::ffff:0.256.0.1')).toThrow()
+      expect(() => ip.parseV6('0:0:0:0:0:ffff:0.256.0.1')).toThrow()
+    })
   })
 
   describe('stringifyV6', () => {
