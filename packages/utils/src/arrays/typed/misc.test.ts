@@ -22,4 +22,8 @@ describe('view', () => {
     expect(u16[0]).oneOf([0x0102, 0x0201])
     expect(u16[1]).oneOf([0x0304, 0x0403])
   })
+
+  it('should throw if byteLength is not a multiple of the element size', () => {
+    expect(() => view(Uint32Array, new Uint8Array([1, 2, 3]))).toThrow(RangeError)
+  })
 })
