@@ -47,6 +47,18 @@ describe('modPowBinary', () => {
     // calculating this directly would either take forever or error with "Maximum BigInt size exceeded
     expect(modPowBinary(2n, 100000000000n, 100n)).toEqual(76n)
   })
+
+  it('should reduce a negative base into the modulus', () => {
+    expect(modPowBinary(-3n, 3n, 7n)).toEqual(1n)
+  })
+
+  it('should return 0 when the modulus is 1', () => {
+    expect(modPowBinary(5n, 0n, 1n)).toEqual(0n)
+  })
+
+  it('should reject a negative exponent', () => {
+    expect(() => modPowBinary(2n, -1n, 7n)).toThrow(RangeError)
+  })
 })
 
 describe('twoMultiplicity', () => {

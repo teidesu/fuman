@@ -71,7 +71,10 @@ export function euclideanGcd(a: bigint, b: bigint): bigint {
 export function modPowBinary(base: bigint, exp: bigint, mod: bigint): bigint {
   // https://en.wikipedia.org/wiki/Modular_exponentiation#Right-to-left_binary_method
 
+  if (exp < 0n) throw new RangeError('Negative exponent is not supported')
+  if (mod === 1n) return 0n
   base %= mod
+  if (base < 0n) base += mod
 
   let result = 1n
 
