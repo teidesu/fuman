@@ -51,7 +51,6 @@ declare const Uint8Array: Uint8ArrayConstructor & {
 }
 
 const HAS_TO_HEX = typeof Uint8Array.prototype.toHex === 'function'
-const HAS_FROM_HEX = typeof Uint8Array.fromHex === 'function'
 
 export function encode(buf: Uint8Array): string {
   if (typeof Buffer !== 'undefined') {
@@ -71,25 +70,19 @@ export function encode(buf: Uint8Array): string {
 }
 
 export function decode(string: string): Uint8Array {
-  if (typeof Buffer !== 'undefined') {
-    const buf = Buffer.from(string, 'hex')
-    return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength)
-  }
-  if (HAS_FROM_HEX) {
+  // Buffer.from(str, "hex") is silent on odd length and non-hex characters
+  if (typeof Uint8Array.fromHex === 'function') {
     // eslint-disable-next-line ts/no-unsafe-return
     return Uint8Array.fromHex(string)
   }
+  if (string.length % 2 !== 0) {
+    throw new Error('Invalid hex string')
+  }
 
-  const buf = u8.alloc(Math.ceil(string.length / 2))
-  const strLen = string.length
-  const length = Math.min(buf.length, strLen / 2)
-
-  let i
-
-  for (i = 0; i < length; ++i) {
-    const a = hexCharValueTable[string[i * 2]]
-    const b = hexCharValueTable[string[i * 2 + 1]]
-
+  let buf = u8.alloc(string.length / 2)
+  for (let i = 0; i < buf.length; ++i) {
+    let a = hexCharValueTable[string[i * 2]]
+    let b = hexCharValueTable[string[i * 2 + 1]]
     if (a === undefined || b === undefined) {
       throw new Error('Invalid hex string')
     }
