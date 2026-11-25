@@ -138,4 +138,24 @@ describe('ffetch/addons/retry', () => {
     expect(res.status).toBe(503)
     expect(await res.text()).toBe('still failing')
   })
+
+  it('should use a Request returned from onRetry', async () => {
+    const urls: string[] = []
+    fetch_.mockImplementation(async (req) => {
+      urls.push(req.url)
+      return new Response(null, { status: 500 })
+    })
+
+    await expect(
+      ffetch('https://example.com/orig', {
+        retry: {
+          maxRetries: 1,
+          retryDelay: 0,
+          onRetry: () => new Request('https://example.com/replaced'),
+        },
+      }),
+    ).rejects.toThrow(RetriesExceededError)
+
+    expect(urls.some(u => u.includes('/replaced'))).toBe(true)
+  })
 })
