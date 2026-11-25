@@ -89,19 +89,17 @@ export function lastIndexOfArray<T extends TypedArray>(haystack: T, needle: T, s
     return lastIndexOf(haystack as Uint8Array, needle[0] as number, start)
   }
 
-  const min = needle.length - 1
-  for (let i = start; i >= min; i--) {
-    if (haystack[i] === needle[needle.length - 1]) {
-      let j = needle.length - 2
-      for (; j >= 0; j--) {
-        if (haystack[i - needle.length + j + 1] !== needle[j]) {
-          break
-        }
+  let maxStart = length - needle.length
+  let effectiveStart = start > maxStart ? maxStart : start
+  for (let i = effectiveStart; i >= 0; i--) {
+    let j = 0
+    for (; j < needle.length; j++) {
+      if (haystack[i + j] !== needle[j]) {
+        break
       }
-
-      if (j < 0) {
-        return i - needle.length + 1
-      }
+    }
+    if (j === needle.length) {
+      return i
     }
   }
 

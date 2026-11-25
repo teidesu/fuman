@@ -89,6 +89,14 @@ describe('lastIndexOfArray', () => {
     expect(lastIndexOfArray(haystack, needle)).toBe(-1)
   })
 
+  it('should treat start as the last candidate start index', () => {
+    const haystack = new Uint8Array([1, 2, 3, 4, 2, 3])
+    const needle = new Uint8Array([2, 3])
+
+    expect(lastIndexOfArray(haystack, needle, 4)).toBe(4)
+    expect(lastIndexOfArray(haystack, needle, 3)).toBe(1)
+  })
+
   it('should clamp negative start like Array#lastIndexOf', () => {
     const haystack = new Uint8Array([1, 2, 3])
 
