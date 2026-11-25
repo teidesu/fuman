@@ -151,7 +151,7 @@ export class BitReader implements ISyncReadable {
     // read the remaining bits
     if (sizeBig > 0n) {
       this.#currentByte = data[byteIdx]
-      this.#currentBitIdx = size
+      this.#currentBitIdx = Number(sizeBig)
 
       result = (result << sizeBig) | (BigInt(this.#currentByte) >> (8n - sizeBig))
     }

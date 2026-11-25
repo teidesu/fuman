@@ -100,6 +100,23 @@ describe('BitReader', () => {
     )
   })
 
+  it('should set bitPosition from leftover bits in the last byte after readBitsBig', () => {
+    const bytes = Bytes.from(new Uint8Array([0xFF, 0xF0]))
+    const bits = new BitReader(bytes)
+
+    expect(bits.readBitsBig(12)).toBe(0xFFFn)
+    expect(bits.bitPosition).toBe(4)
+  })
+
+  it('should set bitPosition from leftover sizeBig after leftover and full bytes', () => {
+    const bytes = Bytes.from(new Uint8Array([0b11100001, 0x00, 0xF0]))
+    const bits = new BitReader(bytes)
+
+    bits.readBits(3)
+    expect(bits.readBitsBig(20)).toBe(32888n)
+    expect(bits.bitPosition).toBe(7)
+  })
+
   describe('skipBits', () => {
     it('should correctly skip bits when aligned', () => {
       const bytes = Bytes.from(new Uint8Array([
