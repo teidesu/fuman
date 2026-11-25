@@ -17,6 +17,21 @@ import { bc, loadConfig } from './_utils.js'
 import { formatBumpVersionResult } from './bump-version.js'
 import { publishPackages } from './publish.js'
 
+async function nextDateTag(root: string): Promise<string> {
+  const date = new Date()
+  const tagNamePrefix = `v${date.getFullYear()}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`
+  let currentSuffix = 'a'
+  let tagName: string
+  do {
+    tagName = `${tagNamePrefix}${currentSuffix}`
+    if (currentSuffix === 'z') {
+      throw new Error('Too many releases for today (max 26)')
+    }
+    currentSuffix = String.fromCharCode(currentSuffix.charCodeAt(0) + 1)
+  } while (await gitTagExists(tagName, root))
+  return tagName
+}
+
 export const releaseCli = bc.command({
   name: 'release',
   desc: 'release packages',
@@ -54,7 +69,7 @@ export const releaseCli = bc.command({
     withNpm: bc.boolean('with-npm')
       .desc('whether to publish to npm'),
     npmToken: bc.string('npm-token')
-      .desc('npm token to use for publishing (note: this will override the global .npmrc file)'),
+      .desc('npm token to use for publishing (passed via env and a temporary local .npmrc, never the global config)'),
     npmPublishArgs: bc.string('npm-publish-args')
       .desc('additional arguments to pass to `npm publish`'),
     npmDistDir: bc.string('npm-dist-dir')
@@ -144,16 +159,7 @@ export const releaseCli = bc.command({
         }
       }
     } else if (taggingSchema === 'date') {
-      const date = new Date()
-      const tagNamePrefix = `v${date.getFullYear()}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`
-      let currentSuffix = 'a'
-      do {
-        tagName = `${tagNamePrefix}${currentSuffix}`
-        if (currentSuffix === 'z') {
-          throw new Error('Too many releases for today (max 26)')
-        }
-        currentSuffix = String.fromCharCode(currentSuffix.charCodeAt(0) + 1)
-      } while (await gitTagExists(tagName, root))
+      tagName = await nextDateTag(root)
     } else {
       throw new Error(`Unknown tagging schema: ${taggingSchema as string}`)
     }
@@ -347,6 +353,7 @@ export const releaseCli = bc.command({
           tag: tagName,
           name: tagName,
           body: changelog,
+          apiUrl: args.githubApiUrl,
           artifacts: await parallelMap(tarballs, async file => ({
             name: basename(file),
             type: 'application/gzip',

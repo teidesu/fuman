@@ -45,22 +45,20 @@ export async function createGithubRelease(params: {
 
   if (params.artifacts != null && params.artifacts.length > 0) {
     await asyncPool(params.artifacts, async (file) => {
-      await ffetch(uploadUrl, {
-        method: 'POST',
-        query: { name: file.name },
-        headers: {
-          'Content-Type': file.type,
-          'Content-Length': file.body.length.toString(),
-        },
-        body: file.body,
-        validateResponse: res => res.status === 201,
-      })
-    }, {
-      onError: (item, idx, err) => {
-        console.error('failed to upload artifact:', item.name)
-        console.error(err)
-        return 'ignore'
-      },
+      try {
+        await ffetch(uploadUrl, {
+          method: 'POST',
+          query: { name: file.name },
+          headers: {
+            'Content-Type': file.type,
+            'Content-Length': file.body.length.toString(),
+          },
+          body: file.body,
+          validateResponse: res => res.status === 201,
+        })
+      } catch (err) {
+        throw new Error(`failed to upload artifact: ${file.name}`, { cause: err })
+      }
     })
   }
 

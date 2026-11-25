@@ -1,5 +1,5 @@
 import type { ReleaseType } from 'semver'
-import type { CommitInfo } from '../git/utils.js'
+import type { CommitInfo, ConventionalCommit } from '../git/utils.js'
 
 import type { WorkspacePackage } from '../package-json/collect-package-jsons.js'
 import type { PackageJson } from '../package-json/types.js'
@@ -51,29 +51,32 @@ export interface BumpVersionResult {
   hasFeatures: boolean
 }
 
-function determineBumpType(params: {
-  oldVersion: string
-  commits: CommitInfo[]
-}): 'major' | 'minor' | 'patch' {
-  const { oldVersion, commits } = params
+function parseCommit(commit: CommitInfo): ConventionalCommit | null {
+  return parseConventionalCommit(`${commit.message}\n${commit.description}`)
+}
 
+function summarizeCommits(commits: CommitInfo[]): { hasBreakingChanges: boolean, hasFeatures: boolean } {
   let hasBreakingChanges = false
   let hasFeatures = false
-
   for (const commit of commits) {
-    const parsed = parseConventionalCommit(commit.message)
+    const parsed = parseCommit(commit)
     if (!parsed) continue
-
     if (parsed.breaking) hasBreakingChanges = true
     if (parsed.type === 'feat') hasFeatures = true
   }
+  return { hasBreakingChanges, hasFeatures }
+}
 
+function bumpFromFlags(
+  oldVersion: string,
+  flags: { hasBreakingChanges: boolean, hasFeatures: boolean },
+): 'major' | 'minor' | 'patch' {
   const parsedVersion = parse(oldVersion)
   if (!parsedVersion) {
     throw new Error(`Invalid version: ${oldVersion}`)
   }
 
-  if (hasBreakingChanges) {
+  if (flags.hasBreakingChanges) {
     if (parsedVersion.major === 0 && parsedVersion.minor === 0) {
       return 'patch'
     } else if (parsedVersion.major === 0) {
@@ -81,10 +84,111 @@ function determineBumpType(params: {
     } else {
       return 'major'
     }
-  } else if (hasFeatures) {
+  } else if (flags.hasFeatures) {
     return parsedVersion.major === 0 ? 'patch' : 'minor'
   } else {
     return 'patch'
+  }
+}
+
+export function determineBumpType(params: {
+  oldVersion: string
+  commits: CommitInfo[]
+}): 'major' | 'minor' | 'patch' {
+  return bumpFromFlags(params.oldVersion, summarizeCommits(params.commits))
+}
+
+async function writePackageVersion(pkg: WorkspacePackage, version: string, dryRun: boolean): Promise<void> {
+  if (!dryRun) {
+    const pkgJsonPath = join(pkg.path, 'package.json')
+    const pkgJsonText = await fsp.readFile(pkgJsonPath, 'utf8')
+    const indent = detectIndent(pkgJsonText).indent || '    '
+
+    const pkgJson = JSON.parse(pkgJsonText) as PackageJson
+    pkgJson.version = version
+
+    await fsp.writeFile(pkgJsonPath, `${JSON.stringify(pkgJson, null, indent)}\n`)
+  }
+
+  pkg.json.version = version
+}
+
+async function nextStandaloneVersion(pkg: WorkspacePackage, cwd: string | URL): Promise<string> {
+  let newVersion = asNonNull(pkg.json.version)
+  const standalonePrevTag = await getLatestTag(pkg.path)
+
+  if (standalonePrevTag != null) {
+    const commits = await getCommitsBetween({
+      since: standalonePrevTag,
+      cwd,
+      files: [join(pkg.path, '**')],
+    })
+    if (commits.length > 0) {
+      const bumpType = determineBumpType({ oldVersion: newVersion, commits })
+      newVersion = asNonNull(inc(newVersion, bumpType))
+    }
+  }
+
+  return newVersion
+}
+
+function bumpDependants(params: {
+  changedPackages: WorkspacePackage[]
+  workspace: WorkspacePackage[]
+  result: BumpVersionPackage[]
+  nextVersion: string
+  type: ReleaseType
+  bumpWithDependants?: boolean | 'only-minor'
+  workspaceVersions: Record<string, string>
+}): void {
+  const { changedPackages, workspace, result, nextVersion, type, bumpWithDependants, workspaceVersions } = params
+
+  for (const pkg of changedPackages) {
+    if (pkg.json.fuman?.ownVersioning) continue
+
+    const pkgName = asNonNull(pkg.json.name)
+    for (const otherPkg of workspace) {
+      for (const kind of ['dependencies', 'peerDependencies']) {
+        const obj = otherPkg.json[kind] as Record<string, string>
+        if (obj == null) continue
+        if (obj[pkgName] == null || typeof obj[pkgName] !== 'string') continue
+
+        let expandedVersion = obj[pkgName]
+        if (!expandedVersion.startsWith('workspace:') && otherPkg.json.fuman?.standalone) {
+          continue
+        }
+        if (expandedVersion === 'workspace:^') expandedVersion = `^${workspaceVersions[pkgName]}`
+        if (expandedVersion === 'workspace:*') expandedVersion = workspaceVersions[pkgName]
+
+        let shouldBump: boolean
+        if (bumpWithDependants === true) {
+          shouldBump = true
+        } else if (bumpWithDependants === 'only-minor') {
+          shouldBump = !satisfies(nextVersion, expandedVersion) && type === 'minor'
+        } else {
+          shouldBump = !satisfies(nextVersion, expandedVersion)
+        }
+
+        if (shouldBump) {
+          if (otherPkg.json.fuman?.ownVersioning) {
+            throw new Error(`package ${otherPkg.json.name}@${otherPkg.json.version} is marked as "own versioning", and will not be compatible with ${pkgName}@${expandedVersion} after bumping. please bump it manually`)
+          }
+
+          const existing = result.find(item => item.package.json.name === otherPkg.json.name)
+          if (existing) {
+            if (!existing.because) break
+            existing.because.push(pkgName)
+          } else {
+            result.push({
+              package: otherPkg,
+              prevVersion: asNonNull(otherPkg.json.version),
+              because: [pkgName],
+            })
+          }
+          break
+        }
+      }
+    }
   }
 }
 
@@ -147,18 +251,14 @@ export async function bumpVersion(params: {
   let hasBreakingChanges = false
 
   if (type == null) {
-    // determine release type
     const commits = await getCommitsBetween({
       since,
       cwd,
     })
-    type = determineBumpType({
-      oldVersion: maxVersion,
-      commits,
-    })
-    // todo probably remove
-    hasFeatures = commits.some(commit => parseConventionalCommit(commit.message)?.type === 'feat')
-    hasBreakingChanges = commits.some(commit => parseConventionalCommit(commit.message)?.breaking)
+    const flags = summarizeCommits(commits)
+    type = bumpFromFlags(maxVersion, flags)
+    hasFeatures = flags.hasFeatures
+    hasBreakingChanges = flags.hasBreakingChanges
   }
 
   const nextVersion = inc(maxVersion, type)
@@ -177,56 +277,15 @@ export async function bumpVersion(params: {
     })
   }
 
-  // make sure that packages that depend on the changed package are also updated if needed
-  const bumpWithDependants = params.params?.bumpWithDependants
-  for (const pkg of changedPackages) {
-    if (pkg.json.fuman?.ownVersioning) continue
-
-    const pkgName = asNonNull(pkg.json.name)
-    for (const otherPkg of workspace) {
-      for (const kind of ['dependencies', 'peerDependencies']) {
-        const obj = otherPkg.json[kind] as Record<string, string>
-        if (obj == null) continue
-        if (obj[pkgName] == null || typeof obj[pkgName] !== 'string') continue
-
-        let expandedVersion = obj[pkgName]
-        if (!expandedVersion.startsWith('workspace:') && otherPkg.json.fuman?.standalone) {
-          // dependency on standalone package by version (i.e. from registry). ignore
-          continue
-        }
-        if (expandedVersion === 'workspace:^') expandedVersion = `^${workspaceVersions[pkgName]}`
-        if (expandedVersion === 'workspace:*') expandedVersion = workspaceVersions[pkgName]
-
-        let shouldBump: boolean
-        if (bumpWithDependants === true) {
-          shouldBump = true
-        } else if (bumpWithDependants === 'only-minor') {
-          shouldBump = !satisfies(nextVersion, expandedVersion) && type === 'minor'
-        } else {
-          shouldBump = !satisfies(nextVersion, expandedVersion)
-        }
-
-        if (shouldBump) {
-          if (otherPkg.json.fuman?.ownVersioning) {
-            throw new Error(`package ${otherPkg.json.name}@${otherPkg.json.version} is marked as "own versioning", and will not be compatible with ${pkgName}@${expandedVersion} after bumping. please bump it manually`)
-          }
-
-          const existing = result.find(pkg => pkg.package.json.name === otherPkg.json.name)
-          if (existing) {
-            if (!existing.because) break
-            existing.because.push(pkgName)
-          } else {
-            result.push({
-              package: otherPkg,
-              prevVersion: asNonNull(otherPkg.json.version),
-              because: [pkgName],
-            })
-          }
-          break
-        }
-      }
-    }
-  }
+  bumpDependants({
+    changedPackages,
+    workspace,
+    result,
+    nextVersion,
+    type,
+    bumpWithDependants: params.params?.bumpWithDependants,
+    workspaceVersions,
+  })
 
   const packagesToBump = [...result.map(it => it.package)]
   if (withRoot) {
@@ -238,41 +297,11 @@ export async function bumpVersion(params: {
   for (const pkg of packagesToBump) {
     if (pkg.json.fuman?.ownVersioning) continue
 
-    let newVersion = nextVersion
+    const newVersion = pkg.json.fuman?.standalone
+      ? await nextStandaloneVersion(pkg, cwd)
+      : nextVersion
 
-    if (pkg.json.fuman?.standalone) {
-      // standalone packages each have their own versioning
-      newVersion = asNonNull(pkg.json.version)
-
-      // was this package released before?
-      const standalonePrevTag = await getLatestTag(pkg.path)
-
-      if (standalonePrevTag != null) {
-        const commits = await getCommitsBetween({
-          since: standalonePrevTag,
-          cwd,
-          files: [join(pkg.path, '**')],
-        })
-        if (commits.length > 0) {
-          const bumpType = determineBumpType({ oldVersion: newVersion, commits })
-          newVersion = asNonNull(inc(newVersion, bumpType))
-        }
-      }
-    }
-
-    if (!dryRun) {
-      const pkgJsonPath = join(pkg.path, 'package.json')
-      const pkgJsonText = await fsp.readFile(pkgJsonPath, 'utf8')
-      const indent = detectIndent(pkgJsonText).indent || '    '
-
-      const pkgJson = JSON.parse(pkgJsonText) as PackageJson
-      pkgJson.version = newVersion
-
-      await fsp.writeFile(pkgJsonPath, `${JSON.stringify(pkgJson, null, indent)}\n`)
-    }
-
-    // update the version in the object as well, in case it'll be reused in the future as is
-    pkg.json.version = newVersion
+    await writePackageVersion(pkg, newVersion, dryRun)
     nextVersions[asNonNull(pkg.json.name)] = newVersion
   }
 

@@ -39,6 +39,19 @@ export interface InternalDepsError {
 
 export type WorkspaceDepsError = ExternalDepsError | InternalDepsError
 
+function versionsCompatible(version: string, otherVersion: string): boolean {
+  if (otherVersion.match(/^(?:https?:\/\/|catalog:)/)) {
+    return version === otherVersion
+  }
+  if (valid(version) != null) {
+    return satisfies(version, otherVersion)
+  }
+  if (validRange(version) != null) {
+    return subset(otherVersion, version)
+  }
+  return version === otherVersion
+}
+
 /**
  * validate the external dependencies of a workspace
  */
@@ -116,16 +129,7 @@ export async function validateWorkspaceDeps(params: {
         }
 
         for (const [pkgName, pkgDepVersions] of Object.entries(versions[name])) {
-          let ok = true
-          if (pkgDepVersions.match(/^(?:https?:\/\/|catalog:)/)) {
-            ok = version === pkgDepVersions
-          } else if (valid(version) != null) {
-            ok = satisfies(version, pkgDepVersions)
-          } else if (validRange(version) != null) {
-            ok = subset(pkgDepVersions, version)
-          }
-
-          if (!ok) {
+          if (!versionsCompatible(version, pkgDepVersions)) {
             errors.push({
               type: 'external',
               package: pj.name,

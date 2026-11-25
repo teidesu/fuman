@@ -27,6 +27,60 @@ function mergeArrays<T>(a: T[] | undefined, b: T[] | undefined, defaultValue: T[
   return [...a, ...b]
 }
 
+function shouldCopySource(source: string, srcDir: string, excludeFilesPico: (file: string) => boolean): boolean {
+  const rel = relative(srcDir, source)
+  if (rel === '') return true
+  const parts = rel.split(/[\\/]/)
+  if (parts.some(part => part === 'node_modules' || part === '.git' || part === 'dist')) return false
+  if (excludeFilesPico(rel)) return false
+  return true
+}
+
+async function rewriteRelativeImports(
+  file: ts.SourceFile,
+  fullFilePath: string,
+  srcDir: string,
+  filename: string,
+): Promise<boolean> {
+  let changedTs = false
+
+  for (const imp of file.statements) {
+    if (!ts.isImportDeclaration(imp) && !ts.isExportDeclaration(imp)) {
+      continue
+    }
+
+    if (!imp.moduleSpecifier || !ts.isStringLiteral(imp.moduleSpecifier)) {
+      continue
+    }
+
+    const mod = imp.moduleSpecifier.text
+
+    if (mod[0] !== '.') {
+      // external module
+      continue
+    }
+
+    if (mod.endsWith('.js') || mod.endsWith('.jsx')) {
+      // verify that the edit is safe (the referenced file must not exist, and the .ts file must do)
+      const newMod = mod.replace(/\.js(x?)$/, '.ts$1')
+
+      const fullPathOld = join(dirname(fullFilePath), mod)
+      const fullPathNew = join(dirname(fullFilePath), newMod)
+
+      if (!(await fileExists(fullPathOld)) && await fileExists(fullPathNew)) {
+        changedTs = true
+        ;(imp as UnsafeMutable<ts.ImportDeclaration>).moduleSpecifier = ts.factory.createStringLiteral(newMod)
+      }
+    } else {
+      // this is not valid and *will* fail when publishing, as this requires --unstable-sloppy-imports
+      // ideally this should be errored by eslint, but just as an another precaution
+      throw new Error(`Invalid import specifier: ${mod} at ${join(srcDir, filename)}`)
+    }
+  }
+
+  return changedTs
+}
+
 export async function generateDenoWorkspace(params: {
   workspaceRoot: string | URL
   workspacePackages?: WorkspacePackage[]
@@ -98,11 +152,7 @@ export async function generateDenoWorkspace(params: {
     await fsp.cp(srcDir, packageOutRoot, {
       recursive: true,
       filter(source) {
-        if (excludeFilesPico(relative(srcDir, source))) {
-          return false
-        }
-
-        return true
+        return shouldCopySource(source, srcDir, excludeFilesPico)
       },
     })
 
@@ -120,41 +170,7 @@ export async function generateDenoWorkspace(params: {
 
       // validate imports + replace .js extensions with .ts while we're at it
       const file = ts.createSourceFile(filename, fileContent, ts.ScriptTarget.ESNext, true)
-      let changedTs = false
-
-      for (const imp of file.statements) {
-        if (!ts.isImportDeclaration(imp) && !ts.isExportDeclaration(imp)) {
-          continue
-        }
-
-        if (!imp.moduleSpecifier || !ts.isStringLiteral(imp.moduleSpecifier)) {
-          continue
-        }
-
-        const mod = imp.moduleSpecifier.text
-
-        if (mod[0] !== '.') {
-          // external module
-          continue
-        }
-
-        if (mod.endsWith('.js') || mod.endsWith('.jsx')) {
-          // verify that the edit is safe (the referenced file must not exist, and the .ts file must do)
-          const newMod = mod.replace(/\.js(x?)$/, '.ts$1')
-
-          const fullPathOld = join(dirname(fullFilePath), mod)
-          const fullPathNew = join(dirname(fullFilePath), newMod)
-
-          if (!(await fileExists(fullPathOld)) && await fileExists(fullPathNew)) {
-            changedTs = true
-            ;(imp as UnsafeMutable<ts.ImportDeclaration>).moduleSpecifier = ts.factory.createStringLiteral(newMod)
-          }
-        } else {
-          // this is not valid and *will* fail when publishing, as this requires --unstable-sloppy-imports
-          // ideally this should be errored by eslint, but just as an another precaution
-          throw new Error(`Invalid import specifier: ${mod} at ${join(srcDir, filename)}`)
-        }
-      }
+      let changedTs = await rewriteRelativeImports(file, fullFilePath, srcDir, filename)
 
       if (rootConfig?.transformAst?.(file)) {
         changedTs = true
@@ -234,6 +250,7 @@ export async function generateDenoWorkspace(params: {
     })
 
     packageConfig?.jsr?.finalizeDenoJson?.(hookContext, denoJson)
+    rootConfig?.finalizeDenoJson?.(hookContext, denoJson)
 
     await fsp.writeFile(join(packageOutRoot, 'deno.json'), JSON.stringify(denoJson, null, 4))
 

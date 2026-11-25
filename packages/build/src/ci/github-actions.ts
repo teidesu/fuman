@@ -27,7 +27,7 @@ export function writeGithubActionsOutput(name: string, value: string): void {
     return
   }
 
-  const delim = `---${randomUUID()}---${EOL}`
+  const delim = `---${randomUUID()}---`
 
-  appendFileSync(process.env.GITHUB_OUTPUT, `${name}<<${delim}${value}${delim}`, 'utf8')
+  appendFileSync(process.env.GITHUB_OUTPUT, `${name}<<${delim}${EOL}${value}${EOL}${delim}${EOL}`, 'utf8')
 }
