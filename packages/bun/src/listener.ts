@@ -1,5 +1,6 @@
 import type { IListener, TcpEndpoint } from '@fuman/net'
 import type { TCPSocketListener } from 'bun'
+import { ListenerClosedError } from '@fuman/net'
 import { Deferred } from '@fuman/utils'
 
 import { TcpConnection } from './connection.js'
@@ -8,6 +9,7 @@ export class TcpListener implements IListener<TcpEndpoint, TcpConnection> {
   constructor() {}
 
   #listener!: TCPSocketListener
+  #closed = false
   #waiter?: Deferred<TcpConnection>
 
   /** listen on the given endpoint; must be called before any other methods */
@@ -44,13 +46,16 @@ export class TcpListener implements IListener<TcpEndpoint, TcpConnection> {
           socket.data._handleDrain()
         },
         close: (socket) => {
-          socket.data._handleClose()
+          socket.data?._handleClose()
         },
       },
     })
   }
 
   close(): void {
+    this.#closed = true
+    this.#waiter?.reject(new ListenerClosedError())
+    this.#waiter = undefined
     this.#listener.stop()
   }
 
@@ -62,6 +67,10 @@ export class TcpListener implements IListener<TcpEndpoint, TcpConnection> {
   }
 
   async accept(): Promise<TcpConnection> {
+    if (this.#closed) {
+      throw new ListenerClosedError()
+    }
+
     this.#waiter = new Deferred()
 
     const connection = await this.#waiter.promise
