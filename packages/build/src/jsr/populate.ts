@@ -3,7 +3,7 @@ import * as fsp from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import process from 'node:process'
 
-import { asyncPool, AsyncQueue } from '@fuman/utils'
+import { asyncPool } from '@fuman/utils'
 import ts from 'typescript'
 
 import { exec } from '../misc/exec.js'
@@ -144,48 +144,39 @@ export async function populateFromUpstream(params: {
   // hold a map of dependencies for each package - this will be used to determine the order of publishing
   const depsMap = new Map<string, string[]>()
   const nameToPath = new Map<string, string>()
+  const pending = [...packages]
+  const seen = new Set<string>()
 
-  // download all packages and their dependencies
-  const downloadQueue = new AsyncQueue<string>(packages)
+  while (pending.length > 0) {
+    const batch = [...new Set(pending.splice(0, pending.length).filter(pkg => !seen.has(pkg)))]
+    for (const pkg of batch) seen.add(pkg)
+    if (batch.length === 0) break
 
-  let i = 0
-  let total = downloadQueue.length
-
-  await asyncPool(downloadQueue, async (pkg) => {
-    i += 1
-
-    if (nameToPath.has(pkg)) {
-      if (downloadQueue.length === 0) {
-        downloadQueue.end()
+    await asyncPool(batch, async (pkg) => {
+      if (!quiet) {
+        console.log(`Downloading ${pkg}...`)
       }
 
-      return
-    }
+      const specifier = parseImportSpecifier(`jsr:${pkg}`)
+      const path = await downloadJsrPackage(specifier, { registry: upstream })
+      nameToPath.set(pkg, path)
 
-    if (!quiet) {
-      console.log(`[${i}/${total}] Downloading ${pkg}...`)
-    }
-
-    const specifier = parseImportSpecifier(`jsr:${pkg}`)
-    const path = await downloadJsrPackage(specifier, { registry: upstream })
-    nameToPath.set(pkg, path)
-
-    const deps = await findPackageDependencies(path)
-    depsMap.set(pkg, deps)
-    deps.forEach(dep => downloadQueue.enqueue(dep))
-    total += deps.length
-
-    if (downloadQueue.length === 0 && deps.length === 0) {
-      downloadQueue.end()
-    }
-  })
+      const deps = await findPackageDependencies(path)
+      depsMap.set(pkg, deps)
+      for (const dep of deps) {
+        if (!seen.has(dep)) pending.push(dep)
+      }
+    })
+  }
 
   const order = determinePublishOrder(Object.fromEntries(depsMap))
 
   for (const item of order) {
     const spec = parseImportSpecifier(`jsr:${item}`)
-    // eslint-disable-next-line ts/no-non-null-assertion
-    const path = nameToPath.get(item)!
+    const path = nameToPath.get(item)
+    if (path == null) {
+      throw new Error(`Missing downloaded package path for ${item}`)
+    }
 
     if (createViaApi) {
       await jsrMaybeCreatePackage({
