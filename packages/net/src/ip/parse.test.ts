@@ -62,3 +62,19 @@ describe('stringify', () => {
     })).toBe('::1')
   })
 })
+
+describe('stringifyWithPort', () => {
+  it('should stringify ipv4 with port', () => {
+    expect(ip.stringifyWithPort({
+      type: 'ipv4',
+      parts: new Uint8Array([127, 0, 0, 1]),
+    }, 1234)).toBe('127.0.0.1:1234')
+  })
+
+  it('should stringify ipv6 with port in brackets', () => {
+    expect(ip.stringifyWithPort({
+      type: 'ipv6',
+      parts: new Uint16Array([0x2001, 0xDB8, 0, 0, 0, 0, 0, 1]),
+    }, 443)).toBe('[2001:db8::1]:443')
+  })
+})

@@ -32,5 +32,9 @@ export function stringify(parsed: Ipv4Address | Ipv6Address): string {
 }
 
 export function stringifyWithPort(parsed: Ipv4Address | Ipv6Address, port: number): string {
-  return `${stringify(parsed)}:${port}`
+  const host = stringify(parsed)
+  if (parsed.type === 'ipv6') {
+    return `[${host}]:${port}`
+  }
+  return `${host}:${port}`
 }
