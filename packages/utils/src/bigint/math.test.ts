@@ -28,6 +28,11 @@ describe('euclideanGcd', () => {
   it('should correctly handle equal values', () => {
     expect(euclideanGcd(1n, 1n)).toEqual(1n)
   })
+
+  it('should return a non-negative remainder', () => {
+    expect(euclideanGcd(-48n, 18n)).toEqual(6n)
+    expect(euclideanGcd(-42n, 0n)).toEqual(42n)
+  })
 })
 
 describe('modPowBinary', () => {

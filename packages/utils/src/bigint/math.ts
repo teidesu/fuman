@@ -65,7 +65,7 @@ export function euclideanGcd(a: bigint, b: bigint): bigint {
     a = t
   }
 
-  return a
+  return a < 0n ? -a : a
 }
 
 export function modPowBinary(base: bigint, exp: bigint, mod: bigint): bigint {
