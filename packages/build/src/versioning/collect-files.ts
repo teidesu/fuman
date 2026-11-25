@@ -20,13 +20,24 @@ export interface ProjectChangedFile {
   root: string
 }
 
+const DEFAULT_EXCLUDE = ['**/*.test.ts', '**/*.md']
+
 async function defaultShouldInclude(file: ProjectChangedFile): Promise<boolean> {
   if (!file.file.endsWith('.ts')) return true
 
   if (file.package == null) return false
 
-  const tsconfigFiles = await getTsconfigFiles(join(file.root, file.package.path))
-  return tsconfigFiles.includes(file.file)
+  try {
+    const tsconfigFiles = await getTsconfigFiles(join(file.root, file.package.path))
+    return tsconfigFiles.includes(file.file)
+  } catch {
+    return true
+  }
+}
+
+function fileBelongsToPackage(file: string, pkgPath: string): boolean {
+  if (pkgPath === '' || pkgPath === '.') return true
+  return file === pkgPath || file.startsWith(`${pkgPath}/`)
 }
 
 export async function findProjectChangedFiles(
@@ -41,7 +52,7 @@ export async function findProjectChangedFiles(
   const {
     params: {
       include,
-      exclude = ['**/*.test.ts'],
+      exclude = DEFAULT_EXCLUDE,
       shouldInclude = defaultShouldInclude,
     } = {},
     root: root_ = process.cwd(),
@@ -61,7 +72,9 @@ export async function findProjectChangedFiles(
 
   // update paths to be relative to workspace root
   const packages = (params.workspace ?? (await collectPackageJsons(root)))
+    .filter(pkg => !pkg.root)
     .map(pkg => ({ ...pkg, path: relative(root, pkg.path) }))
+    .sort((a, b) => b.path.length - a.path.length)
 
   const files: ProjectChangedFile[] = []
 
@@ -69,7 +82,7 @@ export async function findProjectChangedFiles(
   const excludeGlobs = exclude == null ? null : picomatch(exclude)
 
   for (const file of changed) {
-    const pkg = packages.find(pkg => file.startsWith(pkg.path))
+    const pkg = packages.find(pkg => fileBelongsToPackage(file, pkg.path))
     if (!pkg) continue
 
     const relPath = relative(pkg.path, file)
