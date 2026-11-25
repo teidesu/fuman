@@ -54,7 +54,7 @@ export const releaseCli = bc.command({
     withNpm: bc.boolean('with-npm')
       .desc('whether to publish to npm'),
     npmToken: bc.string('npm-token')
-      .desc('npm token to use for publishing (note: this will override the global .npmrc file)'),
+      .desc('npm token to use for publishing (passed via env and a temporary local .npmrc, never the global config)'),
     npmPublishArgs: bc.string('npm-publish-args')
       .desc('additional arguments to pass to `npm publish`'),
     npmDistDir: bc.string('npm-dist-dir')

@@ -1,6 +1,7 @@
 import type { WorkspacePackage } from '../../package-json/collect-package-jsons.js'
 import * as fsp from 'node:fs/promises'
 
+import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import process from 'node:process'
 
@@ -21,6 +22,52 @@ export interface PublishPackagesResult {
 }
 
 const DEFAULT_REGISTRY_URL = 'https://registry.npmjs.org'
+
+export function normalizeNpmAuthToken(token?: string): string | undefined {
+  if (token == null) return undefined
+  const trimmed = token.trim()
+  return trimmed === '' ? undefined : trimmed
+}
+
+export function formatNpmAuthRc(registryUrl: string, token: string): string {
+  const key = new URL(':_authToken', registryUrl).href.replace(/^https:\/\//, '//')
+  return `${key}=${token}\n`
+}
+
+export interface NpmPublishAuth {
+  extraArgs: string[]
+  extraEnv: NodeJS.ProcessEnv
+  cleanup: () => Promise<void>
+}
+
+export async function prepareNpmPublishAuth(params: {
+  token?: string
+  registryUrl: string
+}): Promise<NpmPublishAuth> {
+  const token = normalizeNpmAuthToken(params.token)
+  if (token == null) {
+    return {
+      extraArgs: [],
+      extraEnv: {},
+      cleanup: async () => {},
+    }
+  }
+
+  const dir = await fsp.mkdtemp(join(tmpdir(), 'fuman-npm-auth-'))
+  const npmrcPath = join(dir, '.npmrc')
+  await fsp.writeFile(npmrcPath, formatNpmAuthRc(params.registryUrl, token), { mode: 0o600 })
+
+  return {
+    extraArgs: ['--userconfig', npmrcPath],
+    extraEnv: {
+      NPM_TOKEN: token,
+      NODE_AUTH_TOKEN: token,
+    },
+    cleanup: async () => {
+      await fsp.rm(dir, { recursive: true, force: true })
+    },
+  }
+}
 
 export async function publishPackages(params: {
   workspaceRoot?: string
@@ -65,146 +112,151 @@ export async function publishPackages(params: {
 
   const failed: string[] = []
   const tarballs: string[] = []
+  const auth = await prepareNpmPublishAuth({
+    token: dryRun ? undefined : token,
+    registryUrl,
+  })
+  const npmEnv = { ...process.env, ...auth.extraEnv }
 
-  if (token != null && !dryRun) {
-    await exec([
-      'npm',
-      'config',
-      'set',
-      '--global',
-      new URL(':_authToken', registryUrl).href.replace(/^https:\/\//, '//'),
-      token,
-    ], { throwOnError: true })
-  }
-
-  if (!dryRun) {
-    // validate the token
-    await exec(['npm', 'whoami', '--registry', registryUrl], { throwOnError: true })
-  }
-
-  if (
-    !noProvenance
-    && isRunningInGithubActions()
-    && Boolean(process.env.ACTIONS_ID_TOKEN_REQUEST_URL)
-    && registryUrl === DEFAULT_REGISTRY_URL
-  ) {
-    // we can use --provenance flag to generate a provenance statement
-    if (!publishArgs.some(it => it.startsWith('--provenance'))) {
-      publishArgs.push('--provenance')
-    }
-  }
-
-  for (const pkg of toPublish) {
-    // check if this version is already published
-    const pkgVersion = fixedVersion ?? asNonNull(pkg.json.version)
-    if (!dryRun && !skipVersionCheck && await npmCheckVersion({
-      registry: registryUrl,
-      package: asNonNull(pkg.json.name),
-      version: pkgVersion,
-    })) {
-      if (unpublishExisting) {
-        await exec([
-          'npm',
-          'unpublish',
-          '--force',
-          '--registry',
-          registryUrl,
-          `${asNonNull(pkg.json.name)}@${pkgVersion}`,
-        ], {
-          stdio: 'inherit',
-        })
-      } else {
-        console.log(`Skipping ${pkg.json.name}@${pkgVersion} because it is already published`)
-        continue
-      }
-    }
-
-    if (withBuild) {
-      if (pkg.json.scripts?.build !== undefined) {
-        const res = await exec([
-          'npm',
-          'run',
-          'build',
-        ], {
-          cwd: join(pkg.path),
-          stdio: 'inherit',
-        })
-
-        if (res.exitCode !== 0) {
-          console.log('failed to build %s', pkg.json.name)
-          failed.push(asNonNull(pkg.json.name))
-          continue
-        }
-      } else {
-        try {
-          await buildPackage({
-            workspaceRoot,
-            workspace,
-            packageName: asNonNull(pkg.json.name),
-            fixedVersion,
-          })
-        } catch (err) {
-          console.log('failed to build %s:', pkg.json.name)
-          console.error(err)
-          failed.push(asNonNull(pkg.json.name))
-          continue
-        }
-      }
-    }
-
-    const fullDistDir = join(pkg.path, distDir)
-
-    if (fixedVersion != null) {
-      // NB: we always generate package.json in dist/ regardless of the original package.json format
-      const distPkgJsonPath = join(fullDistDir, 'package.json')
-
-      const pkgJson = await parsePackageJsonFile(distPkgJsonPath)
-      pkgJson.version = fixedVersion
-      await fsp.writeFile(distPkgJsonPath, JSON.stringify(pkgJson, null, 4))
-    }
-
-    console.log(`publishing ${pkg.json.name}@${pkgVersion}`)
-
-    if (pkg.json.name?.includes('/')) {
-      // scoped packages are published as `private` by default,
-      // which is not an obvious choice. unless the user explicitly
-      // opts in, we will publish them as public
-      if (!publishArgs.some(it => it.startsWith('--access'))) {
-        publishArgs.push('--access=public')
-      }
-    }
-
-    const res = await exec([
-      'npm',
-      'publish',
-      '--registry',
-      registryUrl,
-      ...(dryRun ? ['--dry-run'] : ['-q']),
-      ...publishArgs,
-    ], {
-      cwd: fullDistDir,
-      stdio: 'inherit',
-    })
-
-    if (res.exitCode !== 0) {
-      failed.push(asNonNull(pkg.json.name))
-    }
-
-    if (withTarballs) {
-      const tar = await exec(['npm', 'pack', '-q'], {
-        cwd: fullDistDir,
+  try {
+    if (!dryRun) {
+      // validate the token
+      await exec(['npm', ...auth.extraArgs, 'whoami', '--registry', registryUrl], {
+        throwOnError: true,
+        env: npmEnv,
       })
-      if (tar.exitCode !== 0) {
-        console.error(tar.stderr)
-      } else {
-        tarballs.push(join(fullDistDir, tar.stdout.trim()))
+    }
+
+    if (
+      !noProvenance
+      && isRunningInGithubActions()
+      && Boolean(process.env.ACTIONS_ID_TOKEN_REQUEST_URL)
+      && registryUrl === DEFAULT_REGISTRY_URL
+    ) {
+      // we can use --provenance flag to generate a provenance statement
+      if (!publishArgs.some(it => it.startsWith('--provenance'))) {
+        publishArgs.push('--provenance')
       }
     }
-  }
 
-  return {
-    failed,
-    tarballs,
+    for (const pkg of toPublish) {
+      // check if this version is already published
+      const pkgVersion = fixedVersion ?? asNonNull(pkg.json.version)
+      if (!dryRun && !skipVersionCheck && await npmCheckVersion({
+        registry: registryUrl,
+        package: asNonNull(pkg.json.name),
+        version: pkgVersion,
+      })) {
+        if (unpublishExisting) {
+          await exec([
+            'npm',
+            ...auth.extraArgs,
+            'unpublish',
+            '--force',
+            '--registry',
+            registryUrl,
+            `${asNonNull(pkg.json.name)}@${pkgVersion}`,
+          ], {
+            stdio: 'inherit',
+            env: npmEnv,
+          })
+        } else {
+          console.log(`Skipping ${pkg.json.name}@${pkgVersion} because it is already published`)
+          continue
+        }
+      }
+
+      if (withBuild) {
+        if (pkg.json.scripts?.build !== undefined) {
+          const res = await exec([
+            'npm',
+            'run',
+            'build',
+          ], {
+            cwd: join(pkg.path),
+            stdio: 'inherit',
+          })
+
+          if (res.exitCode !== 0) {
+            console.log('failed to build %s', pkg.json.name)
+            failed.push(asNonNull(pkg.json.name))
+            continue
+          }
+        } else {
+          try {
+            await buildPackage({
+              workspaceRoot,
+              workspace,
+              packageName: asNonNull(pkg.json.name),
+              fixedVersion,
+            })
+          } catch (err) {
+            console.log('failed to build %s:', pkg.json.name)
+            console.error(err)
+            failed.push(asNonNull(pkg.json.name))
+            continue
+          }
+        }
+      }
+
+      const fullDistDir = join(pkg.path, distDir)
+
+      if (fixedVersion != null) {
+        // NB: we always generate package.json in dist/ regardless of the original package.json format
+        const distPkgJsonPath = join(fullDistDir, 'package.json')
+
+        const pkgJson = await parsePackageJsonFile(distPkgJsonPath)
+        pkgJson.version = fixedVersion
+        await fsp.writeFile(distPkgJsonPath, JSON.stringify(pkgJson, null, 4))
+      }
+
+      console.log(`publishing ${pkg.json.name}@${pkgVersion}`)
+
+      if (pkg.json.name?.includes('/')) {
+        // scoped packages are published as `private` by default,
+        // which is not an obvious choice. unless the user explicitly
+        // opts in, we will publish them as public
+        if (!publishArgs.some(it => it.startsWith('--access'))) {
+          publishArgs.push('--access=public')
+        }
+      }
+
+      const res = await exec([
+        'npm',
+        ...auth.extraArgs,
+        'publish',
+        '--registry',
+        registryUrl,
+        ...(dryRun ? ['--dry-run'] : ['-q']),
+        ...publishArgs,
+      ], {
+        cwd: fullDistDir,
+        stdio: 'inherit',
+        env: npmEnv,
+      })
+
+      if (res.exitCode !== 0) {
+        failed.push(asNonNull(pkg.json.name))
+      }
+
+      if (withTarballs) {
+        const tar = await exec(['npm', 'pack', '-q'], {
+          cwd: fullDistDir,
+        })
+        if (tar.exitCode !== 0) {
+          console.error(tar.stderr)
+        } else {
+          tarballs.push(join(fullDistDir, tar.stdout.trim()))
+        }
+      }
+    }
+
+    return {
+      failed,
+      tarballs,
+    }
+  } finally {
+    await auth.cleanup()
   }
 }
 
@@ -221,7 +273,7 @@ export const publishPackagesCli = bc.command({
     registryUrl: bc.string('registry')
       .desc('URL of the registry to publish to'),
     token: bc.string('token')
-      .desc('token to use for publishing (note: this will override the global .npmrc file)'),
+      .desc('token to use for publishing (passed via env and a temporary local .npmrc, never the global config)'),
     distDir: bc.string('dist-dir')
       .desc('directory to publish from, relative to package root (default: dist)'),
     dryRun: bc.boolean('dry-run')
