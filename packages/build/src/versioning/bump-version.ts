@@ -1,5 +1,5 @@
 import type { ReleaseType } from 'semver'
-import type { CommitInfo } from '../git/utils.js'
+import type { CommitInfo, ConventionalCommit } from '../git/utils.js'
 
 import type { WorkspacePackage } from '../package-json/collect-package-jsons.js'
 import type { PackageJson } from '../package-json/types.js'
@@ -51,7 +51,11 @@ export interface BumpVersionResult {
   hasFeatures: boolean
 }
 
-function determineBumpType(params: {
+function parseCommit(commit: CommitInfo): ConventionalCommit | null {
+  return parseConventionalCommit(`${commit.message}\n${commit.description}`)
+}
+
+export function determineBumpType(params: {
   oldVersion: string
   commits: CommitInfo[]
 }): 'major' | 'minor' | 'patch' {
@@ -61,7 +65,7 @@ function determineBumpType(params: {
   let hasFeatures = false
 
   for (const commit of commits) {
-    const parsed = parseConventionalCommit(commit.message)
+    const parsed = parseCommit(commit)
     if (!parsed) continue
 
     if (parsed.breaking) hasBreakingChanges = true
@@ -157,8 +161,8 @@ export async function bumpVersion(params: {
       commits,
     })
     // todo probably remove
-    hasFeatures = commits.some(commit => parseConventionalCommit(commit.message)?.type === 'feat')
-    hasBreakingChanges = commits.some(commit => parseConventionalCommit(commit.message)?.breaking)
+    hasFeatures = commits.some(commit => parseCommit(commit)?.type === 'feat')
+    hasBreakingChanges = commits.some(commit => parseCommit(commit)?.breaking)
   }
 
   const nextVersion = inc(maxVersion, type)

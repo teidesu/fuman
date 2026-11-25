@@ -204,13 +204,16 @@ export async function getCommitsBetween(params: {
   return items.reverse()
 }
 
+const CONVENTIONAL_COMMIT_RE = /^(\w+)(?:\(([^)]+)\))?(!?): (.+)$/
+const BREAKING_CHANGE_RE = /^BREAKING[- ]CHANGE:/
+
 /** information about a conventional commit */
 export interface ConventionalCommit {
   /** type of the commit (e.g. `feat`, `fix`, etc) */
   type: string
   /** scope of the commit (i.e. "scope" in `feat(scope): subject`) */
   scope?: string
-  /** whether the commit is marked as breaking with an exclamation mark */
+  /** whether the commit is a breaking change (`!` in the header or a BREAKING CHANGE footer) */
   breaking: boolean
   /** subject of the commit */
   subject: string
@@ -218,16 +221,17 @@ export interface ConventionalCommit {
 
 /** parse a conventional commit message */
 export function parseConventionalCommit(msg: string): ConventionalCommit | null {
-  const match = msg.match(/^(\w+)(?:\(([^)]+)\))?(!?): (.+)$/)
-
+  const [header, ...rest] = msg.split('\n')
+  const match = header.match(CONVENTIONAL_COMMIT_RE)
   if (!match) return null
 
-  const [, type, scope, breaking, subject] = match
+  const [, type, scope, bang, subject] = match
+  const footerBreaking = rest.some(line => BREAKING_CHANGE_RE.test(line.trim()))
 
   return {
     type,
     scope,
-    breaking: Boolean(breaking),
+    breaking: Boolean(bang) || footerBreaking,
     subject,
   }
 }

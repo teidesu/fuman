@@ -88,7 +88,7 @@ export async function generateChangelog(params: {
   const commits = await getCommitsBetween({ since, cwd })
   await onCommitsFetched?.(commits)
   for (const commit of commits) {
-    const parsed = parseConventionalCommit(commit.message)
+    const parsed = parseConventionalCommit(`${commit.message}\n${commit.description}`)
 
     if (!parsed) {
       onCommitParseFailed(commit)
