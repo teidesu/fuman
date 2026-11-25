@@ -9,9 +9,11 @@ const ENDPOINT: TcpEndpoint = { address: '127.0.0.1', port: 1234 }
 
 describe('TcpListener', () => {
   const stop = vi.fn()
+  let handlers: any
 
   vi.stubGlobal('Bun', {
     listen: vi.fn().mockImplementation((opts: TCPSocketListenOptions<unknown>) => {
+      handlers = opts.socket
       return {
         stop,
         hostname: opts.hostname,
@@ -44,4 +46,17 @@ describe('TcpListener', () => {
     await expect(listener.accept()).rejects.toThrow(ListenerClosedError)
     expect(stop).toHaveBeenCalledOnce()
   }, 1000)
+
+  it('should not throw when an incoming socket closes without a waiter', () => {
+    const listener = new TcpListener()
+    listener.listen(ENDPOINT)
+    const socket = {
+      data: undefined,
+      end: vi.fn(),
+    }
+
+    handlers.open(socket)
+    expect(socket.end).toHaveBeenCalledOnce()
+    expect(() => handlers.close(socket)).not.toThrow()
+  })
 })

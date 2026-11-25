@@ -46,7 +46,7 @@ export class TcpListener implements IListener<TcpEndpoint, TcpConnection> {
           socket.data._handleDrain()
         },
         close: (socket) => {
-          socket.data._handleClose()
+          socket.data?._handleClose()
         },
       },
     })
