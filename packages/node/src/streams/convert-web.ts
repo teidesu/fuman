@@ -26,6 +26,9 @@ export function nodeReadableToWeb(stream: Readable): ReadableStream<Uint8Array> 
     pull() {
       stream.resume()
     },
+    cancel(reason) {
+      stream.destroy(reason instanceof Error ? reason : undefined)
+    },
   })
 }
 
@@ -77,7 +80,7 @@ export function webReadableToNode(stream: ReadableStream<Uint8Array>): Readable 
         if (done) {
           this.push(null)
         } else {
-          this.push(Buffer.from(value.buffer, value.byteOffset, value.byteLength))
+          this.push(Buffer.from(value))
         }
       } catch (err) {
         this.destroy(err as Error)

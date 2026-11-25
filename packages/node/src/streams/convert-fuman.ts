@@ -26,11 +26,18 @@ export function nodeReadableToFuman(stream: Readable): IReadable & IClosable {
     waiters.popFront()?.resolve()
   })
 
+  stream.on('close', () => {
+    while (waiters.length > 0) {
+      // eslint-disable-next-line ts/no-non-null-assertion
+      waiters.popFront()!.resolve()
+    }
+  })
+
   const readBuffer = Bytes.alloc()
 
   return {
     async read(into: Uint8Array): Promise<number> {
-      if (stream.readableEnded) return 0
+      if (stream.readableEnded || stream.destroyed) return 0
 
       if (readBuffer.available > 0) {
         const size = Math.min(readBuffer.available, into.length)
@@ -49,7 +56,7 @@ export function nodeReadableToFuman(stream: Readable): IReadable & IClosable {
         // end of stream or end of buffered data
         // if it's the latter, we need to read more
         if (buf === null) {
-          if (stream.readableEnded) return 0
+          if (stream.readableEnded || stream.destroyed) return 0
           const deferred = new Deferred<void>()
           waiters.pushBack(deferred)
           await deferred.promise
@@ -58,7 +65,7 @@ export function nodeReadableToFuman(stream: Readable): IReadable & IClosable {
 
       if (into.length < buf.length) {
         const toReadBuffer = buf.length - into.length
-        readBuffer.writeSync(toReadBuffer).set(buf.subarray(toReadBuffer))
+        readBuffer.writeSync(toReadBuffer).set(buf.subarray(into.length))
         buf = buf.subarray(0, into.length)
       }
 

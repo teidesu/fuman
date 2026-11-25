@@ -48,6 +48,7 @@ abstract class NodeListener<
   }
 
   close(): void {
+    this.#closed = true
     this._waiter?.reject(new ListenerClosedError())
     this._waiter = undefined
 
