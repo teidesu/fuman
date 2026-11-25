@@ -208,6 +208,18 @@ describe('read/numbers', () => {
       expect(read.intbe(rev, 8)).toEqual(-1090226688147180526n)
     })
 
+    it('returns 0n for size 0 without reading a byte', () => {
+      const buffer = new Uint8Array([0x12, 0x34])
+      expect(read.uintle(buffer, 0)).toBe(0n)
+      expect(read.uintbe(buffer, 0)).toBe(0n)
+      expect(read.intle(buffer, 0)).toBe(0n)
+      expect(read.intbe(buffer, 0)).toBe(0n)
+      expect(read.uintle(new Uint8Array(0), 0)).toBe(0n)
+      expect(read.uintbe(new Uint8Array(0), 0)).toBe(0n)
+      expect(read.intle(new Uint8Array(0), 0)).toBe(0n)
+      expect(read.intbe(new Uint8Array(0), 0)).toBe(0n)
+    })
+
     it('intle', () => {
       const buffer = new Uint8Array([0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12])
       const rev = u8.toReversed(buffer)

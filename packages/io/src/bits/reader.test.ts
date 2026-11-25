@@ -31,6 +31,23 @@ describe('BitReader', () => {
     expect(bits.isAligned).toBe(true)
   })
 
+  it('should take leftover bits from the high side of the remainder', () => {
+    const bytes = Bytes.from(new Uint8Array([0b11100001]))
+    const bits = new BitReader(bytes)
+
+    expect(bits.readBits(3)).toBe(0b111)
+    expect(bits.readBits(3)).toBe(0b000)
+    expect(bits.readBits(2)).toBe(0b01)
+  })
+
+  it('should take leftover bits from the high side for bigints', () => {
+    const bytes = Bytes.from(new Uint8Array([0b11100001]))
+    const bits = new BitReader(bytes)
+
+    bits.readBits(1)
+    expect(bits.readBitsBig(3)).toBe(0b110n)
+  })
+
   it('should handle large unaligned reads', () => {
     const bytes = Bytes.from(new Uint8Array([0, 1, 1]))
     const bits = new BitReader(bytes)
@@ -83,6 +100,23 @@ describe('BitReader', () => {
     )
   })
 
+  it('should set bitPosition from leftover bits in the last byte after readBitsBig', () => {
+    const bytes = Bytes.from(new Uint8Array([0xFF, 0xF0]))
+    const bits = new BitReader(bytes)
+
+    expect(bits.readBitsBig(12)).toBe(0xFFFn)
+    expect(bits.bitPosition).toBe(4)
+  })
+
+  it('should set bitPosition from leftover sizeBig after leftover and full bytes', () => {
+    const bytes = Bytes.from(new Uint8Array([0b11100001, 0x00, 0xF0]))
+    const bits = new BitReader(bytes)
+
+    bits.readBits(3)
+    expect(bits.readBitsBig(20)).toBe(32888n)
+    expect(bits.bitPosition).toBe(7)
+  })
+
   describe('skipBits', () => {
     it('should correctly skip bits when aligned', () => {
       const bytes = Bytes.from(new Uint8Array([
@@ -123,6 +157,53 @@ describe('BitReader', () => {
       bits.skipBits(16)
       expect(bits.readBits(6)).toBe(0b111111)
       expect(bits.isAligned).toBe(true)
+    })
+
+    it('should skip leftover bits then consume the next byte', () => {
+      const bytes = Bytes.from(new Uint8Array([0b11100001, 0b10000000]))
+      const bits = new BitReader(bytes)
+
+      expect(bits.readBits(3)).toBe(0b111)
+      bits.skipBits(6)
+      expect(bits.readBits(7)).toBe(0)
+    })
+
+    it('should skip a full byte after leftover bits', () => {
+      const bytes = Bytes.from(new Uint8Array([0b11100001, 0x00, 0xFF, 0xAA]))
+      const bits = new BitReader(bytes)
+
+      bits.readBits(3)
+      bits.skipBits(14)
+      expect(bits.bitPosition).toBe(1)
+      expect(bits.readBits(7)).toBe(127)
+    })
+
+    it('should skip leftover bits then part of the next byte', () => {
+      const bytes = Bytes.from(new Uint8Array([0b11100001, 0b10101010]))
+      const bits = new BitReader(bytes)
+
+      bits.readBits(3)
+      bits.skipBits(8)
+      expect(bits.readBits(5)).toBe(0b01010)
+    })
+
+    it('should no-op skipBits(0) while unaligned', () => {
+      const bytes = Bytes.from(new Uint8Array([0b11100001]))
+      const bits = new BitReader(bytes)
+
+      expect(bits.readBits(3)).toBe(0b111)
+      bits.skipBits(0)
+      expect(bits.readBits(5)).toBe(0b00001)
+    })
+
+    it('should no-op skipBits(0) while aligned', () => {
+      const bytes = Bytes.from(new Uint8Array([0xAA, 0xBB]))
+      const bits = new BitReader(bytes)
+
+      bits.skipBits(0)
+      expect(bits.bitPosition).toBe(0)
+      expect(bits.isAligned).toBe(true)
+      expect(bits.readBits(8)).toBe(0xAA)
     })
   })
 

@@ -43,7 +43,7 @@ export class DelimiterCodec implements IFrameDecoder, IFrameEncoder {
     if (delimiterIdx === -1) {
       if (eof) {
         // no delimiter found, but we reached the end, so we return the remaining data
-        return data
+        return data.slice()
       }
 
       buf.rewind(data.length)
