@@ -24,7 +24,7 @@ export function parseWithPort(ip: string): [Ipv4Address | Ipv6Address, number] {
     portStr = ip.slice(close + 2)
   } else {
     const lastColon = ip.lastIndexOf(':')
-    if (lastColon === -1 || ip.indexOf(':') !== lastColon) {
+    if (lastColon === -1) {
       throw new Error(`Invalid address with port: ${ip}`)
     }
 

@@ -54,9 +54,25 @@ describe('parseWithPort', () => {
     expect(() => ip.parseWithPort('1234')).toThrow('Invalid address with port')
   })
 
-  it('should throw on unbracketed ipv6 without a clear port', () => {
-    expect(() => ip.parseWithPort('2001:db8::1')).toThrow('Invalid address with port')
-    expect(() => ip.parseWithPort('2001:db8::1:443')).toThrow('Invalid address with port')
+  it('should throw on unbracketed ipv6 without a port', () => {
+    expect(() => ip.parseWithPort('2001:db8::1')).toThrow('Invalid IPv6 address')
+  })
+
+  it('should parse unbracketed ipv6 using the last colon as the port', () => {
+    expect(ip.parseWithPort('2001:db8::1:443')).toEqual([
+      {
+        type: 'ipv6',
+        parts: new Uint16Array([0x2001, 0xDB8, 0, 0, 0, 0, 0, 1]),
+      },
+      443,
+    ])
+    expect(ip.parseWithPort('::1:443')).toEqual([
+      {
+        type: 'ipv6',
+        parts: new Uint16Array([0, 0, 0, 0, 0, 0, 0, 1]),
+      },
+      443,
+    ])
   })
 })
 
