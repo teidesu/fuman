@@ -114,4 +114,20 @@ describe('CustomMap', () => {
 
     expect(map.size).toEqual(0)
   })
+
+  it('should keep a stored null in getOrInsert', () => {
+    const map = new CustomMap<string, string, number | null>(k => k, k => k)
+    map.set('k', null)
+
+    expect(map.getOrInsert('k', 99)).toBeNull()
+    expect(map.get('k')).toBeNull()
+  })
+
+  it('should keep a stored null in getOrInsertComputed', () => {
+    const map = new CustomMap<string, string, number | null>(k => k, k => k)
+    map.set('k', null)
+
+    expect(map.getOrInsertComputed('k', () => 99)).toBeNull()
+    expect(map.get('k')).toBeNull()
+  })
 })
