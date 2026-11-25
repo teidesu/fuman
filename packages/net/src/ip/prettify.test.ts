@@ -77,4 +77,16 @@ describe('prettify', () => {
     // Make sure it doesn't strip the first and last characters of IPv4 addresses, when using encloseIpv6
     expect(ip.prettify('1.1.1.1', { encloseIpv6: true })).toBe('1.1.1.1')
   })
+
+  it('should accept already bracketed ipv6', () => {
+    expect(ip.prettify('[::1]')).toBe('::1')
+    expect(ip.prettify('[2001:db8::1]')).toBe('2001:db8::1')
+    expect(ip.prettify('[2001:db8::1]:8080')).toBe('2001:db8::1')
+    expect(ip.prettify('[::1]', { encloseIpv6: true })).toBe('[::1]')
+    expect(ip.prettify('[::1]:3000', { encloseIpv6: true })).toBe('[::1]')
+  })
+
+  it('should accept empty input', () => {
+    expect(ip.prettify('')).toBe('')
+  })
 })
