@@ -1,7 +1,11 @@
 export function unknownToError(err: unknown): Error {
   if (err instanceof Error) return err
   if (typeof err === 'string') return new Error(err)
-  return new Error(JSON.stringify(err), { cause: err })
+  let message = ''
+  try {
+    message = JSON.stringify(err)
+  } catch {}
+  return new Error(message, { cause: err })
 }
 
 export class NotImplementedError extends Error {
