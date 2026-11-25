@@ -62,6 +62,25 @@ describe('webReadableToNode', () => {
       })
     })
   })
+
+  it('should copy chunk bytes instead of aliasing the ArrayBuffer', async () => {
+    const shared = new Uint8Array([1, 2, 3, 4, 5])
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(shared.subarray(0, 3))
+        controller.close()
+      },
+    })
+
+    const nodeStream = webReadableToNode(stream)
+    const chunk = await new Promise<Buffer>((resolve, reject) => {
+      nodeStream.once('data', data => resolve(data as Buffer))
+      nodeStream.once('error', reject)
+    })
+
+    shared.fill(9)
+    expect(chunk).toEqual(Buffer.from([1, 2, 3]))
+  })
 })
 
 describe('nodeWritableToWeb', () => {
