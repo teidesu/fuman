@@ -16,7 +16,10 @@ export function encodedLength(str: string): number {
     const code = str.charCodeAt(i)
     if (code > 0x7F && code <= 0x7FF) s++
     else if (code > 0x7FF && code <= 0xFFFF) s += 2
-    if (code >= 0xDC00 && code <= 0xDFFF) i-- // trail surrogate
+    if (code >= 0xDC00 && code <= 0xDFFF && i > 0) {
+      const prev = str.charCodeAt(i - 1)
+      if (prev >= 0xD800 && prev <= 0xDBFF) i--
+    }
   }
 
   return s

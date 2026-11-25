@@ -44,5 +44,10 @@ describe('utf8', () => {
     it('should handle unicode', () => {
       expect(encodedLength('🌸')).toBe(4)
     })
+
+    it('should not skip the previous unit for a lone low surrogate', () => {
+      const str = 'é\uDC00'
+      expect(encodedLength(str)).toBe(new TextEncoder().encode(str).length)
+    })
   })
 })
