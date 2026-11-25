@@ -20,6 +20,7 @@ export class AsyncInterval {
   #timer?: timers.Timer
   #onError: (err: unknown) => void = () => {}
   #stopped = true
+  #generation = 0
 
   constructor(
     handler: (abortSignal: AbortSignal) => Promise<void>,
@@ -31,7 +32,7 @@ export class AsyncInterval {
 
   #abortController = new AbortController()
 
-  #onTimeout = () => {
+  #onTimeout = (generation: number) => {
     this.#timer = undefined
 
     void (async () => {
@@ -41,9 +42,9 @@ export class AsyncInterval {
         this.#onError(err)
       }
 
-      if (this.#stopped) return
+      if (this.#stopped || generation !== this.#generation) return
 
-      this.#timer = timers.setTimeout(this.#onTimeout, this.#interval)
+      this.#timer = timers.setTimeout(() => this.#onTimeout(generation), this.#interval)
     })()
   }
 
@@ -51,17 +52,19 @@ export class AsyncInterval {
     this.stop()
 
     this.#stopped = false
-    this.#timer = timers.setTimeout(this.#onTimeout, after)
+    let generation = this.#generation
+    this.#timer = timers.setTimeout(() => this.#onTimeout(generation), after)
   }
 
   startNow(): void {
     this.stop()
 
     this.#stopped = false
-    this.#onTimeout()
+    this.#onTimeout(this.#generation)
   }
 
   stop(): void {
+    this.#generation++
     this.#abortController.abort()
     this.#abortController = new AbortController()
 
