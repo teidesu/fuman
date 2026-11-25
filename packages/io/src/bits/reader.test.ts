@@ -31,6 +31,23 @@ describe('BitReader', () => {
     expect(bits.isAligned).toBe(true)
   })
 
+  it('should take leftover bits from the high side of the remainder', () => {
+    const bytes = Bytes.from(new Uint8Array([0b11100001]))
+    const bits = new BitReader(bytes)
+
+    expect(bits.readBits(3)).toBe(0b111)
+    expect(bits.readBits(3)).toBe(0b000)
+    expect(bits.readBits(2)).toBe(0b01)
+  })
+
+  it('should take leftover bits from the high side for bigints', () => {
+    const bytes = Bytes.from(new Uint8Array([0b11100001]))
+    const bits = new BitReader(bytes)
+
+    bits.readBits(1)
+    expect(bits.readBitsBig(3)).toBe(0b110n)
+  })
+
   it('should handle large unaligned reads', () => {
     const bytes = Bytes.from(new Uint8Array([0, 1, 1]))
     const bits = new BitReader(bytes)

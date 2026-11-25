@@ -68,7 +68,7 @@ export class BitReader implements ISyncReadable {
 
       if (size <= bitsLeft) {
         // we can read the entire size from the current byte
-        result = this.#currentByte & ((1 << size) - 1)
+        result = (this.#currentByte >> (bitsLeft - size)) & ((1 << size) - 1)
 
         this.#currentBitIdx += size
 
@@ -118,7 +118,7 @@ export class BitReader implements ISyncReadable {
 
       if (size <= bitsLeft) {
         // we can read the entire size from the current byte
-        result = BigInt(this.#currentByte) & ((1n << BigInt(size)) - 1n)
+        result = (BigInt(this.#currentByte) >> BigInt(bitsLeft - size)) & ((1n << BigInt(size)) - 1n)
 
         this.#currentBitIdx += Number(size)
 
