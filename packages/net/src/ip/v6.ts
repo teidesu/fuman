@@ -50,8 +50,13 @@ export function parseV6(string: string): Ipv6Address {
         throw new Error(`Invalid IPv4 part: ${str} (in ${string})`)
       }
 
-      addPart('', Number.parseInt(ipv4[0], 10) << 8 | Number.parseInt(ipv4[1], 10))
-      addPart('', Number.parseInt(ipv4[2], 10) << 8 | Number.parseInt(ipv4[3], 10))
+      const octets = ipv4.map(octet => Number.parseInt(octet, 10))
+      if (octets.some(octet => Number.isNaN(octet) || octet < 0 || octet > 255)) {
+        throw new Error(`Invalid IPv4 part: ${str} (in ${string})`)
+      }
+
+      addPart('', octets[0] << 8 | octets[1])
+      addPart('', octets[2] << 8 | octets[3])
 
       return
     }
