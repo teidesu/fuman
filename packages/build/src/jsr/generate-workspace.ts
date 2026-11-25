@@ -27,6 +27,15 @@ function mergeArrays<T>(a: T[] | undefined, b: T[] | undefined, defaultValue: T[
   return [...a, ...b]
 }
 
+function shouldCopySource(source: string, srcDir: string, excludeFilesPico: (file: string) => boolean): boolean {
+  const rel = relative(srcDir, source)
+  if (rel === '') return true
+  const parts = rel.split(/[\\/]/)
+  if (parts.some(part => part === 'node_modules' || part === '.git' || part === 'dist')) return false
+  if (excludeFilesPico(rel)) return false
+  return true
+}
+
 export async function generateDenoWorkspace(params: {
   workspaceRoot: string | URL
   workspacePackages?: WorkspacePackage[]
@@ -98,11 +107,7 @@ export async function generateDenoWorkspace(params: {
     await fsp.cp(srcDir, packageOutRoot, {
       recursive: true,
       filter(source) {
-        if (excludeFilesPico(relative(srcDir, source))) {
-          return false
-        }
-
-        return true
+        return shouldCopySource(source, srcDir, excludeFilesPico)
       },
     })
 
@@ -234,6 +239,7 @@ export async function generateDenoWorkspace(params: {
     })
 
     packageConfig?.jsr?.finalizeDenoJson?.(hookContext, denoJson)
+    rootConfig?.finalizeDenoJson?.(hookContext, denoJson)
 
     await fsp.writeFile(join(packageOutRoot, 'deno.json'), JSON.stringify(denoJson, null, 4))
 
