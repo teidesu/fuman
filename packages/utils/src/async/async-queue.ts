@@ -2,6 +2,8 @@ import { Deque } from '../structures/deque.js'
 
 import { Deferred } from './deferred.js'
 
+type WaitResult<T> = { done: true } | { done: false, value: T }
+
 export class AsyncQueue<T> {
   constructor(from?: ArrayLike<T> | Deque<T>) {
     if (from) {
@@ -23,7 +25,7 @@ export class AsyncQueue<T> {
    */
   readonly queue: Deque<T>
 
-  #waiters = new Deque<Deferred<T | undefined>>()
+  #waiters = new Deque<Deferred<WaitResult<T>>>()
   #ended = false
 
   get length(): number {
@@ -38,7 +40,7 @@ export class AsyncQueue<T> {
     if (this.#waiters.length > 0) {
       // eslint-disable-next-line ts/no-non-null-assertion
       const waiter = this.#waiters.popFront()!
-      waiter.resolve(item)
+      waiter.resolve({ done: false, value: item })
       return
     }
 
@@ -52,7 +54,7 @@ export class AsyncQueue<T> {
 
     this.#ended = true
     for (const waiter of this.#waiters) {
-      waiter.resolve(undefined)
+      waiter.resolve({ done: true })
     }
     this.#waiters.clear()
   }
@@ -70,27 +72,39 @@ export class AsyncQueue<T> {
   }
 
   async nextOrWait(): Promise<T | undefined> {
-    if (this.queue.length > 0 || this.#ended) {
+    if (this.queue.length > 0) {
       return this.queue.popFront()
     }
+    if (this.#ended) {
+      return undefined
+    }
 
-    const waiter = new Deferred<T | undefined>()
-    this.#waiters.pushBack(waiter)
-
-    return waiter.promise
+    const result = await this.#wait()
+    if (result.done) return undefined
+    return result.value
   }
 
   [Symbol.asyncIterator](): AsyncIterableIterator<T> {
     const iterator: AsyncIterableIterator<T> = {
       [Symbol.asyncIterator]: () => iterator,
       next: async () => {
-        const item = await this.nextOrWait()
-        if (item === undefined) return { done: true, value: undefined }
+        if (this.queue.length > 0) {
+          return { value: this.next() as T, done: false }
+        }
+        if (this.#ended) return { done: true, value: undefined }
 
-        return { value: item, done: false }
+        const result = await this.#wait()
+        if (result.done) return { done: true, value: undefined }
+        return { value: result.value, done: false }
       },
     }
 
     return iterator
+  }
+
+  #wait(): Promise<WaitResult<T>> {
+    const waiter = new Deferred<WaitResult<T>>()
+    this.#waiters.pushBack(waiter)
+    return waiter.promise
   }
 }

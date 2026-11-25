@@ -103,4 +103,37 @@ describe('AsyncQueue', () => {
     expect(await promise3).toBeUndefined()
     expect(queue.length).toBe(0)
   })
+
+  it('should yield undefined values from the async iterator and continue', async () => {
+    const queue = new AsyncQueue<number | undefined>()
+
+    queue.enqueue(1)
+    queue.enqueue(undefined)
+    queue.enqueue(2)
+    queue.end()
+
+    const items: Array<number | undefined> = []
+    for await (const item of queue) {
+      items.push(item)
+    }
+
+    expect(items).toEqual([1, undefined, 2])
+  })
+
+  it('should yield an undefined value that arrives while the iterator is waiting', async () => {
+    const queue = new AsyncQueue<number | undefined>()
+    const items: Array<number | undefined> = []
+    const done = (async () => {
+      for await (const item of queue) {
+        items.push(item)
+      }
+    })()
+
+    queue.enqueue(undefined)
+    queue.enqueue(1)
+    queue.end()
+    await done
+
+    expect(items).toEqual([undefined, 1])
+  })
 })
